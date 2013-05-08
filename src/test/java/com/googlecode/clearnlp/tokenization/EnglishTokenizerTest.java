@@ -30,7 +30,7 @@ public class EnglishTokenizerTest
 //	@Test
 	public void testTokenize() throws FileNotFoundException
 	{
-		EnglishTokenizer tok = new EnglishTokenizer(new ZipInputStream(new FileInputStream("src/main/resources/model/dictionary-1.2.0.zip")));
+		EnglishTokenizer tok = new EnglishTokenizer(new ZipInputStream(new FileInputStream("src/main/resources/model/dictionary-1.4.0.zip")));
 		String src, trg;
 		
 		// spaces
@@ -53,8 +53,13 @@ public class EnglishTokenizerTest
 		assertEquals(tok.getTokens(src).toString(), trg);
 		
 		// abbreviations
-		src = "prof. ph.d. a. a.b. a.b a.b.c. ab.cd";
-		trg = "[prof., ph.d., a., a.b., a.b, a.b.c., ab, ., cd]";
+		src = "prof. ph.d. a. a.b. a.b a.b.c.";
+		trg = "[prof., ph.d., a., a.b., a.b, a.b.c.]";
+		assertEquals(tok.getTokens(src).toString(), trg);
+		
+		// user IDs
+		src = "ab.cd. 12.34. @a.!";
+		trg = "[ab.cd, ., 12.34, ., @, a, .!]";
 		assertEquals(tok.getTokens(src).toString(), trg);
 				
 		// consecutive punctuation

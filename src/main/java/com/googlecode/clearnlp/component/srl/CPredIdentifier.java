@@ -33,8 +33,8 @@ import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.feature.xml.FtrToken;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.feature.FtrToken;
+import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.nlp.NLPLib;
 
 /**

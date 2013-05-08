@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -48,6 +50,8 @@ import com.googlecode.clearnlp.util.UTXml;
  */
 abstract public class AbstractNLP
 {
+	protected final Logger LOG = LoggerFactory.getLogger(this.getClass());
+	
 	final public String TAG_READER					= "reader";
 	final public String TAG_TYPE					= "type";
 	final public String TAG_READER_COLUMN			= "column";
@@ -247,8 +251,8 @@ abstract public class AbstractNLP
 	protected AbstractModel getLiblinearModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias)
 	{
 		space.build();
-		System.out.println("Liblinear:");
-		System.out.printf("- solver=%d, cost=%f, eps=%f, bias=%f\n", solver, cost, eps, bias);
+		LOG.info("Liblinear:\n");
+		LOG.info(String.format("- solver=%d, cost=%f, eps=%f, bias=%f\n", solver, cost, eps, bias));
 		return LiblinearTrain.getModel(space, numThreads, solver, cost, eps, bias);
 	}
 	
@@ -256,10 +260,10 @@ abstract public class AbstractNLP
 	protected AbstractModel getAdaGradModel(AbstractTrainSpace space, int numThreads, int iter, int rand, double alpha, double rho)
 	{
 		space.build();
-		System.out.println("AdaGrad:");
-		System.out.printf("- iter=%d, rand=%d, alpha=%f, rho=%f\n", iter, rand, alpha, rho);
+		LOG.info("AdaGrad:\n");
+		LOG.info(String.format("- iter=%d, rand=%d, alpha=%f, rho=%f\n", iter, rand, alpha, rho));
 
-		System.out.println("Training:");
+		LOG.info("Training:\n");
 		AdaGradHinge ag = new AdaGradHinge(iter, alpha, rho, new Random(rand));
 		
 		AbstractModel model = space.getModel();
@@ -272,10 +276,10 @@ abstract public class AbstractNLP
 	protected AbstractModel getAdaGradLRModel(AbstractTrainSpace space, int numThreads, int iter, int rand, double alpha, double rho)
 	{
 		space.build();
-		System.out.println("AdaGrad-LR:");
-		System.out.printf("- iter=%d, rand=%d, alpha=%f, rho=%f\n", iter, rand, alpha, rho);
+		LOG.info("AdaGrad-LR:\n");
+		LOG.info(String.format("- iter=%d, rand=%d, alpha=%f, rho=%f\n", iter, rand, alpha, rho));
 
-		System.out.println("Training:");
+		LOG.info("Training:\n");
 		AdaGradLR ag = new AdaGradLR(iter, alpha, rho, new Random(rand));
 		
 		AbstractModel model = space.getModel();
@@ -324,7 +328,7 @@ abstract public class AbstractNLP
 			model.initWeightVector();
 		}
 		
-		System.out.printf("%3d: AdaGrad, iter=%d, alpha=%f, rho=%f\n", nUpdate, iter, alpha, rho);
+		LOG.info(String.format("%3d: AdaGrad, iter=%d, alpha=%f, rho=%f\n", nUpdate, iter, alpha, rho));
 		AdaGradHinge ag = new AdaGradHinge(iter, alpha, rho, rand);
 		ag.updateWeight(space);
 	}
@@ -339,7 +343,7 @@ abstract public class AbstractNLP
 			model.initWeightVector();
 		}
 		
-		System.out.printf("%3d: AdaGrad-LR, iter=%d, alpha=%f, rho=%f\n", nUpdate, iter, alpha, rho);
+		LOG.info(String.format("%3d: AdaGrad-LR, iter=%d, alpha=%f, rho=%f\n", nUpdate, iter, alpha, rho));
 		AdaGradLR ag = new AdaGradLR(iter, alpha, rho, rand);
 		ag.updateWeight(space);
 	}
@@ -356,7 +360,7 @@ abstract public class AbstractNLP
 		long mins   = TimeUnit.MILLISECONDS.toMinutes(millis);
 		long secs   = TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(mins);
 
-		System.out.println(message);
-		System.out.println(String.format("- %d mins, %d secs", mins, secs));
+		LOG.debug(message+"\n");
+		LOG.debug(String.format("- %d mins, %d secs", mins, secs));
 	}
 }

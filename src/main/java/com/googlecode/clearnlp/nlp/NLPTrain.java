@@ -44,7 +44,7 @@ import com.googlecode.clearnlp.component.srl.CSRLabeler;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.reader.JointReader;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
@@ -72,8 +72,8 @@ public class NLPTrain extends AbstractNLP
 	protected String s_mode;
 	@Option(name="-margin", usage="margin between the 1st and 2nd predictions (default: 0.5)", required=false, metaVar="<double>")
 	protected double d_margin = 0.5;
-	@Option(name="-beams", usage="the size of beam (default: 0)", required=false, metaVar="<double>")
-	protected int n_beams = 0;
+	@Option(name="-beams", usage="the size of beam (default: 1)", required=false, metaVar="<double>")
+	protected int n_beams = 1;
 	
 	public NLPTrain() {}
 	
@@ -115,9 +115,9 @@ public class NLPTrain extends AbstractNLP
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf("_")+1)), mode, devId);
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSRLabeler(xmls), mode, devId);
-		else if (mode.equals(NLPLib.MODE_POS_BACK))
-			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
-		else if (mode.equals(NLPLib.MODE_DEP_BACK))
+		else if (mode.equals(NLPLib.MODE_POS_SB))
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTaggerSB(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
+		else if (mode.equals(NLPLib.MODE_DEP_SB))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPParserSB(xmls), mode, devId);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
@@ -138,9 +138,9 @@ public class NLPTrain extends AbstractNLP
 			return new CSenseClassifier(xmls, models, lexica, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return new CSRLabeler(xmls, models, lexica);
-		else if (mode.equals(NLPLib.MODE_POS_BACK))
-			return new CPOSTaggerSB(xmls, models, lexica, d_margin);
-		else if (mode.equals(NLPLib.MODE_DEP_BACK))
+		else if (mode.equals(NLPLib.MODE_POS_SB))
+			return new CPOSTaggerSB(xmls, models, lexica, d_margin, n_beams);
+		else if (mode.equals(NLPLib.MODE_DEP_SB))
 			return new CDEPParserSB(xmls, models, lexica, d_margin, n_beams);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
@@ -178,7 +178,7 @@ public class NLPTrain extends AbstractNLP
 		int i, size = trainFiles.length;
 		DEPTree tree;
 		
-		System.out.println("Collecting lexica:");
+		LOG.info("Collecting lexica:\n");
 		
 		for (i=0; i<size; i++)
 		{
@@ -189,10 +189,9 @@ public class NLPTrain extends AbstractNLP
 				component.process(tree);
 			
 			reader.close();
-			System.out.print(".");
-		}
+			LOG.debug(".");
+		}	LOG.debug("\n");
 		
-		System.out.println();
 		return component.getLexica();
 	}
 	
@@ -206,7 +205,7 @@ public class NLPTrain extends AbstractNLP
 		Prob1DMap map = new Prob1DMap();
 		DEPTree tree;
 		
-		System.out.println("Collecting word-forms:");
+		LOG.info("Collecting word-forms:\n");
 		
 		for (i=0; i<size; i++)
 		{
@@ -226,8 +225,8 @@ public class NLPTrain extends AbstractNLP
 			
 			reader.close();
 			map.addAll(set);
-			System.out.print(".");
-		}	System.out.println();
+			LOG.debug(".");
+		}	LOG.debug("\n");
 		
 		return map.toSet(xml.getDocumentFrequencyCutoff());
 	}
@@ -266,7 +265,7 @@ public class NLPTrain extends AbstractNLP
 		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 		StringTrainSpace[] spaces;
 		
-		System.out.println("Collecting training instances:");
+		LOG.info("Collecting training instances:\n");
 		
 		for (i=0; i<size; i++)
 		{
@@ -285,7 +284,7 @@ public class NLPTrain extends AbstractNLP
 		}
 		catch (InterruptedException e) {e.printStackTrace();}
 		
-		System.out.println();
+		LOG.debug("\n");
 		
 		mSize = lSpaces.get(0).length;
 		spaces = new StringTrainSpace[mSize];
@@ -297,16 +296,14 @@ public class NLPTrain extends AbstractNLP
 			
 			if ((size = lSpaces.size()) > 1)
 			{
-				System.out.println("Merging training instances:");
+				LOG.info("Merging training instances:\n");
 				
 				for (j=1; j<size; j++)
 				{
 					spaces[i].appendSpace(sp = lSpaces.get(j)[i]);
 					sp.clear();
-					System.out.print(".");
-				}
-				
-				System.out.println();
+					LOG.debug(".");
+				}	LOG.debug("\n");
 			}
 		}
 		
@@ -316,7 +313,7 @@ public class NLPTrain extends AbstractNLP
 	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String mode)
 	{
 		if      (mode.equals(NLPLib.MODE_POS))
-			return new CPOSTagger(xmls, spaces, lexica);
+			return (models == null) ? new CPOSTagger(xmls, spaces, lexica) : new CPOSTagger(xmls, spaces, models, lexica);
 		else if (mode.equals(NLPLib.MODE_DEP))
 			return (models == null) ? new CDEPParser(xmls, spaces, lexica) : new CDEPParser(xmls, spaces, models, lexica);
 		else if (mode.equals(NLPLib.MODE_PRED))
@@ -327,9 +324,9 @@ public class NLPTrain extends AbstractNLP
 			return new CSenseClassifier(xmls, spaces, lexica, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return (models == null) ? new CSRLabeler(xmls, spaces, lexica) : new CSRLabeler(xmls, spaces, models, lexica);
-		else if (mode.equals(NLPLib.MODE_POS_BACK))
-			return (models == null) ? new CPOSTaggerSB(xmls, spaces, lexica, d_margin) : new CPOSTaggerSB(xmls, spaces, models, lexica, d_margin);
-		else if (mode.equals(NLPLib.MODE_DEP_BACK))
+		else if (mode.equals(NLPLib.MODE_POS_SB))
+			return (models == null) ? new CPOSTaggerSB(xmls, spaces, lexica, d_margin, n_beams) : new CPOSTaggerSB(xmls, spaces, models, lexica, d_margin, n_beams);
+		else if (mode.equals(NLPLib.MODE_DEP_SB))
 			return (models == null) ? new CDEPParserSB(xmls, spaces, lexica, d_margin, n_beams) : new CDEPParserSB(xmls, spaces, models, lexica, d_margin, n_beams);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
@@ -343,8 +340,8 @@ public class NLPTrain extends AbstractNLP
 			return getStringTrainSpaces(xmls[0], ((ObjectIntOpenHashMap<String>)lexica[1]).size());
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return getStringTrainSpaces(xmls[0], 2);
-		else if (boot > 0 && mode.equals(NLPLib.MODE_DEP_BACK))
-			return getStringTrainSpaces(xmls, 1);
+	//	else if (boot > 0 && mode.equals(NLPLib.MODE_DEP_SB))
+	//		return getStringTrainSpaces(xmls, 1);
 		else
 			return getStringTrainSpaces(xmls);
 	}
@@ -399,7 +396,7 @@ public class NLPTrain extends AbstractNLP
 				j_component.process(tree);
 			
 			j_reader.close();
-			System.out.print(".");
+			LOG.debug(".");
 		}
 	}
 	

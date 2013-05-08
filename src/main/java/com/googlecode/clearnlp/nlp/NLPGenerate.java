@@ -22,7 +22,7 @@ import org.w3c.dom.Element;
 
 import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.reader.JointReader;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTXml;

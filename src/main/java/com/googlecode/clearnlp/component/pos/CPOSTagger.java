@@ -28,8 +28,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.log4j.Logger;
-
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
@@ -39,8 +37,8 @@ import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
-import com.googlecode.clearnlp.feature.xml.FtrToken;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.feature.FtrToken;
+import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.UTInput;
@@ -57,8 +55,6 @@ import com.googlecode.clearnlp.util.pair.StringDoublePair;
  */
 public class CPOSTagger extends AbstractStatisticalComponent
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
-	
 	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_POS + NLPLib.ENTRY_CONFIGURATION;
 	protected final String ENTRY_FEATURE	   = NLPLib.MODE_POS + NLPLib.ENTRY_FEATURE;
 	protected final String ENTRY_LEXICA		   = NLPLib.MODE_POS + NLPLib.ENTRY_LEXICA;
@@ -96,6 +92,12 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	public CPOSTagger(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
 	{
 		super(xmls, models, lexica);
+	}
+	
+	/** Constructs a part-of-speech tagger for bootsrapping. */
+	public CPOSTagger(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
+	{
+		super(xmls, spaces, models, lexica);
 	}
 	
 	/** Constructs a part-of-speech tagger for decoding. */

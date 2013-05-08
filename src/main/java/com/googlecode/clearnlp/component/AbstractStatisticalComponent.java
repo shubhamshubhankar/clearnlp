@@ -28,16 +28,15 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.log4j.Logger;
 
 import com.googlecode.clearnlp.classification.model.ONStringModel;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.feature.xml.FtrTemplate;
-import com.googlecode.clearnlp.feature.xml.FtrToken;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.feature.FtrTemplate;
+import com.googlecode.clearnlp.feature.FtrToken;
+import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -49,8 +48,6 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 abstract public class AbstractStatisticalComponent extends AbstractComponent
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
-	
 	protected StringTrainSpace[]	s_spaces;
 	protected StringModel[]			s_models;
 	protected JointFtrXml[]			f_xmls;

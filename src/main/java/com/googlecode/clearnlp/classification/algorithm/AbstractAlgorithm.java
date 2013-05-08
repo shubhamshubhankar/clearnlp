@@ -25,6 +25,9 @@ package com.googlecode.clearnlp.classification.algorithm;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 
@@ -35,6 +38,8 @@ import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
  */
 abstract public class AbstractAlgorithm
 {
+	protected final Logger LOG = LoggerFactory.getLogger(this.getClass());
+	
 	/** The flag to indicate L2-regularized L1-loss support vector classification (dual). */
 	static public final byte SOLVER_LIBLINEAR_LR2_L1_SV = 0;
 	/** The flag to indicate L2-regularized L2-loss support vector classification (dual). */

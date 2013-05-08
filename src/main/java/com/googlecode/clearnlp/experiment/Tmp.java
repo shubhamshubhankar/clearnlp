@@ -59,6 +59,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import jregex.MatchResult;
+import jregex.Substitution;
+import jregex.TextBuffer;
+
+import org.apache.log4j.Logger;
+
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntDeque;
@@ -90,9 +96,11 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 public class Tmp
 {
+	static Logger log = Logger.getLogger(Tmp.class.getName());
+	
 	public Tmp(String[] args) throws Exception
 	{
-		cleanSejong(args);
+		
 	}
 	
 	void cleanSejong(String[] args)
@@ -705,12 +713,30 @@ public class Tmp
 		}
 	}
 	
+	static class SubstitutionOne implements Substitution
+	{
+		@Override
+		public void appendSubstitution(MatchResult match, TextBuffer dest)
+		{
+			dest.append(match.group(0).toUpperCase());
+		}
+	}
+	
 	public static void main(String[] args) throws IOException
 	{
-		try
+	/*	try
 		{
 			new Tmp(args);
 		}
-		catch (Exception e) {e.printStackTrace();}
+		catch (Exception e) {e.printStackTrace();}*/
+		
+		final Pattern  P_USER_ID = Pattern.compile("\\p{Alnum}+\\.\\p{Alnum}+");
+		
+		System.out.println(P_USER_ID.matcher("a.b").find());
+		System.out.println(P_USER_ID.matcher("a.B").find());
+		System.out.println(P_USER_ID.matcher("A.b").find());
+		System.out.println(P_USER_ID.matcher("1.2").find());
+		System.out.println(P_USER_ID.matcher("#.2").find());
+		System.out.println(P_USER_ID.matcher("1.?").find());
 	}
 }

@@ -35,8 +35,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.log4j.Logger;
-
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
@@ -47,8 +45,8 @@ import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLLib;
-import com.googlecode.clearnlp.feature.xml.FtrToken;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.feature.FtrToken;
+import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -61,8 +59,6 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
  */
 public class CSRLabeler extends AbstractStatisticalComponent
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
-	
 	private final String ENTRY_CONFIGURATION = NLPLib.MODE_SRL + NLPLib.ENTRY_CONFIGURATION;
 	private final String ENTRY_FEATURE		 = NLPLib.MODE_SRL + NLPLib.ENTRY_FEATURE;
 	private final String ENTRY_LEXICA		 = NLPLib.MODE_SRL + NLPLib.ENTRY_LEXICA;

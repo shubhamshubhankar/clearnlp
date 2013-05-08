@@ -29,8 +29,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.log4j.Logger;
-
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
@@ -41,8 +39,8 @@ import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.feature.xml.FtrToken;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.feature.FtrToken;
+import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -53,8 +51,6 @@ import com.googlecode.clearnlp.util.UTOutput;
  */
 public class CSenseClassifier extends AbstractStatisticalComponent
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
-	
 	private String ENTRY_CONFIGURATION;
 	private String ENTRY_FEATURE;
 	private String ENTRY_LEXICA;

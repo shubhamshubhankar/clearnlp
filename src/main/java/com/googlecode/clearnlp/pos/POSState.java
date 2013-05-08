@@ -17,7 +17,7 @@ package com.googlecode.clearnlp.pos;
 
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 
-public class POSState
+public class POSState implements Comparable<POSState>
 {
 	public int              input;	// index of input
 	public double           score;	// sum of all previous scores
@@ -28,5 +28,15 @@ public class POSState
 		this.input = input;
 		this.score = score;
 		this.label = label;
+	}
+	
+	@Override
+	public int compareTo(POSState p)
+	{
+		double diff = label.score - p.label.score;
+		
+		if      (diff > 0)	return -1;
+		else if (diff < 0)	return  1;
+		else				return  0;
 	}
 }

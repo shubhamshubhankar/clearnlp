@@ -63,15 +63,17 @@ public class AdaGradLR extends AbstractAdaGrad
 		ArrayList<int[]>    xs = space.getXs();
 		ArrayList<double[]> vs = space.getVs();
 		
+		int i, j, size = weights.length;
 		int[] indices;
-		int i, j;
 		
 		int      yi;
 		int[]    xi;
 		double[] vi = null, grad;
+		double[] pWeights = new double[size];
 		
 		for (i=0; i<n_iter; i++)
 		{
+			System.arraycopy(weights, 0, pWeights, 0, size);
 			indices = getShuffledIndices(N);
 			Arrays.fill(gs, 0);
 			
@@ -143,5 +145,13 @@ public class AdaGradLR extends AbstractAdaGrad
 					weights[getWeightIndex(L, label, x[i])] += getUpdate(L, gs, label, x[i]) * grad[label];
 		}
 	}
+	
+/*	protected void regularize(double[] pWeights, double[] weights, int size)
+	{
+		int i;
+		
+		for (i=0; i<size; i++)
+			weights[i] -= NLPDevelop.d_reg * pWeights[i]; 
+	}*/
 }
 	

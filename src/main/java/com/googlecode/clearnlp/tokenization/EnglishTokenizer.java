@@ -34,6 +34,7 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.morphology.MPLib;
 import com.googlecode.clearnlp.util.UTArray;
 import com.googlecode.clearnlp.util.pair.IntIntPair;
+import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.pair.StringBooleanPair;
 
 /**
@@ -48,7 +49,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 	protected final String F_HYPHENS		= F_DIR+"hyphens.txt";
 	protected final String F_COMPOUNDS		= F_DIR+"compounds.txt";
 	protected final String F_UNITS			= F_DIR+"units.txt";
-	protected final String F_MICROSOFT		= F_DIR+"microsoft.txt";
+	protected final String F_NON_UTF8		= F_DIR+"non-utf8.txt";
 	
 	protected final String S_DELIM			= " ";
 	protected final String S_PROTECTED		= "PR0T_";
@@ -56,16 +57,18 @@ public class EnglishTokenizer extends AbstractTokenizer
 	protected final String S_HYPHEN			= "_HYYN_";
 	protected final String S_AMPERSAND		= "_APSD_";
 	protected final String S_APOSTROPHY		= "_AOOR_";
+	protected final String S_PERIOD			= "_PERI_";
 	protected final int    N_PROTECTED		= S_PROTECTED.length();
 	
-	protected final Pattern P_DELIM			= Pattern.compile(S_DELIM);
-	protected final Pattern P_HYPHEN		= Pattern.compile("-");
-	protected final Pattern P_ABBREVIATION	= Pattern.compile("^(\\p{Alpha}\\.)+\\p{Alpha}?$");
-	protected final String[] A_D0D = {".",",",":","-","/","'"};
+	protected final Pattern  P_DELIM		= Pattern.compile(S_DELIM);
+	protected final Pattern  P_HYPHEN		= Pattern.compile("-");
+	protected final Pattern  P_ABBREVIATION	= Pattern.compile("^(\\p{Alpha}\\.)+\\p{Alpha}?$");
+	protected final String[] A_D0D			= {".",",",":","-","/","'"};
 	
 	protected Replacer   R_URL;
 	protected Replacer   R_ABBREVIATION;
 	protected Replacer   R_PERIOD_LIKE;
+	protected Replacer   R_PERIOD;
 	protected Replacer   R_MARKER;
 	protected Replacer   R_APOSTROPHY;
 	protected Replacer   R_USDOLLAR;
@@ -76,15 +79,16 @@ public class EnglishTokenizer extends AbstractTokenizer
 	protected Replacer[] R_D0D;
 	protected Replacer[] R_UNIT;
 	
+	protected List<Pair<String,Pattern>>	L_NON_UTF8;
 	protected Set<String>					T_EMOTICONS;
 	protected Set<String>					T_ABBREVIATIONS;
 	protected Pattern						P_HYPHEN_LIST;
 	protected ObjectIntOpenHashMap<String>	M_D0D;
 	protected ObjectIntOpenHashMap<String>	M_COMPOUNDS;
 	protected List<IntIntPair[]>			L_COMPOUNDS;
-	protected Pattern[]						P_MICROSOFT;
 	protected Pattern[]						P_RECOVER_D0D;
 	protected Pattern						P_RECOVER_DOT;
+	protected Pattern						P_RECOVER_PERIOD;
 	protected Pattern						P_RECOVER_HYPHEN;
 	protected Pattern						P_RECOVER_APOSTROPHY;
 	protected Pattern						P_RECOVER_AMPERSAND;
@@ -104,6 +108,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 	
 	public List<StringBooleanPair> getTokenList(String str)
 	{
+		str = normalizeNonUTF8(str);
 		List<StringBooleanPair> lTokens = tokenizeWhiteSpaces(str);
 
 		protectEmoticons(lTokens);
@@ -117,21 +122,22 @@ public class EnglishTokenizer extends AbstractTokenizer
 		lTokens = tokenizePatterns(lTokens, R_PUNCTUATION_PRE);
 		protectAbbreviations(lTokens);
 		protectFilenames(lTokens);
+		if (b_twit)	protectTwits(lTokens);
 		
 		lTokens = tokenizeCompounds(lTokens);
 		lTokens = tokenizePatterns(lTokens, R_APOSTROPHY);
+		if (b_userId) replaceProtects(lTokens, R_PERIOD);
 		replaceProtects(lTokens, R_AMPERSAND);
 		replaceProtects(lTokens, R_WAW);
 		for (Replacer r : R_UNIT) lTokens = tokenizePatterns(lTokens, r);
-		if (b_twit)	protectTwits(lTokens);
 		lTokens = tokenizePatterns(lTokens, R_PUNCTUATION_POST);
 		
 		int i, size = P_RECOVER_D0D.length;
 		for (i=0; i<size; i++)	recoverPatterns(lTokens, P_RECOVER_D0D[i], A_D0D[i]);
+		if (b_userId) recoverPatterns(lTokens, P_RECOVER_PERIOD, ".");
 		recoverPatterns(lTokens, P_RECOVER_HYPHEN, "-");
 		recoverPatterns(lTokens, P_RECOVER_APOSTROPHY, "'");
 		recoverPatterns(lTokens, P_RECOVER_AMPERSAND, "&");
-		
 		return lTokens;
 	}
 	
@@ -146,7 +152,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		R_USDOLLAR     = new jregex.Pattern("^US\\$").replacer(new SubstitutionOne());
 		R_AMPERSAND    = getReplacerAmpersand();
 		R_WAW          = getReplacerWAWs();
-		
+		R_PERIOD       = getReplacerPeriods();
 		R_PUNCTUATION_PRE  = new jregex.Pattern("\\(|\\)|\\[|\\]|\\{|\\}|<|>|\\,|\\:|\\;|\\\"").replacer(new SubstitutionOne());
 		R_PUNCTUATION_POST = new jregex.Pattern("\\.|\\?|\\!|\\`|\\'|\\-|\\/|\\@|\\#|\\$|\\%|\\&|\\|").replacer(new SubstitutionOne());
 		
@@ -182,6 +188,20 @@ public class EnglishTokenizer extends AbstractTokenizer
 		});
 	}
 	
+	private Replacer getReplacerPeriods()
+	{
+		return new jregex.Pattern("(\\p{Alnum})(\\.)(\\p{Alnum})").replacer(new Substitution()
+		{
+			@Override
+			public void appendSubstitution(MatchResult match, TextBuffer dest)
+			{
+				dest.append(match.group(1));
+				dest.append(S_PERIOD);
+				dest.append(match.group(3));
+			}
+		});
+	}
+	
 	/** Called by {@link EnglishTokenizer#initReplacers()}. */
 	private void initReplacersD0Ds()
 	{
@@ -211,10 +231,12 @@ public class EnglishTokenizer extends AbstractTokenizer
 		
 		for (i=0; i<size; i++)
 			P_RECOVER_D0D[i] = Pattern.compile(S_D0D+i+"_");
-			
+		
+		P_RECOVER_PERIOD     = Pattern.compile(S_PERIOD);
 		P_RECOVER_HYPHEN     = Pattern.compile(S_HYPHEN);
 		P_RECOVER_APOSTROPHY = Pattern.compile(S_APOSTROPHY);
 		P_RECOVER_AMPERSAND  = Pattern.compile(S_AMPERSAND);
+		
 	}
 	
 	/** Called by {@link EnglishTokenizer#EnglishTokenizer(ZipInputStream)}. */
@@ -237,6 +259,8 @@ public class EnglishTokenizer extends AbstractTokenizer
 				initDictionariesComounds(zin);
 			else if (filename.equals(F_UNITS))
 				initDictionariesUnits(zin);
+			else if (filename.equals(F_NON_UTF8))
+				initDictionaryNonUTF8(zin);
 		}
 		
 		zin.close();
@@ -317,6 +341,30 @@ public class EnglishTokenizer extends AbstractTokenizer
 		R_UNIT[3] = new jregex.Pattern("(?i)(\\d)("+units+"\\p{Punct}*)$").replacer(new SubstitutionTwo());
 	}
 	
+	private void initDictionaryNonUTF8(ZipInputStream zin) throws Exception
+	{
+		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
+		Pattern tab = Pattern.compile("\t");
+		String line;
+		String[] t;
+		
+		L_NON_UTF8 = new ArrayList<Pair<String,Pattern>>();
+		
+		while ((line = fin.readLine()) != null)
+		{
+			t = tab.split(line);
+			L_NON_UTF8.add(new Pair<String,Pattern>(t[1], Pattern.compile(t[0])));
+		}
+	}
+	
+	protected String normalizeNonUTF8(String str)
+	{
+		for (Pair<String,Pattern> p : L_NON_UTF8)
+			str = p.o2.matcher(str).replaceAll(p.o1);
+		
+		return str;
+	}
+	
 	/** Called by {@link EnglishTokenizer#getTokenList(String)}. */
 	protected List<StringBooleanPair> tokenizeWhiteSpaces(String str)
 	{
@@ -326,17 +374,6 @@ public class EnglishTokenizer extends AbstractTokenizer
 			tokens.add(new StringBooleanPair(token, false));
 		
 		return tokens;
-	}
-	
-	protected void protectTwits(List<StringBooleanPair> tokens)
-	{
-		for (StringBooleanPair token : tokens)
-		{
-			char c = token.s.charAt(0);
-			
-			if ((c == '@' || c == '#') && MPLib.isAlnum(token.s.substring(1)))
-				token.b = true;
-		}
 	}
 	
 	/** Called by {@link EnglishTokenizer#getTokenList(String)}. */
@@ -373,6 +410,17 @@ public class EnglishTokenizer extends AbstractTokenizer
 			lower = token.s.toLowerCase();
 			
 			if (MPLib.FILE_EXTS.matcher(lower).find())
+				token.b = true;
+		}
+	}
+	
+	protected void protectTwits(List<StringBooleanPair> tokens)
+	{
+		for (StringBooleanPair token : tokens)
+		{
+			char c = token.s.charAt(0);
+			
+			if ((c == '@' || c == '#') && MPLib.isAlnum(token.s.substring(1)))
 				token.b = true;
 		}
 	}

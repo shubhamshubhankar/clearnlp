@@ -26,8 +26,6 @@ package com.googlecode.clearnlp.classification.algorithm;
 import java.util.ArrayList;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
-
 import com.carrotsearch.hppc.IntArrayList;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 import com.googlecode.clearnlp.util.UTArray;
@@ -39,7 +37,6 @@ import com.googlecode.clearnlp.util.UTArray;
  */
 public class LiblinearL2SV extends AbstractLiblinear
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
 	private byte i_lossType;
 	
 	/**

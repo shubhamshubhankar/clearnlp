@@ -199,7 +199,7 @@ public class NLPDecode extends AbstractNLP
 			return new CSenseClassifier(zin, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return new CSRLabeler(zin);
-		else if (mode.equals(NLPLib.MODE_DEP_BACK))
+		else if (mode.equals(NLPLib.MODE_DEP_SB))
 			return new CDEPParserSB(zin);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
@@ -268,7 +268,7 @@ public class NLPDecode extends AbstractNLP
 			modes.add(NLPLib.MODE_ROLE);
 			modes.add(NLPLib.MODE_SRL);
 		}
-		else if (mode.equals(NLPLib.MODE_DEP_BACK))
+		else if (mode.equals(NLPLib.MODE_DEP_SB))
 		{
 			if (readerType.equals(AbstractReader.TYPE_RAW) || readerType.equals(AbstractReader.TYPE_LINE) || readerType.equals(AbstractReader.TYPE_TOK))
 			{
@@ -280,7 +280,7 @@ public class NLPDecode extends AbstractNLP
 				modes.add(NLPLib.MODE_MORPH);
 			}
 			
-			modes.add(NLPLib.MODE_DEP_BACK);
+			modes.add(NLPLib.MODE_DEP_SB);
 		}
 		
 		return modes;

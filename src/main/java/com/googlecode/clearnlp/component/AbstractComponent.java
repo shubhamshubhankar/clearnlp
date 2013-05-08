@@ -15,6 +15,9 @@
 */
 package com.googlecode.clearnlp.component;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.googlecode.clearnlp.dependency.DEPTree;
 
 /**
@@ -23,6 +26,8 @@ import com.googlecode.clearnlp.dependency.DEPTree;
  */
 abstract public class AbstractComponent
 {
+	protected final Logger LOG = LoggerFactory.getLogger(this.getClass());
+	
 	protected final byte FLAG_LEXICA	= 0;
 	protected final byte FLAG_TRAIN		= 1;
 	protected final byte FLAG_DECODE	= 2;

@@ -24,7 +24,7 @@ import java.util.zip.ZipInputStream;
 import com.googlecode.clearnlp.classification.model.ONStringModel;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.util.pair.Pair;
 
 /**

@@ -17,10 +17,9 @@ package com.googlecode.clearnlp.component.pos;
 
 import java.io.BufferedReader;
 import java.io.PrintStream;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Deque;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,19 +29,18 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.log4j.Logger;
-
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
+import com.googlecode.clearnlp.component.AbstractStatisticalComponentSB;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
-import com.googlecode.clearnlp.feature.xml.FtrToken;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.feature.FtrToken;
+import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.pos.POSState;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
@@ -60,10 +58,8 @@ import com.googlecode.clearnlp.util.triple.Triple;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CPOSTaggerSB extends AbstractStatisticalComponent
+public class CPOSTaggerSB extends AbstractStatisticalComponentSB
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
-	
 	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_POS + NLPLib.ENTRY_CONFIGURATION;
 	protected final String ENTRY_FEATURE	   = NLPLib.MODE_POS + NLPLib.ENTRY_FEATURE;
 	protected final String ENTRY_LEXICA		   = NLPLib.MODE_POS + NLPLib.ENTRY_LEXICA;
@@ -72,12 +68,13 @@ public class CPOSTaggerSB extends AbstractStatisticalComponent
 	protected final int LEXICA_LOWER_SIMPLIFIED_FORMS = 0;
 	protected final int LEXICA_AMBIGUITY_CLASSES      = 1;
 	
-	protected Set<String>			s_lsfs;		// lower simplified forms
-	protected Prob2DMap				p_ambi;		// ambiguity classes (only for collecting)
-	protected Map<String,String>	m_ambi;		// ambiguity classes
-	protected String[]          	g_tags;		// gold-standard part-of-speech tags
+	protected Set<String>			s_lsfs;
+	protected Prob2DMap				p_ambi;		// only for collecting
+	protected Map<String,String>	m_ambi;
+	protected String[]          	g_tags;
 	protected int 					i_input;
-	protected double				d_score, d_margin; 
+	
+//	protected Map<String,Pair<StringPrediction,StringPrediction>> m_labels;
 	
 //	====================================== CONSTRUCTORS ======================================
 
@@ -87,30 +84,26 @@ public class CPOSTaggerSB extends AbstractStatisticalComponent
 	public CPOSTaggerSB(JointFtrXml[] xmls, Set<String> sLsfs)
 	{
 		super(xmls);
-
 		s_lsfs = sLsfs;
 		p_ambi = new Prob2DMap();
 	}
 	
 	/** Constructs a part-of-speech tagger for training. */
-	public CPOSTaggerSB(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica, double margin)
+	public CPOSTaggerSB(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica, double margin, int beams)
 	{
-		super(xmls, spaces, lexica);
-		d_margin = margin;
+		super(xmls, spaces, lexica, margin, beams);
 	}
 	
 	/** Constructs a part-of-speech tagger for developing. */
-	public CPOSTaggerSB(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, double margin)
+	public CPOSTaggerSB(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, double margin, int beams)
 	{
-		super(xmls, models, lexica);
-		d_margin = margin;
+		super(xmls, models, lexica, margin, beams);
 	}
 	
 	/** Constructs a part-of-speech tagger for bootsrapping. */
-	public CPOSTaggerSB(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, double margin)
+	public CPOSTaggerSB(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, double margin, int beams)
 	{
-		super(xmls, spaces, models, lexica);
-		d_margin = margin;
+		super(xmls, spaces, models, lexica, margin, beams);
 	}
 	
 	/** Constructs a part-of-speech tagger for decoding. */
@@ -274,8 +267,9 @@ public class CPOSTaggerSB extends AbstractStatisticalComponent
 	{
 	 	d_tree  = tree;
 	 	t_size  = tree.size();
-	 	d_score = 0;
-	 	i_input = 1;
+	 	b_first = true;
+	 	
+	 //	m_labels = new HashMap<String, Pair<StringPrediction,StringPrediction>>();
 	 	
 	 	if (i_flag != FLAG_DECODE)
 	 	{
@@ -283,7 +277,14 @@ public class CPOSTaggerSB extends AbstractStatisticalComponent
 	 		tree.clearPOSTags();
 	 	}
 	 	
+	 	initAux();
 	 	EngineProcess.normalizeForms(tree);
+	}
+	
+	protected void initAux()
+	{
+		i_input = 1;
+		d_score = 0;
 	}
 	
 	/** Called by {@link CPOSTaggerSB#process(DEPTree)}. */
@@ -295,7 +296,7 @@ public class CPOSTaggerSB extends AbstractStatisticalComponent
 		{
 			List<Pair<String,StringFeatureVector>> insts = tag();
 			
-			if (insts != null)
+			if (i_flag == FLAG_TRAIN || i_flag == FLAG_BOOTSTRAP)
 			{
 				for (Pair<String,StringFeatureVector> inst : insts)
 					s_spaces[0].addInstance(inst.o1, inst.o2);				
@@ -324,15 +325,21 @@ public class CPOSTaggerSB extends AbstractStatisticalComponent
 		return (i_flag == FLAG_TRAIN) ? tagMain().o2 : tagBranches();
 	}
 	
-	protected Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>> tagMain()
+	protected Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>> tagMain()
 	{
 		List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>();
-		Deque<POSState> states = new ArrayDeque<POSState>();
+		List<POSState> states = new ArrayList<POSState>();
 		
 		while (i_input < t_size)
 			tagAux(getLabel(insts, states));
 		
-		return new Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>>(d_tree.getPOSTags(), insts, states);
+		if (states.size() > n_beams - 1)
+		{
+			Collections.sort(states);
+			states = states.subList(0, n_beams - 1);
+		}
+		
+		return new Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>(d_tree.getPOSTags(), insts, states);
 	}
 	
 	private void tagAux(StringPrediction p)
@@ -342,103 +349,28 @@ public class CPOSTaggerSB extends AbstractStatisticalComponent
 		i_input++;
 	}
 	
-	protected List<Pair<String,StringFeatureVector>> tagBranches()
-	{
-		List<ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>>>> list = new ArrayList<ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>>>>();
-		Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>> t0 = tagMain(), max;
-		
-		list.add(new ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>>>(t0, d_score));
-		
-		for (POSState state : t0.o3)
-		{
-			reset(state);
-			list.add(new ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>>>(tagMain(), d_score));
-		}
-		
-		if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
-		{
-			max = getMax(list);
-			d_tree.resetPOSTags(max.o1);
-			return null;
-		}
-		else
-		{
-			setGoldScores(list);
-			max = getMax(list);
-			
-			List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>(t0.o2);
-			insts.addAll(max.o2);
-			return insts;
-		}
-	}
-	
-	private void reset(POSState state)
-	{
-		i_input = state.input;
-		d_score = state.score;
-		tagAux(state.label);
-		
-		int i; for (i=i_input+1; i<t_size; i++)
-			d_tree.get(i).pos = null;
-	}
-	
-	@SuppressWarnings("unchecked")
-	private Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>> getMax(List<ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>>>> list)
-	{
-		ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>>> max = list.get(0), p;
-		int i, size = list.size();
-		
-		for (i=1; i<size; i++)
-		{
-			p = list.get(i);
-			if (max.d < p.d) max = p;
-		}
-		
-		return (Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>>)max.o;
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void setGoldScores(List<ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>>>> list)
-	{
-		String[] tags;
-		int i, c;
-		
-		for (ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>>> p : list)
-		{
-			tags = ((Triple<String[],List<Pair<String,StringFeatureVector>>,Deque<POSState>>)p.o).o1;
-			
-			for (i=1,c=0; i<t_size; i++)
-			{
-				if (g_tags[i].equals(tags[i]))
-					c++;
-			}
-			
-			p.d = c;
-		}
-	}
-	
 	/** Called by {@link CPOSTaggerSB#tag()}. */
-	private StringPrediction getLabel(List<Pair<String,StringFeatureVector>> insts, Deque<POSState> states)
+	private StringPrediction getLabel(List<Pair<String,StringFeatureVector>> insts, List<POSState> states)
 	{
 		StringFeatureVector vector = getFeatureVector(f_xmls[0]);
-		StringPrediction p = null;
+		StringPrediction label = null;
 		
 		if (i_flag == FLAG_TRAIN)
 		{
-			p = getGoldLabel();
-			if (vector.size() > 0)	insts.add(new Pair<String,StringFeatureVector>(p.label, vector));
+			label = getGoldLabel();
+			if (vector.size() > 0)	insts.add(new Pair<String,StringFeatureVector>(label.label, vector));
 		}
 		else if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
-			p = getAutoLabel(vector, states);
+			label = getAutoLabel(vector, states);
 		}
 		else if (i_flag == FLAG_BOOTSTRAP)
 		{
-			p = getAutoLabel(vector, states);
+			label = getAutoLabel(vector, states);
 			if (vector.size() > 0)	insts.add(new Pair<String,StringFeatureVector>(getGoldLabel().label, vector));
 		}
 		
-		return p;
+		return label;
 	}
 	
 	/** Called by {@link CPOSTaggerSB#getLabel()}. */
@@ -448,7 +380,7 @@ public class CPOSTaggerSB extends AbstractStatisticalComponent
 	}
 	
 	/** Called by {@link CPOSTaggerSB#getLabel()}. */
-	private StringPrediction getAutoLabel(StringFeatureVector vector, Deque<POSState> states)
+	private StringPrediction getAutoLabel(StringFeatureVector vector, List<POSState> states)
 	{
 		List<StringPrediction> ps = s_models[0].predictAll(vector);
 		AbstractAlgorithm.normalize(ps);
@@ -456,7 +388,7 @@ public class CPOSTaggerSB extends AbstractStatisticalComponent
 		StringPrediction fst = ps.get(0);
 		StringPrediction snd = ps.get(1);
 		
-		if (fst.score - snd.score < d_margin)
+		if (b_first && n_beams > 1 && fst.score - snd.score < d_margin)
 			states.add(new POSState(i_input, d_score, snd));
 
 		return fst;
@@ -552,5 +484,99 @@ public class CPOSTaggerSB extends AbstractStatisticalComponent
 	{
 		int index = i_input + token.offset;
 		return (0 < index && index < t_size) ? d_tree.get(index) : null;
+	}
+	
+//	================================ SELECTIONAL BRANCHING ================================
+	
+	@SuppressWarnings("unchecked")
+	protected List<Pair<String,StringFeatureVector>> tagBranches()
+	{
+		List<ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>>> list;
+		Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>> t0 = tagMain();
+		
+		if (t0.o3.isEmpty())
+			return (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP) ? null : t0.o2;
+		
+		Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>> tm;
+		b_first = false;
+		
+		list = new ArrayList<ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>>>();
+		list.add(new ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>>(t0, d_score));
+		branch(list, t0.o3);
+		
+		if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
+		{
+			tm = (Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>)getMax(list).o;
+			d_tree.resetPOSTags(tm.o1);
+			return null;
+		}
+		else
+		{
+			List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>(t0.o2);
+			setGoldScores(list);
+			
+			tm = (Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>)getMax(list).o;
+			insts.addAll(tm.o2);
+			
+			return insts;
+		}
+	}
+	
+	private void branch(List<ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>>> list, List<POSState> states)
+	{
+		Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>> t1;
+		double s1;
+		
+		for (POSState state : states)
+		{
+			resetState(state);
+			t1 = tagMain();
+			s1 = d_score;
+			list.add(new ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>>(t1, s1));
+		}
+	}
+	
+	private void resetState(POSState state)
+	{
+		i_input = state.input;
+		d_score = state.score;
+		tagAux(state.label);
+		
+		int i; for (i=i_input+1; i<t_size; i++)
+			d_tree.get(i).pos = null;
+	}
+	
+	private ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>> getMax(List<ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>>> list)
+	{
+		ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>> max = list.get(0), t;
+		int i, size = list.size();
+		
+		for (i=1; i<size; i++)
+		{
+			t = list.get(i);
+			if (max.d < t.d) max = t;
+		}
+		
+		return max;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void setGoldScores(List<ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>>> list)
+	{
+		String[] tags;
+		int i, c;
+		
+		for (ObjectDoublePair<Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>> p : list)
+		{
+			tags = ((Triple<String[],List<Pair<String,StringFeatureVector>>,List<POSState>>)p.o).o1;
+			
+			for (i=1,c=0; i<t_size; i++)
+			{
+				if (g_tags[i].equals(tags[i]))
+					c++;
+			}
+			
+			p.d = c;
+		}
 	}
 }

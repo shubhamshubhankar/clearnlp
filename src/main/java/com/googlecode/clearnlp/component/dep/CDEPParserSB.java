@@ -29,15 +29,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.log4j.Logger;
-
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
-import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
+import com.googlecode.clearnlp.component.AbstractStatisticalComponentSB;
 import com.googlecode.clearnlp.dependency.DEPHead;
 import com.googlecode.clearnlp.dependency.DEPLabel;
 import com.googlecode.clearnlp.dependency.DEPLib;
@@ -45,8 +43,8 @@ import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPState;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.feature.xml.FtrToken;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.feature.FtrToken;
+import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -61,14 +59,12 @@ import com.googlecode.clearnlp.util.triple.Triple;
  * @since 1.3.2
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CDEPParserSB extends AbstractStatisticalComponent
+public class CDEPParserSB extends AbstractStatisticalComponentSB
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
-	
-	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP_BACK + NLPLib.ENTRY_CONFIGURATION;
-	protected final String ENTRY_FEATURE	   = NLPLib.MODE_DEP_BACK + NLPLib.ENTRY_FEATURE;
-	protected final String ENTRY_LEXICA		   = NLPLib.MODE_DEP_BACK + NLPLib.ENTRY_LEXICA;
-	protected final String ENTRY_MODEL		   = NLPLib.MODE_DEP_BACK + NLPLib.ENTRY_MODEL;
+	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_CONFIGURATION;
+	protected final String ENTRY_FEATURE	   = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_FEATURE;
+	protected final String ENTRY_LEXICA		   = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_LEXICA;
+	protected final String ENTRY_MODEL		   = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_PUNCTUATION = 0;
 	
@@ -87,9 +83,7 @@ public class CDEPParserSB extends AbstractStatisticalComponent
 
 	protected Map<String,Pair<DEPLabel,DEPLabel>> m_labels;
 	protected List<List<DEPHead>> l_2nd;
-	protected int                 n_trans, n_beams;
-	protected double              d_score, d_margin;
-	protected boolean             b_first;
+	protected int n_trans;
 	
 //	====================================== CONSTRUCTORS ======================================
 
@@ -103,25 +97,19 @@ public class CDEPParserSB extends AbstractStatisticalComponent
 	/** Constructs a dependency parsing for training. */
 	public CDEPParserSB(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica, double margin, int beams)
 	{
-		super(xmls, spaces, lexica);
-		d_margin = margin;
-		n_beams  = beams;
+		super(xmls, spaces, lexica, margin, beams);
 	}
 	
 	/** Constructs a dependency parsing for developing. */
 	public CDEPParserSB(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, double margin, int beams)
 	{
-		super(xmls, models, lexica);
-		d_margin = margin;
-		n_beams  = beams;
+		super(xmls, models, lexica, margin, beams);
 	}
 	
 	/** Constructs a dependency parser for bootsrapping. */
 	public CDEPParserSB(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, double margin, int beams)
 	{
-		super(xmls, spaces, models, lexica);
-		d_margin = margin;
-		n_beams  = beams;
+		super(xmls, spaces, models, lexica, margin, beams);
 	}
 	
 	/** Constructs a dependency parser for decoding. */
@@ -259,16 +247,6 @@ public class CDEPParserSB extends AbstractStatisticalComponent
 		counts[1] += las;
 		counts[2] += uas;
 		counts[3] += ls;
-	}
-	
-	public void setMargin(double margin)
-	{
-		d_margin = margin;
-	}
-	
-	public void setBeams(int beams)
-	{
-		n_beams = beams;
 	}
 	
 //	================================ PROCESS ================================
@@ -923,7 +901,7 @@ public class CDEPParserSB extends AbstractStatisticalComponent
 		return null;
 	}
 	
-//	================================ BACKTRACK ================================
+//	================================ SELECTIONAL BRANCHING ================================
 	
 	@SuppressWarnings("unchecked")
 	public List<Pair<String,StringFeatureVector>> parseBranches()
@@ -938,7 +916,7 @@ public class CDEPParserSB extends AbstractStatisticalComponent
 		
 		list = new ArrayList<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>>();
 		list.add(new ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>(t0, s0));
-		backTrackDEP(list, t0.o3);
+		branch(list, t0.o3);
 		
 		if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
@@ -958,7 +936,7 @@ public class CDEPParserSB extends AbstractStatisticalComponent
 		}
 	}
 	
-	private void backTrackDEP(List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list, List<DEPState> states)
+	private void branch(List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list, List<DEPState> states)
 	{
 		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> t1;
 		double s1;

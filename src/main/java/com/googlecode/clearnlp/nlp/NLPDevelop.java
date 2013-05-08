@@ -26,16 +26,16 @@ import org.w3c.dom.Element;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.component.dep.CDEPParserSB;
 import com.googlecode.clearnlp.component.dep.CDEPParser;
-import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
+import com.googlecode.clearnlp.component.dep.CDEPParserSB;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
+import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
 import com.googlecode.clearnlp.component.srl.CSRLabeler;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLEval;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.reader.JointReader;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
@@ -78,7 +78,7 @@ public class NLPDevelop extends NLPTrain
 		JointReader  reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		
 		if      (mode.equals(NLPLib.MODE_POS))
-			developComponent(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
 		else if (mode.equals(NLPLib.MODE_DEP))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParser(xmls), mode, -1);
 		else if (mode.equals(NLPLib.MODE_PRED))
@@ -89,9 +89,9 @@ public class NLPDevelop extends NLPTrain
 			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf("_")+1)), mode, -1), devFiles, mode, mode);
 		else if (mode.equals(NLPLib.MODE_SRL))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CSRLabeler(xmls), mode, -1);
-		else if (mode.equals(NLPLib.MODE_POS_BACK))
+		else if (mode.equals(NLPLib.MODE_POS_SB))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTaggerSB(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
-		else if (mode.equals(NLPLib.MODE_DEP_BACK))
+		else if (mode.equals(NLPLib.MODE_DEP_SB))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParserSB(xmls), mode, -1);
 	}
 	
@@ -148,25 +148,6 @@ public class NLPDevelop extends NLPTrain
 			currScore = p.d;
 			boot++;
 		}
-		while (-0.01 < currScore - prevScore);
-	}
-	
-	protected void developComponentBoot2(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, AbstractStatisticalComponent component, String mode, int devId) throws Exception
-	{
-		Object[] lexica = getLexica(component, reader, xmls, trainFiles, devId);
-		ObjectDoublePair<StringModel[]> p;
-		double prevScore, currScore = 0;
-		StringModel[] models = null;
-		int boot = 0;
-		
-		do
-		{
-			prevScore = currScore;
-			p = developComponent2(eConfig, reader, xmls, trainFiles, devFiles, lexica, models, mode, boot, devId);
-			models = (StringModel[])p.o;
-			currScore = p.d;
-			boot++;
-		}
 		while (prevScore < currScore);
 	}
 	
@@ -213,6 +194,105 @@ public class NLPDevelop extends NLPTrain
 			models[i].setWeights(prevWeights[i]);
 		
 		return new ObjectDoublePair<StringModel[]>(models, prevScore);
+	}
+	
+	protected double decode(JointReader reader, AbstractStatisticalComponent component, String[] devFiles, String mode, String ext) throws Exception
+	{
+		int[] counts = getCounts(mode);
+		PrintStream fout = null;
+		DEPTree tree;
+		
+		for (String devFile : devFiles)
+		{
+			if (b_generate) fout = UTOutput.createPrintBufferedFileStream(devFile+"."+ext);
+			reader.open(UTInput.createBufferedFileReader(devFile));
+			
+			while ((tree = reader.next()) != null)
+			{
+				component.process(tree);
+				component.countAccuracy(counts);
+				if (b_generate)	fout.println(toString(tree, mode)+"\n");
+			}
+			
+			reader.close();
+			if (b_generate)	fout.close();
+		}
+
+		return getScore(mode, counts);
+	}
+	
+	protected int[] getCounts(String mode)
+	{
+		if      (mode.startsWith(NLPLib.MODE_POS) || mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
+			return new int[2];
+		else if (mode.startsWith(NLPLib.MODE_DEP))
+			return new int[4];
+		else if (mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_SRL))
+			return new int[3];
+		
+		return null;
+	}
+	
+	protected double getScore(String mode, int[] counts)
+	{
+		double score = 0;
+		
+		if (mode.startsWith(NLPLib.MODE_POS) || mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
+		{
+			score = 100d * counts[1] / counts[0];
+			LOG.info(String.format("- ACC: %5.2f (%d/%d)\n", score, counts[1], counts[0]));
+		}
+		else if (mode.startsWith(NLPLib.MODE_DEP))
+		{
+			String[] labels = {"T","LAS","UAS","LS"};
+			printScores(labels, counts);
+
+			score = 100d * counts[1] / counts[0];
+		}
+		else if (mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_SRL))
+		{
+			double p = 100d * counts[0] / counts[1];
+			double r = 100d * counts[0] / counts[2];
+			score = SRLEval.getF1(p, r);
+			
+			LOG.info(String.format("P: %5.2f ", p));
+			LOG.info(String.format("R: %5.2f ", r));
+			LOG.info(String.format("F1: %5.2f\n", score));
+		}
+		
+		return score;
+	}
+	
+	private void printScores(String[] labels, int[] counts)
+	{
+		int i, t = counts[0], size = counts.length;
+		
+		for (i=1; i<size; i++)
+			LOG.info(String.format("%3s: %5.2f (%d/%d)\n", labels[i], 100d*counts[i]/t, counts[i], t));
+	}
+	
+	static public void main(String[] args)
+	{
+		new NLPDevelop(args);
+	}
+	
+/*	protected void developComponentBoot2(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, AbstractStatisticalComponent component, String mode, int devId) throws Exception
+	{
+		Object[] lexica = getLexica(component, reader, xmls, trainFiles, devId);
+		ObjectDoublePair<StringModel[]> p;
+		double prevScore, currScore = 0;
+		StringModel[] models = null;
+		int boot = 0;
+		
+		do
+		{
+			prevScore = currScore;
+			p = developComponent2(eConfig, reader, xmls, trainFiles, devFiles, lexica, models, mode, boot, devId);
+			models = (StringModel[])p.o;
+			currScore = p.d;
+			boot++;
+		}
+		while (prevScore < currScore);
 	}
 	
 	private ObjectDoublePair<StringModel[]> developComponent2(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, Object[] lexica, StringModel[] models, String mode, int boot, int devId) throws Exception
@@ -263,90 +343,8 @@ public class NLPDevelop extends NLPTrain
 		
 		return new ObjectDoublePair<StringModel[]>(models, prevScore);
 	}
-	
-	protected double decode(JointReader reader, AbstractStatisticalComponent component, String[] devFiles, String mode, String ext) throws Exception
-	{
-		int[] counts = getCounts(mode);
-		PrintStream fout = null;
-		DEPTree tree;
-		
-		for (String devFile : devFiles)
-		{
-			if (b_generate) fout = UTOutput.createPrintBufferedFileStream(devFile+"."+ext);
-			reader.open(UTInput.createBufferedFileReader(devFile));
-			
-			while ((tree = reader.next()) != null)
-			{
-				component.process(tree);
-				component.countAccuracy(counts);
-				if (b_generate)	fout.println(toString(tree, mode)+"\n");
-			}
-			
-			reader.close();
-			if (b_generate)	fout.close();
-		}
 
-		return getScore(mode, counts);
-	}
-	
-	protected int[] getCounts(String mode)
-	{
-		if      (mode.startsWith(NLPLib.MODE_POS) || mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
-			return new int[2];
-		else if (mode.equals(NLPLib.MODE_DEP))
-			return new int[4];
-		else if (mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_SRL))
-			return new int[3];
-		else if (mode.equals(NLPLib.MODE_DEP_BACK))
-			return new int[5];
-		
-		return null;
-	}
-	
-	protected double getScore(String mode, int[] counts)
-	{
-		double score = 0;
-		
-		if (mode.startsWith(NLPLib.MODE_POS) || mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
-		{
-			score = 100d * counts[1] / counts[0];
-			System.out.printf("- ACC: %5.2f (%d/%d)\n", score, counts[1], counts[0]);
-		}
-		else if (mode.startsWith(NLPLib.MODE_DEP))
-		{
-			String[] labels = {"T","LAS","UAS","LS"};
-			printScores(labels, counts);
-
-			score = 100d * counts[1] / counts[0];
-		}
-		else if (mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_SRL))
-		{
-			double p = 100d * counts[0] / counts[1];
-			double r = 100d * counts[0] / counts[2];
-			score = SRLEval.getF1(p, r);
-			
-			System.out.printf("P: %5.2f ", p);
-			System.out.printf("R: %5.2f ", r);
-			System.out.printf("F1: %5.2f\n", score);
-		}
-		
-		return score;
-	}
-	
-	private void printScores(String[] labels, int[] counts)
-	{
-		int i, t = counts[0], size = counts.length;
-		
-		for (i=1; i<size; i++)
-			System.out.printf("%3s: %5.2f (%d/%d)\n", labels[i], 100d*counts[i]/t, counts[i], t);
-	}
-	
-	static public void main(String[] args)
-	{
-		new NLPDevelop(args);
-	}
-	
-/*	protected void developPOSTagger(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles) throws Exception
+	protected void developPOSTagger(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles) throws Exception
 	{
 		CPOSTagger tagger = getTrainedPOSTagger(eConfig, reader, xmls, trainFiles, -1);
 		predict(reader, tagger, devFiles, COMLib.MODE_POS);
