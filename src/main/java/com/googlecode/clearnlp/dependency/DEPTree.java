@@ -35,6 +35,7 @@ import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.googlecode.clearnlp.coreference.Mention;
+import com.googlecode.clearnlp.dependency.srl.SRLTree;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.util.pair.IntIntPair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
@@ -692,6 +693,36 @@ public class DEPTree extends ArrayList<DEPNode>
 		}
 		
 		return xHeads;
+	}
+	
+	// --------------------------------- semantic heads ---------------------------------
+	
+	/**
+	 * Returns a semantic tree representing a predicate-argument structure of the specific token.
+	 * Returns {@code null} if the specific token is not a predicate.
+	 * @param predId the token ID of a predicate.
+	 * @return a semantic tree representing a predicate-argument structure of the specific token.
+	 */
+	public SRLTree getSRLTree(int predId)
+	{
+		DEPNode pred = get(predId);
+		if (pred.getFeat(DEPLib.FEAT_PB) == null) return null;
+		
+		SRLTree tree = new SRLTree(pred);
+		int i, size = size();
+		DEPNode node;
+		String label;
+		
+		for (i=1; i<size; i++)
+		{
+			node  = get(i);
+			label = node.getSLabel(pred);
+			
+			if (label != null)
+				tree.addArgument(node, label);
+		}
+		
+		return tree;
 	}
 	
 	// --------------------------------- toString ---------------------------------

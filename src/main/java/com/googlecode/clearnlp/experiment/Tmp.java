@@ -78,6 +78,7 @@ import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.srl.SRLTree;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.MPLib;
@@ -93,17 +94,47 @@ import com.googlecode.clearnlp.util.map.Prob2DMap;
 import com.googlecode.clearnlp.util.pair.StringDoublePair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
-import edu.smu.tspell.wordnet.Synset;
-import edu.smu.tspell.wordnet.SynsetType;
-import edu.smu.tspell.wordnet.VerbSynset;
-import edu.smu.tspell.wordnet.WordNetDatabase;
-
 
 public class Tmp
 {
 	static Logger log = Logger.getLogger(Tmp.class.getName());
 	
 	public Tmp(String[] args) throws Exception
+	{
+		SRLReader fin = new SRLReader(0, 1, 2, 4, 6, 7, 9, 12);
+		fin.open(UTInput.createBufferedFileReader("/Users/jdchoi/Documents/Workspace/dat/experiments/ontonotes-en-1.3.1/trn-pmd/nw_wsj_2100.dspn.pmd"));
+		DEPTree dTree = fin.next();
+		int i, size = dTree.size();
+		SRLTree sTree;
+		
+		for (i=1; i<size; i++)
+		{
+			sTree = dTree.getSRLTree(i);
+			if (sTree != null) System.out.println(sTree.getKey());
+		}
+		
+		System.out.println();
+		Pattern p = Pattern.compile("AM-.+");
+		
+		for (i=1; i<size; i++)
+		{
+			sTree = dTree.getSRLTree(i);
+			if (sTree != null) System.out.println(sTree.getKey(p));
+		}
+		
+		System.out.println();
+		Set<String> s = new HashSet<String>();
+		s.add("AM-MOD");
+		
+		for (i=1; i<size; i++)
+		{
+			sTree = dTree.getSRLTree(i);
+			if (sTree != null) System.out.println(sTree.getKey(s));
+		}
+	}
+	
+	
+/*	void wordnet()
 	{
 		System.setProperty("wordnet.database.dir", "/Users/jdchoi/Downloads/WordNet-3.0/dict/");
 
@@ -117,8 +148,7 @@ public class Tmp
 		    verbSynset = (VerbSynset)(synsets[i]); 
 		    System.out.println((i+1)+": "+Arrays.toString(verbSynset.getWordForms()));
 		}
-		
-	}
+	}*/
 	
 	void cleanSejong(String[] args)
 	{

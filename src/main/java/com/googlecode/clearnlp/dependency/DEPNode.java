@@ -277,6 +277,17 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return false;
 	}
 	
+	public String getSLabel(DEPNode sHead)
+	{
+		for (DEPArc arc : s_heads)
+		{
+			if (arc.isNode(sHead))
+				return arc.label;
+		}
+		
+		return null;
+	}
+	
 	public List<DEPArc> getSHeads()
 	{
 		return s_heads;
