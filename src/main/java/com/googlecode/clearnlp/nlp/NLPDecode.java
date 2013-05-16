@@ -67,10 +67,12 @@ public class NLPDecode extends AbstractNLP
 	private String s_outputExt = "cnlp";
 	@Option(name="-z", usage="mode (pos|morph|dep|srl|sense_vn)", required=true, metaVar="<string>")
 	protected String s_mode;
-	@Option(name="-twit", usage="if set, tokenize for twits", required=false, metaVar="<boolean>")
+	@Option(name="-twit", usage="if set, set the tokenizer for twits", required=false, metaVar="<boolean>")
 	protected boolean b_twit;
-	@Option(name="-beams", usage="beam size (default: 1)", required=false, metaVar="<boolean>")
+	@Option(name="-beams", usage="beam size (for selectional branching; default: 1)", required=false, metaVar="<integer>")
 	protected int n_beams = 1;
+	@Option(name="-posFile", usage="predefined part-of-speech tag list (default: null)", required=false, metaVar="<String>")
+	protected String s_posFile = null;
 	
 	public NLPDecode() {}
 	
@@ -97,7 +99,7 @@ public class NLPDecode extends AbstractNLP
 		
 		AbstractSegmenter   segmenter  = readerType.equals(AbstractReader.TYPE_RAW)  ? getSegmenter(eModels, b_twit) : null;
 		AbstractTokenizer   tokenizer  = readerType.equals(AbstractReader.TYPE_LINE) ? getTokenizer(eModels, b_twit) : null;
-		AbstractComponent[] components = getComponent(eModels, getModes(readerType, mode));
+		AbstractComponent[] components = getComponents(eModels, getModes(readerType, mode));
 		
 		System.out.println("Decoding:");
 		
@@ -186,7 +188,7 @@ public class NLPDecode extends AbstractNLP
 		ZipInputStream zin = new ZipInputStream(stream);
 		
 		if      (mode.equals(NLPLib.MODE_POS))
-			return new CPOSTagger(zin);
+			return (s_posFile == null) ? new CPOSTagger(zin) : new CPOSTagger(zin, UTInput.createBufferedFileReader(s_posFile));
 		else if (mode.equals(NLPLib.MODE_MORPH))
 			return getMPAnalyzer(zin, language);
 		else if (mode.equals(NLPLib.MODE_DEP))
@@ -288,7 +290,7 @@ public class NLPDecode extends AbstractNLP
 	
 //	===================================== getComponent: protected =====================================
 	
-	protected AbstractComponent[] getComponent(Element eModels, List<String> modes) throws Exception
+	protected AbstractComponent[] getComponents(Element eModels, List<String> modes) throws Exception
 	{
 		AbstractComponent[] components = new AbstractComponent[modes.size()];
 		NodeList list = eModels.getElementsByTagName(TAG_MODEL);
@@ -329,7 +331,7 @@ public class NLPDecode extends AbstractNLP
 		return tokenizer;
 	}
 	
-	/** Called by {@link NLPDecode#getComponent(Element, List)}. */
+	/** Called by {@link NLPDecode#getComponents(Element, List)}. */
 	private ObjectIntOpenHashMap<String> getModeMap(List<String> modes)
 	{
 		ObjectIntOpenHashMap<String> map = new ObjectIntOpenHashMap<String>();

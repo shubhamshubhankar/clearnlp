@@ -93,6 +93,11 @@ import com.googlecode.clearnlp.util.map.Prob2DMap;
 import com.googlecode.clearnlp.util.pair.StringDoublePair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
+import edu.smu.tspell.wordnet.Synset;
+import edu.smu.tspell.wordnet.SynsetType;
+import edu.smu.tspell.wordnet.VerbSynset;
+import edu.smu.tspell.wordnet.WordNetDatabase;
+
 
 public class Tmp
 {
@@ -100,6 +105,18 @@ public class Tmp
 	
 	public Tmp(String[] args) throws Exception
 	{
+		System.setProperty("wordnet.database.dir", "/Users/jdchoi/Downloads/WordNet-3.0/dict/");
+
+		WordNetDatabase database = WordNetDatabase.getFileInstance(); 
+		VerbSynset verbSynset; 
+				
+		Synset[] synsets = database.getSynsets("enable", SynsetType.VERB, false);
+		
+		for (int i = 0; i < synsets.length; i++)
+		{ 
+		    verbSynset = (VerbSynset)(synsets[i]); 
+		    System.out.println((i+1)+": "+Arrays.toString(verbSynset.getWordForms()));
+		}
 		
 	}
 	
@@ -724,19 +741,10 @@ public class Tmp
 	
 	public static void main(String[] args) throws IOException
 	{
-	/*	try
+		try
 		{
 			new Tmp(args);
 		}
-		catch (Exception e) {e.printStackTrace();}*/
-		
-		final Pattern  P_USER_ID = Pattern.compile("\\p{Alnum}+\\.\\p{Alnum}+");
-		
-		System.out.println(P_USER_ID.matcher("a.b").find());
-		System.out.println(P_USER_ID.matcher("a.B").find());
-		System.out.println(P_USER_ID.matcher("A.b").find());
-		System.out.println(P_USER_ID.matcher("1.2").find());
-		System.out.println(P_USER_ID.matcher("#.2").find());
-		System.out.println(P_USER_ID.matcher("1.?").find());
+		catch (Exception e) {e.printStackTrace();}
 	}
 }

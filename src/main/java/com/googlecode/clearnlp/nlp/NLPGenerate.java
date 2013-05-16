@@ -33,9 +33,9 @@ import com.googlecode.clearnlp.util.UTXml;
  */
 public class NLPGenerate extends NLPDevelop
 {
-	@Option(name="-b", usage="the directory containing development files (required)", required=true, metaVar="<directory>")
+	@Option(name="-b", usage="the beginning index (required)", required=true, metaVar="<directory>")
 	private int b_idx = -1;
-	@Option(name="-e", usage="the directory containing development files (required)", required=true, metaVar="<directory>")
+	@Option(name="-e", usage="the endding index (required)", required=true, metaVar="<directory>")
 	private int e_idx = -1;
 	@Option(name="-ie", usage="input file extension (default: .*)", required=false, metaVar="<regex>")
 	private String s_inputExt = ".*";

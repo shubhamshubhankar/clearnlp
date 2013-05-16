@@ -43,6 +43,8 @@ public class DEPLib
 	static public final String FEAT_SEM	= "sem";
 	/** The feat-key of syntactic function tags. */
 	static public final String FEAT_SYN	= "syn";
+	/** The feat-key of sentence types. */
+	static public final String FEAT_SNT	= "snt";
 	/** The feat-key of propbank rolesets. */
 	static public final String FEAT_PB	= "pb";
 	/** The feat-key of verbnet classes. */

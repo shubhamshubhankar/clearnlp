@@ -55,7 +55,7 @@ import com.googlecode.clearnlp.util.triple.Triple;
 
 /**
  * Part-of-speech tagger using document frequency cutoffs.
- * @since 1.3.0
+ * @since 1.4.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class CPOSTaggerSB extends AbstractStatisticalComponentSB

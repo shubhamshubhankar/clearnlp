@@ -20,9 +20,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -48,11 +51,12 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 abstract public class AbstractStatisticalComponent extends AbstractComponent
 {
+	protected DEPTree d_tree;
+	protected int     t_size;	// size of d_tree
+
 	protected StringTrainSpace[]	s_spaces;
 	protected StringModel[]			s_models;
 	protected JointFtrXml[]			f_xmls;
-	protected DEPTree				d_tree;
-	protected int 					t_size;		// size of d_tree
 	
 //	====================================== CONSTRUCTORS ======================================
 	
@@ -323,5 +327,55 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 		}
 		
 		return nInsts;
+	}
+	
+//	====================================== RULES ======================================
+	
+	protected List<Map<String,String[]>> getRules(BufferedReader fin)
+	{
+		Pattern space = Pattern.compile(" "), tab = Pattern.compile("\t");
+		List<Map<String,String[]>> rules = null;
+		String[] tmp, val;
+		String line;
+		int i, ngram;
+		
+		try
+		{
+			ngram = Integer.parseInt(fin.readLine());
+			rules = new ArrayList<Map<String,String[]>>(ngram);
+			
+			for (i=0; i<ngram; i++)
+				rules.add(new HashMap<String,String[]>());
+			
+			while ((line = fin.readLine()) != null)
+			{
+				tmp = tab.split(line);
+				val = space.split(tmp[1]);
+				
+				if (val.length <= ngram)
+					rules.get(val.length-1).put(tmp[0].trim(), val);
+			}
+		}
+		catch (IOException e) {e.printStackTrace();}
+		
+		return rules;
+	}
+	
+	protected String[] getRules(List<Map<String,String[]>> list, int currId)
+	{
+		StringBuilder build = new StringBuilder();
+		int i, j, ngram = list.size();
+		String[] tmp, rules = null;
+		
+		for (i=currId,j=0; i<t_size && j<ngram; i++,j++)
+		{
+			if (j > 0)	build.append(" ");
+			build.append(d_tree.get(i).form);
+
+			tmp = list.get(j).get(build.toString());
+			if (tmp != null)	rules = tmp;
+		}
+		
+		return rules;
 	}
 }

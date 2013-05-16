@@ -69,6 +69,8 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	protected String[]          	g_tags;		// gold-standard part-of-speech tags
 	protected int 					i_input;
 	
+	private List<Map<String,String[]>> m_ngrams;
+	
 //	====================================== CONSTRUCTORS ======================================
 
 	public CPOSTagger() {}
@@ -104,6 +106,13 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	public CPOSTagger(ZipInputStream in)
 	{
 		super(in);
+	}
+	
+	/** Constructs a part-of-speech tagger for decoding with predefined tags. */
+	public CPOSTagger(ZipInputStream in, BufferedReader frule)
+	{
+		super(in);
+		m_ngrams = getRules(frule);
 	}
 	
 	@Override @SuppressWarnings("unchecked")
@@ -311,11 +320,31 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		
 		for (i_input=1; i_input<t_size; i_input++)
 		{
-			node = d_tree.get(i_input);
-			node.pos = getLabel(insts);
+			if (!applyRules())
+			{
+				node = d_tree.get(i_input);
+				node.pos = getLabel(insts);				
+			}
 		}
 		
 		return insts;
+	}
+	
+	private boolean applyRules()
+	{
+		if (m_ngrams == null)	return false;
+		String[] rules = getRules(m_ngrams, i_input);
+		
+		if (rules != null)
+		{
+			for (String pos : rules)
+				d_tree.get(i_input++).pos = pos;
+			
+			i_input--;
+			return true;
+		}
+		
+		return false;
 	}
 	
 	/** Called by {@link CPOSTagger#tag()}. */
