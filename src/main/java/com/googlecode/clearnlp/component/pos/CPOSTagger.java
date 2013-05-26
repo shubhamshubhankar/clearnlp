@@ -307,7 +307,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		{
 			node = d_tree.get(i);
 			
-			if (s_lsfs.contains(node.lowerSimplifiedForm))			
+			if (s_lsfs.contains(node.lowerSimplifiedForm))
 				p_ambi.add(node.simplifiedForm, g_tags[i]);
 		}
 	}
@@ -460,20 +460,19 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	{
 		DEPNode node = getNodeInput(token);
 		if (node == null)	return null;
+		String[] fields = null;
 		Matcher m;
 		
 		if ((m = JointFtrXml.P_PREFIX.matcher(token.field)).find())
 		{
-			String[] fields = UTString.getPrefixes(node.lowerSimplifiedForm, Integer.parseInt(m.group(1)));
-			return fields.length == 0 ? null : fields;
+			fields = UTString.getPrefixes(node.lowerSimplifiedForm, Integer.parseInt(m.group(1)));
 		}
 		else if ((m = JointFtrXml.P_SUFFIX.matcher(token.field)).find())
 		{
-			String[] fields = UTString.getSuffixes(node.lowerSimplifiedForm, Integer.parseInt(m.group(1)));
-			return fields.length == 0 ? null : fields;
+			fields = UTString.getSuffixes(node.lowerSimplifiedForm, Integer.parseInt(m.group(1)));
 		}
 		
-		return null;
+		return (fields == null) || (fields.length == 0) ? null : fields;
 	}
 	
 //	====================================== NODE GETTER ======================================
@@ -484,4 +483,41 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		int index = i_input + token.offset;
 		return (0 < index && index < t_size) ? d_tree.get(index) : null;
 	}
+
+
+/*	private Set<String> getEnglishPrefixes(String form)
+	{
+		Set<String> set = new HashSet<String>();
+		String ambi;
+		
+		for (String prefix : MPLibEn.RULE_PREFIXES)
+		{
+			if (form.startsWith(prefix) && (ambi = m_ambi.get(form.substring(prefix.length()))) != null)
+				set.add(prefix+"_"+ambi);
+		}
+		
+		return set;
+	}
+	
+	private Set<String> getEnglishSuffixes(String form)
+	{
+		Set<String> set = new HashSet<String>(); 
+		int i, len = form.length();
+		String org, rep, ambi;
+		
+		for (String[] suffix : MPLibEn.RULE_SUFFIXES)
+		{
+			org  = suffix[0];
+			
+			for (i=suffix.length; i>0; i--)
+			{
+				rep = suffix[1];
+				
+				if (form.endsWith(org) && (ambi = m_ambi.get(form.substring(0, len-org.length())+rep)) != null)
+					set.add(ambi+"_"+org);				
+			}
+		}
+		
+		return set;
+	}*/
 }

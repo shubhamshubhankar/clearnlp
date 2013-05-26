@@ -68,7 +68,7 @@ public class NLPTrain extends AbstractNLP
 	protected String s_modelFile;
 	@Option(name="-n", usage="bootstrapping level (default: 2)", required=false, metaVar="<integer>")
 	protected int n_boot = 0;
-	@Option(name="-z", usage="mode (pos|morph|dep|pred|role|srl)", required=true, metaVar="<string>")
+	@Option(name="-z", usage="mode (pos|morph|dep-sb|pred|role|srl)", required=true, metaVar="<string>")
 	protected String s_mode;
 	@Option(name="-margin", usage="margin between the 1st and 2nd predictions (default: 0.5)", required=false, metaVar="<double>")
 	protected double d_margin = 0.5;

@@ -45,7 +45,17 @@ public class MPLibEn extends MPLib
 	static public Pattern RE_HAVE	= Pattern.compile("^(have|has|had|having|'ve|'d)$");
 	/** Derivations of a verb "do". */
 	static public Pattern RE_DO		= Pattern.compile("^(do|does|did|done|doing)$");
+
+	static public String[][] RULE_SUFFIXES = {
+		{"s"	,""},		{"ses"	,"s"},		{"xes"	,"x"},		{"zes"	,"z"},
+		{"ches"	,"ch"},		{"shes"	,"sh"},		{"men"	,"man"},	{"ies"	,"y"},
+		{"es"	,"", "e"},	{"ed"	,"", "e"},	{"ing"	,"", "e"},	{"er"	,"", "e"},
+		{"est"	,"", "e"},	{"ment"	,"", "e"},	{"ion"	,"", "e"},	{"able"	,"", "e"},
+		{"en"	,"", "e"},	{"ize"	,"", "y"},	{"less"	,""},		{"ness"	,""},
+		{"iness","y"},		{"ful"	,""},		{"iful"	,"y"},		{"ly"	,""},		{"ily"	,"y"}};
 	
+	static public String[] RULE_PREFIXES = {"a","anti","be","de","dis","en","in","mal","mis","over","post","pre","re","un","under"};
+
 	/**
 	 * Returns {@code true} if the specific word-form is a derivation of a verb "be".
 	 * @param form the word-form to be compared.

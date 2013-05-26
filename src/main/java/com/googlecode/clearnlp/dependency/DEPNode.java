@@ -624,8 +624,13 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		StringBuilder build = new StringBuilder();
 		
 		build.append(form);		build.append(DEPReader.DELIM_COLUMN);
-		build.append(pos);		build.append(DEPReader.DELIM_COLUMN);
-		build.append(d_feats);
+		build.append(pos);
+		
+		if (d_feats != null)
+		{
+			build.append(DEPReader.DELIM_COLUMN);
+			build.append(d_feats);			
+		}
 		
 		return build.toString();
 	}
@@ -637,6 +642,12 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		build.append(form);		build.append(DEPReader.DELIM_COLUMN);
 		build.append(lemma);	build.append(DEPReader.DELIM_COLUMN);
 		build.append(pos);
+		
+		if (d_feats != null)
+		{
+			build.append(DEPReader.DELIM_COLUMN);
+			build.append(d_feats);			
+		}
 		
 		return build.toString();
 	}

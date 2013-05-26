@@ -57,6 +57,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import jregex.MatchResult;
@@ -68,6 +69,7 @@ import org.apache.log4j.Logger;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntDeque;
+import com.googlecode.clearnlp.component.dep.CDEPParserSB;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
 import com.googlecode.clearnlp.constituent.CTTree;
@@ -78,7 +80,6 @@ import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.dependency.srl.SRLTree;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.MPLib;
@@ -101,38 +102,60 @@ public class Tmp
 	
 	public Tmp(String[] args) throws Exception
 	{
-		SRLReader fin = new SRLReader(0, 1, 2, 4, 6, 7, 9, 12);
-		fin.open(UTInput.createBufferedFileReader("/Users/jdchoi/Documents/Workspace/dat/experiments/ontonotes-en-1.3.1/trn-pmd/nw_wsj_2100.dspn.pmd"));
-		DEPTree dTree = fin.next();
-		int i, size = dTree.size();
-		SRLTree sTree;
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
+		Set<String> phrases = new TreeSet<String>();
+		Set<String> tokens  = new TreeSet<String>();
+		CTTree tree;
 		
-		for (i=1; i<size; i++)
-		{
-			sTree = dTree.getSRLTree(i);
-			if (sTree != null) System.out.println(sTree.getKey());
-		}
+		while ((tree = reader.nextTree()) != null)
+			checkConstituents(tree.getRoot(), phrases, tokens);
 		
+		reader.close();
+		
+		for (String s : phrases)	System.out.println(s);
 		System.out.println();
-		Pattern p = Pattern.compile("AM-.+");
-		
-		for (i=1; i<size; i++)
+		for (String s : tokens)		System.out.println(s);
+	}
+	
+	void checkConstituents(CTNode node, Set<String> phrases, Set<String> tokens)
+	{
+		if (node.isPhrase())
 		{
-			sTree = dTree.getSRLTree(i);
-			if (sTree != null) System.out.println(sTree.getKey(p));
+			phrases.add(node.pTag);
+			
+			for (CTNode child : node.getChildren())
+				checkConstituents(child, phrases, tokens);
 		}
-		
-		System.out.println();
-		Set<String> s = new HashSet<String>();
-		s.add("AM-MOD");
-		
-		for (i=1; i<size; i++)
+		else
 		{
-			sTree = dTree.getSRLTree(i);
-			if (sTree != null) System.out.println(sTree.getKey(s));
+			tokens.add(node.pTag);
 		}
 	}
 	
+	void parseBeam(String[] args)
+	{
+		CDEPParserSB parser = new CDEPParserSB(UTInput.createZipFileInputStream(args[0]));
+		DEPReader reader = new DEPReader(0, 1, 2, 3, 4, -1, -1);
+		int[] beams = {1,2,4,8,16,32,64};
+		PrintStream fout;
+		DEPTree tree;
+		
+		for (int beam : beams)
+		{
+			fout = UTOutput.createPrintBufferedFileStream(args[1]+"."+beam);
+			reader.open(UTInput.createBufferedFileReader(args[1]));
+			parser.setBeams(beam);
+
+			while ((tree = reader.next()) != null)
+			{
+				parser.process(tree);
+				fout.println(tree.toStringDEP()+"\n");
+			}
+			
+			fout.close();
+			reader.close();
+		}
+	}
 	
 /*	void wordnet()
 	{

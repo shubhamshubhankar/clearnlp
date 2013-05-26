@@ -715,12 +715,12 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			if (p.getParent() == C.getParent())	// p and C are siblings
 			{
 				if (p.getSiblingId() < C.getSiblingId())
-					return getPmodLabel(C);
+					return getPmodLabel(C, d);
 			}
 			else								// UCP
 			{
 				if (p.getFirstTerminal().getTerminalId() < C.getFirstTerminal().getTerminalId())
-					return getPmodLabel(C);
+					return getPmodLabel(C, d);
 			}
 		}
 		
@@ -893,9 +893,9 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return DEPLibEn.DEP_NMOD;
 	}
 	
-	private String getPmodLabel(CTNode C)
+	private String getPmodLabel(CTNode C, CTNode d)
 	{
-		if (C.isPTagAny(CTLibEn.PTAG_NP, CTLibEn.PTAG_NML))
+		if (C.isPTagAny(CTLibEn.PTAG_NP, CTLibEn.PTAG_NML) || CTLibEn.RE_COMP_POS.matcher(d.pTag).find())
 			return DEPLibEn.DEP_POBJ;
 		else
 			return DEPLibEn.DEP_PCOMP;	
@@ -1225,6 +1225,9 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		if ((feat = getFunctionTags(cNode, s_synTags)) != null)
 			cNode.c2d.putFeat(DEPLibEn.FEAT_SYN, feat);
 		
+		if ((feat = getSentenceType(cNode)) != null)
+			cNode.c2d.putFeat(DEPLibEn.FEAT_SNT, feat);
+		
 		for (CTNode child : cNode.getChildren())
 			addFeats(dTree, cTree, child);
 	}
@@ -1252,6 +1255,17 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		}
 		
 		return build.substring(DEPFeat.DELIM_VALUES.length());
+	}
+	
+	private String getSentenceType(CTNode node)
+	{
+		if (node.isPTag(CTLibEn.PTAG_SQ))
+			return "INT";
+		
+		if (node.isFTag(CTLibEn.FTAG_IMP))
+			return CTLibEn.FTAG_IMP;
+		
+		return null;
 	}
 	
 	// ============================= Add PropBank arguments =============================
