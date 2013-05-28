@@ -185,7 +185,7 @@ public class NLPDevelop extends NLPTrain
 			}
 			
 			component = getComponent(xmls, models, lexica, mode);
-			currScore = decode(reader, component, devFiles, mode, boot+"."+nUpdate+"."+i_rand);
+			currScore = decode(reader, component, devFiles, mode, boot+"."+nUpdate);
 			nUpdate++;
 		}
 		while (prevScore < currScore);

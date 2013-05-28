@@ -137,7 +137,7 @@ public class CPOSTaggerSB extends AbstractStatisticalComponentSB
 				entry = zEntry.getName();
 				
 				if      (entry.equals(ENTRY_CONFIGURATION))
-					loadDefaultConfiguration(zin);
+					loadSBConfiguration(zin);
 				else if (entry.startsWith(ENTRY_FEATURE))
 					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(fLen)));
 				else if (entry.startsWith(ENTRY_MODEL))
@@ -163,10 +163,10 @@ public class CPOSTaggerSB extends AbstractStatisticalComponentSB
 	{
 		try
 		{
-			saveDefaultConfiguration(zout, ENTRY_CONFIGURATION);
-			saveFeatureTemplates    (zout, ENTRY_FEATURE);
-			saveLexica              (zout);
-			saveStatisticalModels   (zout, ENTRY_MODEL);
+			saveSBConfiguration  (zout, ENTRY_CONFIGURATION);
+			saveFeatureTemplates (zout, ENTRY_FEATURE);
+			saveLexica           (zout);
+			saveStatisticalModels(zout, ENTRY_MODEL);
 			zout.close();
 		}
 		catch (Exception e) {e.printStackTrace();}

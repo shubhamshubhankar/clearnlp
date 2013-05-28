@@ -15,11 +15,17 @@
 */
 package com.googlecode.clearnlp.component;
 
+import java.io.BufferedReader;
+import java.io.PrintStream;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.feature.JointFtrXml;
+import com.googlecode.clearnlp.util.UTInput;
+import com.googlecode.clearnlp.util.UTOutput;
 
 /**
  * @since 1.4.0
@@ -79,4 +85,29 @@ abstract public class AbstractStatisticalComponentSB extends AbstractStatistical
 	{
 		n_beams = beams;
 	}
+	
+	protected void loadSBConfiguration(ZipInputStream zin) throws Exception
+	{
+		BufferedReader fin = UTInput.createBufferedReader(zin);
+		LOG.info("Loading configuration.\n");
+		
+		s_models = new StringModel[Integer.parseInt(fin.readLine())];
+		n_beams  = Integer.parseInt(fin.readLine());
+		d_margin = Double.parseDouble(fin.readLine());
+	}
+	
+	protected void saveSBConfiguration(ZipOutputStream zout, String entryName) throws Exception
+	{
+		zout.putNextEntry(new ZipEntry(entryName));
+		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
+		LOG.info("Saving configuration.\n");
+		
+		fout.println(s_models.length);
+		fout.println(n_beams);
+		fout.println(d_margin);
+		
+		fout.flush();
+		zout.closeEntry();
+	}
+	
 }

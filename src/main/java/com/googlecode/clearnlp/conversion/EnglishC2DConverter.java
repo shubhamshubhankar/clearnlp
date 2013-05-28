@@ -1260,7 +1260,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	private String getSentenceType(CTNode node)
 	{
 		if (node.isPTag(CTLibEn.PTAG_SQ))
-			return "INT";
+			return CTLibEn.FTAG_INT;
 		
 		if (node.isFTag(CTLibEn.FTAG_IMP))
 			return CTLibEn.FTAG_IMP;

@@ -64,12 +64,11 @@ import jregex.MatchResult;
 import jregex.Substitution;
 import jregex.TextBuffer;
 
-import org.apache.log4j.Logger;
-
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntDeque;
 import com.googlecode.clearnlp.component.dep.CDEPParserSB;
+import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
 import com.googlecode.clearnlp.constituent.CTTree;
@@ -78,6 +77,7 @@ import com.googlecode.clearnlp.conversion.KaistC2DConverter;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
+import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
@@ -92,15 +92,165 @@ import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
 import com.googlecode.clearnlp.util.map.Prob2DMap;
+import com.googlecode.clearnlp.util.pair.IntIntPair;
 import com.googlecode.clearnlp.util.pair.StringDoublePair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 
 public class Tmp
 {
-	static Logger log = Logger.getLogger(Tmp.class.getName());
+//	static Logger log = Logger.getLogger(Tmp.class.getName());
 	
 	public Tmp(String[] args) throws Exception
+	{
+		DEPReader fin = new DEPReader(0, 1, 2, 3, 4, 5, 6);
+		fin.open(UTInput.createBufferedFileReader(args[0]));
+		IntIntPair count = new IntIntPair(0, 0);
+		DEPTree tree;
+		
+		while ((tree = fin.next()) != null)
+			classifySentenceType(tree, count);
+		
+		System.err.printf("%5.2f (%d/%d)\n", 100d*count.i2/count.i1, count.i2, count.i1);
+	}
+	
+	void classifySentenceType(DEPTree tree, IntIntPair count)
+	{
+		int i, size = tree.size();
+		DEPNode node;
+		String  feat;
+		
+		tree.setDependents();
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			feat = node.getFeat(DEPLib.FEAT_SNT);
+			
+			if (node.pos.startsWith("VB"))
+			{
+				if (isImperative(node))
+				{
+					count.i1++;
+					
+					if (feat == null || !feat.equals("IMP"))
+					{
+						if (node.isLemma("be"))
+							System.out.println(node.id+" "+tree.toStringDEP()+"\n");
+						count.i2++;
+					}
+				}
+			}
+		}
+	}
+	
+	boolean isImperative(DEPNode verb)
+	{
+		Pattern P_SBJ = Pattern.compile("^[nc]subj.*");
+		Pattern P_AUX = Pattern.compile("^aux.*");
+		
+		if (verb.isLemma("let") || verb.isLemma("thank") || verb.isLemma("welcome"))
+			return false;
+		
+		if (!verb.isPos(CTLibEn.POS_VB) && !verb.isPos(CTLibEn.POS_VBP))
+			return false;
+		
+		if (verb.isLabel(DEPLibEn.DEP_AUX) || verb.isLabel(DEPLibEn.DEP_AUXPASS) || verb.isLabel(DEPLibEn.DEP_XCOMP) || verb.isLabel(DEPLibEn.DEP_PARTMOD) || verb.isLabel(DEPLibEn.DEP_RCMOD) || verb.isLabel(DEPLibEn.DEP_CONJ) || verb.isLabel(DEPLibEn.DEP_HMOD))
+			return false;
+
+		List<DEPArc> deps = verb.getDependents();
+		int i, size = deps.size();
+		DEPNode node;
+		DEPArc  dep;
+		
+		for (i=0; i<size; i++)
+		{
+			dep  = deps.get(i);
+			node = dep.getNode();
+			
+			if (node.id < verb.id)
+			{
+				if (dep.isLabel(DEPLibEn.DEP_COMPLM) || dep.isLabel(DEPLibEn.DEP_MARK))
+					return false;
+				
+				if (dep.isLabel(P_AUX) && !node.isLemma("do"))
+					return false;
+				
+				if (node.isPos(CTLibEn.POS_TO) || node.isPos(CTLibEn.POS_MD) || node.pos.startsWith("W"))
+					return false;	
+			}
+			
+			if (dep.isLabel(P_SBJ) || dep.isLabel(DEPLibEn.DEP_EXPL))
+				return false;
+		}
+		
+		return true;
+	}
+	
+	void classifySentenceTypeINT(DEPTree tree, DEPNode verb, IntIntPair count)
+	{
+		Pattern pPeriod = Pattern.compile("^[\\.\\!]+$");
+		Pattern pSbj = Pattern.compile("^[nc]subj.*");
+		Pattern pAux = Pattern.compile("^aux.*");
+		List<DEPArc> deps = verb.getDependents();
+		int i, size = deps.size();
+		boolean hasAux = false;
+		DEPArc  curr, prev;
+		String  label;
+		DEPNode node;
+		
+		for (i=size-1; i>=0; i--)
+		{
+			curr  = deps.get(i);
+			node  = curr.getNode();
+			label = curr.getLabel();
+			
+			if (curr.isLabel(DEPLibEn.DEP_PUNCT))
+			{
+				if (pPeriod.matcher(node.lemma).find())
+					return;
+			}
+		}
+		
+		for (i=0; i<size; i++)
+		{
+			curr  = deps.get(i);
+			node  = curr.getNode();
+			label = curr.getLabel();
+			
+			if (node.id > verb.id)
+				break;
+			
+			if (pAux.matcher(label).find())
+			{
+				if (i > 0)
+				{
+					prev = deps.get(i-1);
+					
+					if (prev.isLabel(DEPLibEn.DEP_PRECONJ))
+						return;
+				}
+				
+				hasAux = true;
+			}
+			else if (pSbj.matcher(label).find())
+			{
+				if (hasAux)
+				{
+					String snt = verb.getFeat(DEPLib.FEAT_SNT);
+					count.i1++;
+					
+					if (snt == null || !snt.equals("INT"))
+					{
+						count.i2++;
+						System.out.println(verb.id+" "+tree.toStringDEP()+"\n");
+					}
+				}
+			}
+		}
+	}
+	
+	void checkConstituentTags(String[] args)
 	{
 		CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
 		Set<String> phrases = new TreeSet<String>();

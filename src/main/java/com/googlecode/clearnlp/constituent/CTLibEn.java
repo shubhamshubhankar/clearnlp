@@ -228,6 +228,8 @@ public class CTLibEn extends CTLib
 	static final public String FTAG_HLN = "HLN";
 	/** The function tag of imperatives. */
 	static final public String FTAG_IMP = "IMP";
+	/** The function tag of interrogative. */
+	static final public String FTAG_INT = "INT";
 	/** The function tag of logical subjects. */
 	static final public String FTAG_LGS = "LGS";
 	/** The function tag of locatives. */

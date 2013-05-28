@@ -67,7 +67,7 @@ public class NLPGenerate extends NLPDevelop
 			devFiles = new String[]{trainFiles[i]};
 
 			if      (mode.equals(NLPLib.MODE_POS))
-				developComponent(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, i)), mode, i);
+				developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, i)), mode, i);
 			else if (mode.equals(NLPLib.MODE_DEP))
 				developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParser(xmls), mode, i);
 			else if (mode.equals(NLPLib.MODE_DEP_SB))

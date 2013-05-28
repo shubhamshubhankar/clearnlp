@@ -53,8 +53,6 @@ public class DEPLib
 	static public final String FEAT_WS	= "ws";
 	/** The feat-key of gold POS tag. */
 	static public final String FEAT_POS0 = "p0";
-	/** The feat-key of 1st POS prediction. */
-	static public final String FEAT_POS1 = "p1";
 	/** The feat-key of 2nd POS prediction. */
 	static public final String FEAT_POS2 = "p2";
 	/** The feat-key of 2nd lemma prediction. */
