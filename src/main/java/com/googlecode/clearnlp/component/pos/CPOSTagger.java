@@ -112,7 +112,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	public CPOSTagger(ZipInputStream in, BufferedReader frule)
 	{
 		super(in);
-		m_ngrams = getRules(frule);
+		setRules(frule);
 	}
 	
 	@Override @SuppressWarnings("unchecked")
@@ -185,6 +185,11 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		UTOutput.printMap(fout, m_ambi, " ");	fout.flush();
 		
 		zout.closeEntry();
+	}
+	
+	public void setRules(BufferedReader frule)
+	{
+		m_ngrams = getRules(frule);
 	}
 	
 //	====================================== GETTERS AND SETTERS ======================================
@@ -426,7 +431,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 			{
 			case  0: return UTString.isAllUpperCase(node.simplifiedForm) ? token.field : null;
 			case  1: return UTString.isAllLowerCase(node.simplifiedForm) ? token.field : null;
-			case  2: return UTString.beginsWithUpperCase(node.simplifiedForm) ? token.field : null;
+			case  2: return UTString.beginsWithUpperCase(node.simplifiedForm) & (i_input != 1) ? token.field : null;
 			case  3: return UTString.getNumOfCapitalsNotAtBeginning(node.simplifiedForm) == 1 ? token.field : null;
 			case  4: return UTString.getNumOfCapitalsNotAtBeginning(node.simplifiedForm)  > 1 ? token.field : null;
 			case  5: return node.simplifiedForm.contains(".") ? token.field : null;

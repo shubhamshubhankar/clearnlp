@@ -25,6 +25,9 @@ import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.morphology.MPLibEn;
+import com.googlecode.clearnlp.reader.DEPReader;
+import com.googlecode.clearnlp.util.UTInput;
 
 /**
  * @since 1.4.0
@@ -48,7 +51,7 @@ public class CSenTypeClassifierEN extends AbstractComponent
 		{
 			node = tree.get(i);
 			
-			if (node.pos.startsWith("VB"))
+			if (isMainVerb(node))
 			{
 				if (isInterrogative(node))
 					node.addFeat(DEPLib.FEAT_SNT, CTLibEn.FTAG_INT);
@@ -56,6 +59,17 @@ public class CSenTypeClassifierEN extends AbstractComponent
 					node.addFeat(DEPLib.FEAT_SNT, CTLibEn.FTAG_IMP);
 			}
 		}
+	}
+	
+	public  boolean isMainVerb(DEPNode verb)
+	{
+		if (!MPLibEn.isVerb(verb.pos) ||
+			verb.isLabel(DEPLibEn.DEP_AUX) || verb.isLabel(DEPLibEn.DEP_AUXPASS) ||
+			verb.isLabel(DEPLibEn.DEP_XCOMP) || verb.isLabel(DEPLibEn.DEP_PARTMOD) || verb.isLabel(DEPLibEn.DEP_RCMOD) ||
+			verb.isLabel(DEPLibEn.DEP_CONJ) || verb.isLabel(DEPLibEn.DEP_HMOD))
+			return false;
+		else
+			return true;
 	}
 	
 	public boolean isInterrogative(DEPNode verb)
@@ -80,18 +94,35 @@ public class CSenTypeClassifierEN extends AbstractComponent
 		
 		for (i=0; i<size; i++)
 		{
-			curr = deps.get(i);
-			node = curr.getNode();
-			
-			if (node.id > verb.id)	break;
+			curr  = deps.get(i);
+			node  = curr.getNode();
 			label = curr.getLabel();
 			
-			if (curr.isLabel(DEPLibEn.DEP_PRECONJ))
-				return false;
-			else if (P_AUX.matcher(label).find())
-				hasAux = true;
-			else if (P_SBJ.matcher(label).find())
-				return hasAux;
+			if (node.id < verb.id)
+			{
+				if (curr.isLabel(DEPLibEn.DEP_PRECONJ))
+					return false;
+				else if (P_AUX.matcher(label).find())
+					hasAux = true;
+				else if (node.pos.startsWith("W"))
+					return true;
+				else if (P_SBJ.matcher(label).find())
+					return hasAux;
+			}
+			else
+				break;
+		}
+		
+		if (verb.isLemma("be"))
+		{
+			for (; i<size; i++)
+			{
+				curr  = deps.get(i);
+				label = curr.getLabel();
+				
+				if (P_SBJ.matcher(label).find())
+					return true;
+			}			
 		}
 		
 		return false;
@@ -103,9 +134,6 @@ public class CSenTypeClassifierEN extends AbstractComponent
 			return false;
 		
 		if (verb.isLemma("let") || verb.isLemma("thank") || verb.isLemma("welcome"))
-			return false;
-		
-		if (verb.isLabel(DEPLibEn.DEP_AUX) || verb.isLabel(DEPLibEn.DEP_AUXPASS) || verb.isLabel(DEPLibEn.DEP_XCOMP) || verb.isLabel(DEPLibEn.DEP_PARTMOD) || verb.isLabel(DEPLibEn.DEP_RCMOD) || verb.isLabel(DEPLibEn.DEP_CONJ) || verb.isLabel(DEPLibEn.DEP_HMOD))
 			return false;
 
 		List<DEPArc> deps = verb.getDependents();
@@ -135,5 +163,18 @@ public class CSenTypeClassifierEN extends AbstractComponent
 		}
 		
 		return true;
+	}
+	
+	static public void main(String[] args)
+	{
+		DEPReader fin = new DEPReader(0, 1, 2, 3, 4, 5, 6);
+		DEPTree tree = new DEPTree();
+		
+		fin.open(UTInput.createBufferedFileReader(args[0]));
+		tree = fin.next();
+		
+		CSenTypeClassifierEN sen = new CSenTypeClassifierEN();
+		tree.setDependents();
+		System.out.println(sen.isInterrogative(tree.get(1)));
 	}
 }

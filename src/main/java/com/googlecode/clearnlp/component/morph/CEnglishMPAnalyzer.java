@@ -30,7 +30,6 @@ import java.util.zip.ZipInputStream;
 
 import com.googlecode.clearnlp.component.AbstractComponent;
 import com.googlecode.clearnlp.constituent.CTLibEn;
-import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.morphology.MPLib;
@@ -244,15 +243,15 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 	{
 		int i, size = tree.size();
 		DEPNode node;
-		String  p2;
+	//	String  p2;
 		
 		for (i=1; i<size; i++)
 		{
 			node = tree.get(i);
 			node.lemma = getLemma(node.form, node.pos);
 			
-			p2 = node.getFeat(DEPLib.FEAT_POS2);
-			if (p2 != null)	node.addFeat(DEPLib.FEAT_LEMMA2, getLemma(node.form, p2));
+	//		p2 = node.getFeat(DEPLib.FEAT_POS2);
+	//		if (p2 != null)	node.addFeat(DEPLib.FEAT_LEMMA2, getLemma(node.form, p2));
 		}
 	}
 	
@@ -343,6 +342,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 	/** Called by {@link CEnglishMPAnalyzer#getBase(String, String)}. */
 	private String getBaseAux(String form, Set<String> set, List<Pair<String,String>> rule)
 	{
+		if (set.contains(form))	return form;
 		int offset;	String base;
 		
 		for (Pair<String,String> tup : rule)

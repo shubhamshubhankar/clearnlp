@@ -103,15 +103,17 @@ public class Tmp
 	
 	public Tmp(String[] args) throws Exception
 	{
-		DEPReader fin = new DEPReader(0, 1, 2, 3, 4, 5, 6);
+		SRLReader fin = new SRLReader(0, 1, 2, 3, 4, 5, 6, 8);
 		fin.open(UTInput.createBufferedFileReader(args[0]));
-		IntIntPair count = new IntIntPair(0, 0);
-		DEPTree tree;
+		DEPTree tree = fin.next();
+		System.out.println(tree.toStringSRL()+"\n");
+
+		DEPNode aux = tree.get(1), verb = tree.get(3);
+		tree.removeNode(aux.id);
+		System.out.println(tree.toStringSRL()+"\n");
 		
-		while ((tree = fin.next()) != null)
-			classifySentenceType(tree, count);
-		
-		System.err.printf("%5.2f (%d/%d)\n", 100d*count.i2/count.i1, count.i2, count.i1);
+		tree.insertNode(verb.id, aux);
+		System.out.println(tree.toStringSRL());
 	}
 	
 	void classifySentenceType(DEPTree tree, IntIntPair count)

@@ -98,6 +98,24 @@ public class DEPTree extends ArrayList<DEPNode>
 		}
 	}
 	
+	/** @return a list of root nodes in this tree. */
+	public List<DEPNode> getRoots()
+	{
+		List<DEPNode> roots = new ArrayList<DEPNode>();
+		DEPNode node, root = get(0);
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			node = get(i);
+			
+			if (node.getHead() == root)
+				roots.add(node);
+		}
+
+		return roots;
+	}
+	
 	public int getLeftValency(int id)
 	{
 		DEPNode node = get(id);
@@ -244,6 +262,47 @@ public class DEPTree extends ArrayList<DEPNode>
 		}
 		
 		return null;
+	}
+	
+	/** Removes the specific node from this tree. */
+	public boolean removeNode(int index)
+	{
+		try
+		{
+			remove(index);
+			reassignIDs(index);
+			return true;
+		}
+		catch (IndexOutOfBoundsException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	/** Inserts the specific node to this tree. */
+	public boolean insertNode(int index, DEPNode node)
+	{
+		try
+		{
+			add(index, node);
+			reassignIDs(index);
+			return true;
+		}
+		catch (IndexOutOfBoundsException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	/** @param bId beginning ID (inclusive). */
+	private void reassignIDs(int bId)
+	{
+		int i;
+		
+		for (i=size()-1; i>=bId; i--)
+			get(i).id = i;
 	}
 	
 	public boolean containsPredicate()
@@ -838,20 +897,6 @@ public class DEPTree extends ArrayList<DEPNode>
 
 		return build.substring(DEPReader.DELIM_SENTENCE.length());
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	// --------------------------------- depredicated ---------------------------------
 	

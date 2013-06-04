@@ -23,6 +23,11 @@
 */
 package com.googlecode.clearnlp.dependency;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
+import com.googlecode.clearnlp.util.pair.Pair;
+
 /**
  * Dependency library for English.
  * @since 1.0.0
@@ -150,6 +155,8 @@ public class DEPLibEn extends DEPLib
 	/** The secondary dependency label for right node raising. */
 	static public final String DEP_RNR			= "rnr";
 	
+	static public Pattern P_SBJ = Pattern.compile("^[nc]subj.*");
+	
 /*	static public final String CONLL_ADV	= "ADV";
 	static public final String CONLL_AMOD	= "AMOD";
 	static public final String CONLL_APPO	= "APPO";
@@ -178,4 +185,79 @@ public class DEPLibEn extends DEPLib
 	static public final String CONLL_SUB	= "SUB";
 	static public final String CONLL_VC		= "VC";
 	static public final String CONLL_XCOMP	= "XCOMP";*/
+	
+	
+	
+	
+	/**
+	 * If the specific tree has only one root and is interrogative, return a declarative form of the tree.
+	 * Otherwise, return {@code null}.
+	 * PRE: {@link DEPTree#setDependents()} must be called.
+	 */
+	static public DEPTree fromInterrogativeToDeclarative(DEPTree tree)
+	{
+		List<DEPNode> roots = tree.getRoots();
+		if (roots.size() != 1)	return null;
+		DEPNode root = roots.get(0);
+		
+		Pair<DEPNode,DEPNode> p = getInterrogativeClues(root);
+		DEPNode aux = p.o1, sbj = p.o2;
+		
+		
+		if (aux != null)
+		{
+			aux.form = aux.form.toLowerCase();
+			tree.removeNode(aux.id);
+			tree.insertNode(root.id, aux);
+		}
+		else if (sbj != null)
+		{
+			
+		}
+		
+		return null;
+	}
+	
+	static private Pair<DEPNode,DEPNode> getInterrogativeClues(DEPNode verb)
+	{
+		List<DEPArc> deps = verb.getDependents();
+		int i, size = deps.size();
+		DEPNode aux = null, node;
+		DEPArc curr;
+		String label;
+		
+		for (i=0; i<size; i++)
+		{
+			curr  = deps.get(i);
+			node  = curr.getNode();
+			label = curr.getLabel();
+			
+			if (node.id < verb.id)
+			{
+				if (curr.isLabel(DEPLibEn.DEP_PRECONJ))
+					return null;
+				else if (label.startsWith(DEP_AUX))
+					aux = node;
+				else if (P_SBJ.matcher(label).find())
+					return new Pair<DEPNode,DEPNode>(aux, node);
+			}
+			else
+				break;
+		}
+		
+		if (verb.isLemma("be"))
+		{
+			for (; i<size; i++)
+			{
+				curr  = deps.get(i);
+				node  = curr.getNode();
+				label = curr.getLabel();
+				
+				if (P_SBJ.matcher(label).find())
+					return new Pair<DEPNode,DEPNode>(aux, node);
+			}			
+		}
+		
+		return null;
+	}
 }

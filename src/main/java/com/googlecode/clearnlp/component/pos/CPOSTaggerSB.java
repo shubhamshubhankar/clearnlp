@@ -427,7 +427,7 @@ public class CPOSTaggerSB extends AbstractStatisticalComponentSB
 			{
 			case  0: return UTString.isAllUpperCase(node.simplifiedForm) ? token.field : null;
 			case  1: return UTString.isAllLowerCase(node.simplifiedForm) ? token.field : null;
-			case  2: return UTString.beginsWithUpperCase(node.simplifiedForm) ? token.field : null;
+			case  2: return UTString.beginsWithUpperCase(node.simplifiedForm) & (i_input != 1) ? token.field : null;
 			case  3: return UTString.getNumOfCapitalsNotAtBeginning(node.simplifiedForm) == 1 ? token.field : null;
 			case  4: return UTString.getNumOfCapitalsNotAtBeginning(node.simplifiedForm)  > 1 ? token.field : null;
 			case  5: return node.simplifiedForm.contains(".") ? token.field : null;

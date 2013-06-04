@@ -52,9 +52,7 @@ public class SparseModel extends AbstractModel
 		super(reader);
 	}
 	
-	/* (non-Javadoc)
-	 * @see edu.colorado.clear.classification.model.AbstractModel#load(java.io.Reader)
-	 */
+	@Override
 	public void load(BufferedReader reader)
 	{
 		LOG.info("Loading model:\n");
@@ -69,9 +67,7 @@ public class SparseModel extends AbstractModel
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	/* (non-Javadoc)
-	 * @see edu.colorado.clear.classification.model.AbstractModel#save(java.io.PrintStream)
-	 */
+	@Override
 	public void save(PrintStream fout)
 	{
 		LOG.info("Saving model:\n");

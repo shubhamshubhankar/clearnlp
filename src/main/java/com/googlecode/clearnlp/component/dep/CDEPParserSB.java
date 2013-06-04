@@ -142,7 +142,7 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 				entry = zEntry.getName();
 				
 				if      (entry.equals(ENTRY_CONFIGURATION))
-					loadSBConfiguration(zin);
+					loadConfiguration(zin);
 				else if (entry.startsWith(ENTRY_FEATURE))
 					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(fLen)));
 				else if (entry.startsWith(ENTRY_MODEL))
@@ -152,6 +152,16 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 			}		
 		}
 		catch (Exception e) {e.printStackTrace();}
+	}
+	
+	protected void loadConfiguration(ZipInputStream zin) throws Exception
+	{
+		BufferedReader fin = UTInput.createBufferedReader(zin);
+		LOG.info("Loading configuration.\n");
+		
+		s_models = new StringModel[Integer.parseInt(fin.readLine())];
+		n_beams  = Integer.parseInt(fin.readLine());
+		d_margin = Double.parseDouble(fin.readLine());
 	}
 	
 	protected void loadLexica(ZipInputStream zin) throws Exception
@@ -167,13 +177,27 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 	{
 		try
 		{
-			saveSBConfiguration  (zout, ENTRY_CONFIGURATION);
+			saveConfiguration    (zout, ENTRY_CONFIGURATION);
 			saveFeatureTemplates (zout, ENTRY_FEATURE);
 			saveLexica           (zout);
 			saveStatisticalModels(zout, ENTRY_MODEL);
 			zout.close();
 		}
 		catch (Exception e) {e.printStackTrace();}
+	}
+	
+	protected void saveConfiguration(ZipOutputStream zout, String entryName) throws Exception
+	{
+		zout.putNextEntry(new ZipEntry(entryName));
+		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
+		LOG.info("Saving configuration.\n");
+		
+		fout.println(s_models.length);
+		fout.println(n_beams);
+		fout.println(d_margin);
+		
+		fout.flush();
+		zout.closeEntry();
 	}
 	
 	protected void saveLexica(ZipOutputStream zout) throws Exception
@@ -390,14 +414,14 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 		}
 		else if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
-			label = getAutoLabel(vector, insts, states);
+			label = getAutoLabel(vector, states);
 		}
 		else if (i_flag == FLAG_BOOTSTRAP)
 		{
-			label = getAutoLabel(vector, insts, states);
+			label = getAutoLabel(vector, states);
 			insts.add(new Pair<String,StringFeatureVector>(getGoldLabel().toString(), vector));
 		}
-
+		
 		return label;
 	}
 	
@@ -474,7 +498,7 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 	}
 	
 	/** Called by {@link CDEPParserSB#getLabel()}. */
-	private DEPLabel getAutoLabel(StringFeatureVector vector, List<Pair<String,StringFeatureVector>> insts, List<DEPState> states)
+	private DEPLabel getAutoLabel(StringFeatureVector vector, List<DEPState> states)
 	{
 		String key = vector.toString();
 		Pair<DEPLabel,DEPLabel> val = m_labels.get(key);
@@ -882,36 +906,19 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 	@SuppressWarnings("unchecked")
 	public List<Pair<String,StringFeatureVector>> parseBranches()
 	{
-		List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list
-		= new ArrayList<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>>();
-		
-	/*	Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> t0 = parseMain();
+		List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list;
+		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> t0 = parseMain();
 		if ((i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP) && t0.o3.isEmpty())	return null;
 		
 		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> tm;
-		double s0 = getCurrScore();*/
-		
-		
-		// ==================== BEGIN: WITH POS BRANCHING ====================
-		ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>> op = branchPOS();
-		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> t0 = (Triple<StringIntPair[], List<Pair<String, StringFeatureVector>>, List<DEPState>>)op.o;
-		if (i_flag != FLAG_BOOTSTRAP && t0.o3.isEmpty())	return null;
-		
-		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> tm;
-		double s0 = op.d; 
-		// ==================== END: WITH POS BRANCHING ====================
-		
-		
-		
-		
-		
-		
-		list.add(new ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>(t0, s0));
-
+		double s0 = d_score / n_trans; 
 		b_first = false;
+		
+		list = new ArrayList<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>>();
+		list.add(new ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>(t0, s0));
 		branch(list, t0.o3);
 		
-		if (i_flag != FLAG_BOOTSTRAP)
+		if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
 			tm = (Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>)getMax(list).o;
 			d_tree.resetHeads(tm.o1);
@@ -929,62 +936,6 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 		}
 	}
 	
-	private ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>> branchPOS()
-	{
-		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> t0, t1;
-		int c0 = 0, c1 = 0, i;
-		String p1, p2, m1;
-		double s0, s1;
-		DEPNode node;
-		boolean b;
-		
-		t0 = parseMain();
-		s0 = getCurrScore();
-		if (i_flag == FLAG_BOOTSTRAP)	c0 = getGoldLAS();
-		
-		for (i=1; i<t_size; i++)
-		{
-			node = d_tree.get(i);
-			p2 = node.getFeat(DEPLib.FEAT_POS2);
-			
-			if (p2 != null)
-			{
-				p1 = node.pos;
-				m1 = node.lemma;
-				node.pos   = p2;
-				node.lemma = node.getFeat(DEPLib.FEAT_LEMMA2);
-				
-				resetState();
-				t1 = parseMain();
-				s1 = getCurrScore();
-				
-				if (i_flag == FLAG_BOOTSTRAP)
-				{
-					c1 = getGoldLAS();
-					b  = c1 > c0;
-				}
-				else
-				{
-					b = s1 > s0; 
-				}
-				
-				if (b)
-				{
-					t0 = t1;
-					s0 = s1;
-					c0 = c1;
-				}
-				else
-				{
-					node.pos   = p1;
-					node.lemma = m1;
-				}
-			}
-		}
-		
-		return new ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>(t0, s0);
-	}
-	
 	private void branch(List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list, List<DEPState> states)
 	{
 		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> t1;
@@ -994,25 +945,15 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 		{
 			resetState(state);
 			t1 = parseMain();
-			s1 = getCurrScore();
+			s1 = d_score / n_trans;
 			list.add(new ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>(t1, s1));
 		}
 	}
 	
-	private void resetState()
-	{
-		i_lambda = 0;
-		i_beta   = 1;
-		n_trans  = 0;
-		d_score  = 0d;
-		s_reduce = new IntOpenHashSet();
-		d_tree.clearHeads();
-	}
-	
 	private void resetState(DEPState state)
 	{
-		i_lambda = state.lambda;
-		i_beta   = state.beta;
+		i_lambda = state.iLambda;
+		i_beta   = state.iBeta;
 		n_trans  = state.trans;
 		d_score  = state.score;
 		s_reduce = state.reduce;
@@ -1056,28 +997,5 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 			
 			p.d = c;
 		}
-	}
-	
-	private int getGoldLAS()
-	{
-		StringIntPair head;
-		DEPNode node;
-		int i, c = 0;
-		
-		for (i=1; i<t_size; i++)
-		{
-			node = d_tree.get(i);
-			head = g_heads[i];
-			
-			if (node.getHead().id == head.i && node.isLabel(head.s))
-				c++;
-		}
-		
-		return c;
-	}
-	
-	private double getCurrScore()
-	{
-		return d_score / n_trans;
 	}
 }

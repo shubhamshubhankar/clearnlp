@@ -338,10 +338,10 @@ public class NLPTrain extends AbstractNLP
 	{
 		if      (mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
 			return getStringTrainSpaces(xmls[0], ((ObjectIntOpenHashMap<String>)lexica[1]).size());
+		else if (boot > 0 && mode.equals(NLPLib.MODE_DEP_SB))
+			return getStringTrainSpaces(xmls, 1);
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return getStringTrainSpaces(xmls[0], 2);
-	//	else if (boot > 0 && mode.equals(NLPLib.MODE_DEP_SB))
-	//		return getStringTrainSpaces(xmls, 1);
 		else
 			return getStringTrainSpaces(xmls);
 	}
