@@ -15,9 +15,13 @@
 */
 package com.googlecode.clearnlp.component;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -119,10 +123,13 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	protected void loadDefaultConfiguration(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = UTInput.createBufferedReader(zin);
-		int mSize = Integer.parseInt(fin.readLine());
+		int i, mSize = Integer.parseInt(fin.readLine());
 		
 		LOG.info("Loading configuration.\n");
 		s_models = new StringModel[mSize];
+		
+		for (i=0; i<mSize; i++)
+			s_models[i] = new StringModel();
 	}
 
 	/** Called by {@link AbstractStatisticalComponent#loadModels(ZipInputStream)}}. */
@@ -155,7 +162,14 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	protected void loadStatisticalModels(ZipInputStream zin, int index) throws Exception
 	{
 		BufferedReader fin = UTInput.createBufferedReader(zin);
-		s_models[index] = new StringModel(fin);
+		s_models[index].load(fin);
+	//	s_models[index] = new StringModel(fin);
+	}
+	
+	protected void loadWeightVector(ZipInputStream zin, int index) throws Exception
+	{
+		ObjectInputStream oin = new ObjectInputStream(new BufferedInputStream(zin));
+		s_models[index].loadWeightVector(oin);
 	}
 	
 	/** For online decoders. */
@@ -209,6 +223,21 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 			fout = UTOutput.createPrintBufferedStream(zout);
 			s_models[i].save(fout);
 			fout.flush();
+			zout.closeEntry();			
+		}
+	}
+	
+	protected void saveWeightVector(ZipOutputStream zout, String entryName) throws Exception
+	{
+		int i, size = s_models.length;
+		ObjectOutputStream oout;
+		
+		for (i=0; i<size; i++)
+		{
+			zout.putNextEntry(new ZipEntry(entryName+i));
+			oout = new ObjectOutputStream(new BufferedOutputStream(zout));
+			s_models[i].saveWeightVector(oout);
+			oout.flush();
 			zout.closeEntry();			
 		}
 	}

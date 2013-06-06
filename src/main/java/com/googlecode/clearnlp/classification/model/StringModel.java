@@ -75,7 +75,7 @@ public class StringModel extends AbstractModel
 			i_solver = Byte.parseByte(reader.readLine());
 			loadLabels(reader);
 			loadFeatures(reader);
-			loadWeightVector(reader);			
+		//	loadWeightVector(reader);			
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
@@ -90,7 +90,7 @@ public class StringModel extends AbstractModel
 			fout.println(i_solver);
 			saveLabels(fout);
 			saveFeatures(fout);
-			saveWeightVector(fout);
+		//	saveWeightVector(fout);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}

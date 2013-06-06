@@ -27,7 +27,6 @@ import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
 import com.googlecode.clearnlp.component.dep.CDEPParser;
-import com.googlecode.clearnlp.component.dep.CDEPParserSB;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
@@ -92,7 +91,7 @@ public class NLPDevelop extends NLPTrain
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTaggerSB(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
 		else if (mode.equals(NLPLib.MODE_DEP_SB))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParserSB(xmls), mode, -1);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, null, mode, -1);
 	}
 	
 	protected double developComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, Object[] lexica, String mode, int devId) throws Exception
@@ -134,7 +133,7 @@ public class NLPDevelop extends NLPTrain
 	
 	protected void developComponentBoot(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, AbstractStatisticalComponent component, String mode, int devId) throws Exception
 	{
-		Object[] lexica = getLexica(component, reader, xmls, trainFiles, devId);
+		Object[] lexica = (component != null) ? getLexica(component, reader, xmls, trainFiles, devId) : null;
 		ObjectDoublePair<StringModel[]> p;
 		double prevScore, currScore = 0;
 		StringModel[] models = null;

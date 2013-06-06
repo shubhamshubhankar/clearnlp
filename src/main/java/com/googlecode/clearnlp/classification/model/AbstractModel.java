@@ -25,6 +25,8 @@ package com.googlecode.clearnlp.classification.model;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -347,6 +349,16 @@ abstract public class AbstractModel
 	
 	/**
 	 * Loads the weight vector from the specific reader.
+	 * @param oin from {@code double[]} to {@code Object}.
+	 * @throws Exception
+	 */
+	public void loadWeightVector(ObjectInputStream oin) throws Exception
+	{
+		d_weights = (double[])oin.readObject();
+	}
+	
+	/**
+	 * Loads the weight vector from the specific reader.
 	 * @param fin the reader to load the weight vector from.
 	 * @throws Exception
 	 */
@@ -378,6 +390,16 @@ abstract public class AbstractModel
 		fin.readLine();
 	}
 
+	/**
+	 * Saves the weight vector to the specific stream.
+	 * @param oout from {@code Object} to {@code double[]}. 
+	 * @throws Exception
+	 */
+	public void saveWeightVector(ObjectOutputStream oout) throws Exception
+	{
+		oout.writeObject(d_weights);
+	}
+	
 	/**
 	 * Saves the weight vector to the specific stream.
 	 * @param fout the output stream to save the weight vector to.

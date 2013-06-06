@@ -25,6 +25,7 @@ public class NLPLib
 	static public final String ENTRY_FEATURE		= "_FEATURE";
 	static public final String ENTRY_LEXICA			= "_LEXICA";
 	static public final String ENTRY_MODEL			= "_MODEL";
+	static public final String ENTRY_WEIGHTS		= "_WEIGHTS";
 	
 	static public final String MODE_TOK		= "tok";
 	static public final String MODE_SEG		= "seg";

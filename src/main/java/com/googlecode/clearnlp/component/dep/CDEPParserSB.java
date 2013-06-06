@@ -16,14 +16,12 @@
 package com.googlecode.clearnlp.component.dep;
 
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -48,7 +46,6 @@ import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
-import com.googlecode.clearnlp.util.map.Prob1DMap;
 import com.googlecode.clearnlp.util.pair.ObjectDoublePair;
 import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
@@ -65,6 +62,7 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 	protected final String ENTRY_FEATURE	   = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_FEATURE;
 	protected final String ENTRY_LEXICA		   = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_LEXICA;
 	protected final String ENTRY_MODEL		   = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_MODEL;
+	protected final String ENTRY_WEIGHTS	   = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_WEIGHTS;
 	
 	protected final int LEXICA_PUNCTUATION = 0;
 	
@@ -76,8 +74,6 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 	protected final String LB_PASS		= "P";
 	
 	protected IntOpenHashSet	s_reduce;
-	protected Prob1DMap			p_punc;		// only for collecting
-	protected Set<String>		s_punc;
 	protected StringIntPair[]	g_heads;
 	protected int				i_lambda, i_beta;
 
@@ -86,13 +82,6 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 	protected int n_trans;
 	
 //	====================================== CONSTRUCTORS ======================================
-
-	/** Constructs a dependency parser for collecting lexica. */
-	public CDEPParserSB(JointFtrXml[] xmls)
-	{
-		super(xmls);
-		p_punc = new Prob1DMap();
-	}
 	
 	/** Constructs a dependency parsing for training. */
 	public CDEPParserSB(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica, double margin, int beams)
@@ -118,18 +107,14 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 		super(in);
 	}
 	
-	@Override @SuppressWarnings("unchecked")
-	protected void initLexia(Object[] lexica)
-	{
-		s_punc = (Set<String>)lexica[LEXICA_PUNCTUATION];
-	}
+	@Override
+	protected void initLexia(Object[] lexica) {}
 	
 //	====================================== LOAD/SAVE MODELS ======================================
 	
 	@Override
 	public void loadModels(ZipInputStream zin)
 	{
-		int fLen = ENTRY_FEATURE.length(), mLen = ENTRY_MODEL.length();
 		f_xmls   = new JointFtrXml[1];
 		s_models = null;
 		ZipEntry zEntry;
@@ -144,11 +129,11 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 				if      (entry.equals(ENTRY_CONFIGURATION))
 					loadConfiguration(zin);
 				else if (entry.startsWith(ENTRY_FEATURE))
-					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(fLen)));
+					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(ENTRY_FEATURE.length())));
 				else if (entry.startsWith(ENTRY_MODEL))
-					loadStatisticalModels(zin, Integer.parseInt(entry.substring(mLen)));
-				else if (entry.equals(ENTRY_LEXICA))
-					loadLexica(zin);
+					loadStatisticalModels(zin, Integer.parseInt(entry.substring(ENTRY_MODEL.length())));
+				else if (entry.startsWith(ENTRY_WEIGHTS))
+					loadWeightVector(zin, Integer.parseInt(entry.substring(ENTRY_WEIGHTS.length())));
 			}		
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -159,17 +144,14 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 		BufferedReader fin = UTInput.createBufferedReader(zin);
 		LOG.info("Loading configuration.\n");
 		
-		s_models = new StringModel[Integer.parseInt(fin.readLine())];
+		int i, mSize = Integer.parseInt(fin.readLine());
 		n_beams  = Integer.parseInt(fin.readLine());
 		d_margin = Double.parseDouble(fin.readLine());
-	}
-	
-	protected void loadLexica(ZipInputStream zin) throws Exception
-	{
-		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
-		LOG.info("Loading lexica.\n");
-
-		s_punc = UTInput.getStringSet(fin);
+		
+		s_models = new StringModel[mSize];
+		
+		for (i=0; i<mSize; i++)
+			s_models[i] = new StringModel();
 	}
 
 	@Override
@@ -179,8 +161,8 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 		{
 			saveConfiguration    (zout, ENTRY_CONFIGURATION);
 			saveFeatureTemplates (zout, ENTRY_FEATURE);
-			saveLexica           (zout);
 			saveStatisticalModels(zout, ENTRY_MODEL);
+			saveWeightVector     (zout, ENTRY_WEIGHTS);
 			zout.close();
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -200,26 +182,10 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 		zout.closeEntry();
 	}
 	
-	protected void saveLexica(ZipOutputStream zout) throws Exception
-	{
-		zout.putNextEntry(new ZipEntry(ENTRY_LEXICA));
-		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
-		LOG.info("Saving lexica.\n");
-		
-		UTOutput.printSet(fout, s_punc);	fout.flush();
-		zout.closeEntry();
-	}
-	
 //	====================================== GETTERS AND SETTERS ======================================
 	
 	@Override
-	public Object[] getLexica()
-	{
-		Object[] lexica = new Object[1];
-
-		lexica[LEXICA_PUNCTUATION] = (i_flag == FLAG_LEXICA) ? p_punc.toSet(f_xmls[0].getPunctuationCutoff()) : s_punc;
-		return lexica;
-	}
+	public Object[] getLexica() {return null;}
 	
 	@Override
 	public void countAccuracy(int[] counts)
@@ -292,35 +258,12 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 	/** Called by {@link CDEPParserSB#process(DEPTree)}. */
 	protected void processAux()
 	{
-		if (i_flag == FLAG_LEXICA)
-			addLexica();
-		else
+		List<Pair<String,StringFeatureVector>> insts = parse();
+		
+		if (i_flag == FLAG_TRAIN || i_flag == FLAG_BOOTSTRAP)
 		{
-			List<Pair<String,StringFeatureVector>> insts = parse();
-			
-			if (i_flag == FLAG_TRAIN || i_flag == FLAG_BOOTSTRAP)
-			{
-				for (Pair<String,StringFeatureVector> inst : insts)
-					s_spaces[0].addInstance(inst.o1, inst.o2);				
-			}
-		}
-	}
-	
-	/** Called by {@link CDEPParserSB#processAux()}. */
-	private void addLexica()
-	{
-		String puncLabel = f_xmls[0].getPunctuationLabel();
-		StringIntPair head;
-		DEPNode node;
-		int i;
-
-		for (i=1; i<t_size; i++)
-		{
-			node = d_tree.get(i);
-			head = g_heads[i];
-			
-			if (head.s.equals(puncLabel))
-				p_punc.add(node.form);
+			for (Pair<String,StringFeatureVector> inst : insts)
+				s_spaces[0].addInstance(inst.o1, inst.o2);				
 		}
 	}
 	
@@ -747,22 +690,6 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 		{
 			return Integer.toString(d_tree.getRightValency(node.id));
 		}
-		else if (token.isField(JointFtrXml.F_LNPL))
-		{
-			return getLeftNearestPunctuation (0, i_lambda);
-		}
-		else if (token.isField(JointFtrXml.F_RNPL))
-		{
-			return getRightNearestPunctuation(i_lambda, i_beta);
-		}
-		else if (token.isField(JointFtrXml.F_LNPB))
-		{
-			return getLeftNearestPunctuation (i_lambda, i_beta);
-		}
-		else if (token.isField(JointFtrXml.F_RNPB))
-		{
-			return getRightNearestPunctuation(i_beta, d_tree.size());
-		}
 		else if ((m = JointFtrXml.P_BOOLEAN.matcher(token.field)).find())
 		{
 			int field = Integer.parseInt(m.group(1));
@@ -772,7 +699,6 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 			case  0: return (i_lambda == 1) ? token.field : null;
 			case  1: return (i_beta == t_size-1) ? token.field : null;
 			case  2: return (i_lambda+1 == i_beta) ? token.field : null;
-			case  3: return s_punc.contains(node.form) ? token.field : null;
 			default: throw new IllegalArgumentException("Unsupported feature: "+field);
 			}
 		}
@@ -787,40 +713,6 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 	@Override
 	protected String[] getFields(FtrToken token)
 	{
-		return null;
-	}
-	
-	/** Called by {@link CDEPParserSB#getField(FtrToken)}. */
-	private String getLeftNearestPunctuation(int lIdx, int rIdx)
-	{
-		String form;
-		int i;
-		
-		for (i=rIdx-1; i>lIdx; i--)
-		{
-			form = d_tree.get(i).form;
-			
-			if (s_punc.contains(form))
-				return form;
-		}
-		
-		return null;
-	}
-	
-	/** Called by {@link CDEPParserSB#getField(FtrToken)}. */
-	private String getRightNearestPunctuation(int lIdx, int rIdx)
-	{
-		String form;
-		int i;
-		
-		for (i=lIdx+1; i<rIdx; i++)
-		{
-			form = d_tree.get(i).form;
-			
-			if (s_punc.contains(form))
-				return form;
-		}
-		
 		return null;
 	}
 	

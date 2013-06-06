@@ -118,7 +118,7 @@ public class NLPTrain extends AbstractNLP
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTaggerSB(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
 		else if (mode.equals(NLPLib.MODE_DEP_SB))
-			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPParserSB(xmls), mode, devId);
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, null, mode, devId);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
@@ -148,7 +148,7 @@ public class NLPTrain extends AbstractNLP
 	
 	protected AbstractStatisticalComponent getTrainedComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, AbstractStatisticalComponent component, String mode, int devId) 
 	{
-		Object[] lexica = getLexica(component, reader, xmls, trainFiles, devId);
+		Object[] lexica = (component != null) ? getLexica(component, reader, xmls, trainFiles, devId) : null;
 		AbstractStatisticalComponent processor = null;
 		StringModel[] models = null;
 		int boot;

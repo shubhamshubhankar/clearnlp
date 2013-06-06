@@ -59,6 +59,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	protected final String ENTRY_FEATURE	   = NLPLib.MODE_POS + NLPLib.ENTRY_FEATURE;
 	protected final String ENTRY_LEXICA		   = NLPLib.MODE_POS + NLPLib.ENTRY_LEXICA;
 	protected final String ENTRY_MODEL		   = NLPLib.MODE_POS + NLPLib.ENTRY_MODEL;
+	protected final String ENTRY_WEIGHTS	   = NLPLib.MODE_POS + NLPLib.ENTRY_WEIGHTS;
 	
 	protected final int LEXICA_LOWER_SIMPLIFIED_FORMS = 0;
 	protected final int LEXICA_AMBIGUITY_CLASSES      = 1;
@@ -127,7 +128,6 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	@Override
 	public void loadModels(ZipInputStream zin)
 	{
-		int fLen = ENTRY_FEATURE.length(), mLen = ENTRY_MODEL.length();
 		f_xmls   = new JointFtrXml[1];
 		s_models = null;
 		ZipEntry zEntry;
@@ -142,11 +142,13 @@ public class CPOSTagger extends AbstractStatisticalComponent
 				if      (entry.equals(ENTRY_CONFIGURATION))
 					loadDefaultConfiguration(zin);
 				else if (entry.startsWith(ENTRY_FEATURE))
-					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(fLen)));
-				else if (entry.startsWith(ENTRY_MODEL))
-					loadStatisticalModels(zin, Integer.parseInt(entry.substring(mLen)));
+					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(ENTRY_FEATURE.length())));
 				else if (entry.equals(ENTRY_LEXICA))
 					loadLexica(zin);
+				else if (entry.startsWith(ENTRY_MODEL))
+					loadStatisticalModels(zin, Integer.parseInt(entry.substring(ENTRY_MODEL.length())));
+				else if (entry.startsWith(ENTRY_WEIGHTS))
+					loadWeightVector(zin, Integer.parseInt(entry.substring(ENTRY_WEIGHTS.length())));
 			}		
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -170,6 +172,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 			saveFeatureTemplates    (zout, ENTRY_FEATURE);
 			saveLexica              (zout);
 			saveStatisticalModels   (zout, ENTRY_MODEL);
+			saveWeightVector        (zout, ENTRY_WEIGHTS);
 			zout.close();
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -393,9 +396,6 @@ public class CPOSTagger extends AbstractStatisticalComponent
 			d_tree.get(i_input).addFeat(DEPLib.FEAT_POS2, snd.label);
 		
 		return fst.label;
-		
-	//	StringPrediction p = s_models[0].predictBest(vector);
-	//	return p.label;
 	}
 
 //	====================================== FEATURE EXTRACTION ======================================
