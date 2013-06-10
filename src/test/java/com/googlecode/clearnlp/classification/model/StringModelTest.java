@@ -31,10 +31,7 @@ import java.io.PrintStream;
 import java.io.StringReader;
 import java.util.List;
 
-import org.junit.Test;
-
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
-import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
@@ -43,7 +40,7 @@ import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
 public class StringModelTest
 {
-	@Test
+//	@Test
 	public void testStringModelMultiClassification()
 	{
 		StringModel model    = new StringModel();
@@ -125,7 +122,7 @@ public class StringModelTest
 		assertEquals(true, 1.102034 == p.score);
 	}
 	
-	@Test
+//	@Test
 	public void testStringModelBinaryClassification()
 	{
 		StringModel model    = new StringModel();

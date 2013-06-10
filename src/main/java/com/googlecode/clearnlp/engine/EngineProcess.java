@@ -58,9 +58,6 @@ public class EngineProcess
 	
 	static public void normalizeForms(DEPTree tree)
 	{
-		if (tree.get(1).simplifiedForm != null)
-			return;
-		
 		int i, size = tree.size();
 		DEPNode node;
 		
