@@ -403,7 +403,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	@Override
 	protected String getField(FtrToken token)
 	{
-		DEPNode node = getNodeInput(token);
+		DEPNode node = getNode(token);
 		if (node == null)	return null;
 		Matcher m;
 		
@@ -463,7 +463,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	@Override
 	protected String[] getFields(FtrToken token)
 	{
-		DEPNode node = getNodeInput(token);
+		DEPNode node = getNode(token);
 		if (node == null)	return null;
 		String[] fields = null;
 		Matcher m;
@@ -482,8 +482,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	
 //	====================================== NODE GETTER ======================================
 	
-	/** @return a node specified by the feature token. */
-	protected DEPNode getNodeInput(FtrToken token)
+	protected DEPNode getNode(FtrToken token)
 	{
 		int index = i_input + token.offset;
 		return (0 < index && index < t_size) ? d_tree.get(index) : null;

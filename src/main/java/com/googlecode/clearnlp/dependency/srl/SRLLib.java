@@ -41,10 +41,16 @@ public class SRLLib
 	
 	static private Pattern P_ARGN = Pattern.compile("^(A|C-A|R-A)\\d");
 	static private Pattern P_ARGM = Pattern.compile("^AM");
+	static private Pattern P_ARGN_CORE = Pattern.compile("^A\\d");
 	
 	static public boolean isNumberedArgument(String label)
 	{
 		return P_ARGN.matcher(label).find();
+	}
+	
+	static public boolean isCoreNumberedArgument(String label)
+	{
+		return P_ARGN_CORE.matcher(label).find();
 	}
 	
 	static public boolean isModifier(String label)

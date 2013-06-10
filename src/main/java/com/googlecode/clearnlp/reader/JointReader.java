@@ -46,6 +46,7 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 	protected int i_id;
 	protected int i_form;
 	protected int i_lemma;
+	protected int i_gpos;
 	protected int i_pos;
 	protected int i_feats;
 	protected int i_headId;
@@ -101,6 +102,11 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 		i_coref  = iCoref;
 	}
 	
+	public void initGoldPOSTag(int gpos)
+	{
+		i_gpos = gpos;
+	}
+	
 	@Override
 	public DEPTree next()
 	{
@@ -152,6 +158,9 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 			
 			if (i_sheads >= 0)
 				node.setSHeads(getSHeads(tree, tmp[i_sheads]));
+			
+			if (i_gpos >= 0)
+				node.addFeat(DEPLib.FEAT_GPOS, tmp[i_gpos]);
 		}
 		
 		if (i_coref >= 0) tree.setMentions(getMentions(lines));

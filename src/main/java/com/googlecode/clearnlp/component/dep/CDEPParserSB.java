@@ -718,8 +718,7 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 	
 //	================================ NODE GETTER ================================
 	
-	/** Called by {@link CDEPParserSB#getField(FtrToken)}. */
-	private DEPNode getNode(FtrToken token)
+	protected DEPNode getNode(FtrToken token)
 	{
 		DEPNode node = null;
 		

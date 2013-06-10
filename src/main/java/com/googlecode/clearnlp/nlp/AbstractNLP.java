@@ -174,7 +174,10 @@ abstract public class AbstractNLP
 		int iNament = map.get(AbstractColumnReader.FIELD_NAMENT) - 1;
 		int iCoref  = map.get(AbstractColumnReader.FIELD_COREF)  - 1;
 		
-		return new JointReader(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel, iXHeads, iSHeads, iNament, iCoref);
+		JointReader reader = new JointReader(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel, iXHeads, iSHeads, iNament, iCoref);
+		reader.initGoldPOSTag(map.get(AbstractColumnReader.FIELD_GPOS) - 1);
+		
+		return reader;
 	}
 	
 	/** Called by {@link AbstractNLP#getCDEPReader(Element, String)}. */

@@ -46,8 +46,10 @@ package com.googlecode.clearnlp.experiment;
 * POSSIBILITY OF SUCH DAMAGE.
 */
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.DecimalFormat;
@@ -59,6 +61,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import java.util.zip.ZipInputStream;
 
 import jregex.MatchResult;
 import jregex.Substitution;
@@ -68,6 +71,7 @@ import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntDeque;
 import com.googlecode.clearnlp.component.dep.CDEPParserSB;
+import com.googlecode.clearnlp.component.joint.CPDAligner;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
@@ -83,6 +87,7 @@ import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.MPLib;
+import com.googlecode.clearnlp.morphology.MPLibEn;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.reader.SRLReader;
 import com.googlecode.clearnlp.reader.TOKReader;
@@ -103,17 +108,72 @@ public class Tmp
 	
 	public Tmp(String[] args) throws Exception
 	{
-		SRLReader fin = new SRLReader(0, 1, 2, 3, 4, 5, 6, 8);
-		fin.open(UTInput.createBufferedFileReader(args[0]));
-		DEPTree tree = fin.next();
-		System.out.println(tree.toStringSRL()+"\n");
-
-		DEPNode aux = tree.get(1), verb = tree.get(3);
-		tree.removeNode(aux.id);
-		System.out.println(tree.toStringSRL()+"\n");
+		DEPReader fin = new DEPReader(0, 1, 3, 5, 7, 9, 11);
+		CPDAligner pd = new CPDAligner(new ZipInputStream(new BufferedInputStream(new FileInputStream(args[1]))));
+		PrintStream fout;
+		DEPTree tree;
 		
-		tree.insertNode(verb.id, aux);
-		System.out.println(tree.toStringSRL());
+		for (String filename : UTFile.getSortedFileList(args[0]))
+		{
+			System.out.println(filename);
+			
+			fin.open(UTInput.createBufferedFileReader(filename));
+			fout = UTOutput.createPrintBufferedFileStream(filename+".pd");
+			
+			while ((tree = fin.next()) != null)
+			{
+				pd.process(tree);
+				fout.println(tree.toStringDEP()+"\n");
+			}
+				
+			fin.close();
+			fout.close();
+		}
+		
+	}
+	
+	void pdAligner(String[] args) throws Exception
+	{
+		DEPReader fin = new DEPReader(0, 1, 2, 3, 4, 5, 6);
+		CPDAligner pd;
+		DEPTree tree;
+		
+		fin.open(UTInput.createBufferedFileReader(args[0]));
+
+	/*	pd = new CPDAligner();
+		
+		while ((tree = fin.next()) != null)
+			pd.process(tree);
+		
+		pd.saveModels(new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(args[1]))), 0.9);*/
+		
+		pd = new CPDAligner(new ZipInputStream(new BufferedInputStream(new FileInputStream(args[1]))));
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(args[2]);
+		
+		while ((tree = fin.next()) != null)
+		{
+			pd.process(tree);
+			fout.println(tree.toStringDEP()+"\n");
+		}
+		
+		fout.close();
+	}
+	
+	void checkPosDeprel(DEPTree tree, Prob2DMap mc, Prob2DMap mh)
+	{
+		int i, size = tree.size();
+		DEPNode node, head;
+		String deprel;
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			head = node.getHead();
+			deprel = node.getLabel();
+
+			mc.add(deprel, MPLibEn.toCPOSTag(node.pos));
+			mh.add(deprel, MPLibEn.toCPOSTag(head.pos));
+		}
 	}
 	
 	void classifySentenceType(DEPTree tree, IntIntPair count)

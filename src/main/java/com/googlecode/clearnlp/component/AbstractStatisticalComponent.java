@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -40,6 +41,8 @@ import com.googlecode.clearnlp.classification.model.ONStringModel;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
+import com.googlecode.clearnlp.dependency.DEPArc;
+import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.FtrTemplate;
 import com.googlecode.clearnlp.feature.FtrToken;
@@ -55,12 +58,15 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 abstract public class AbstractStatisticalComponent extends AbstractComponent
 {
-	protected DEPTree d_tree;
-	protected int     t_size;	// size of d_tree
+	protected StringTrainSpace[] s_spaces;
+	protected StringModel[]      s_models;
+	protected JointFtrXml[]      f_xmls;
 
-	protected StringTrainSpace[]	s_spaces;
-	protected StringModel[]			s_models;
-	protected JointFtrXml[]			f_xmls;
+	protected DEPTree	d_tree;
+	protected int		t_size;	// size of d_tree
+
+	protected DEPNode[]	lm_deps, rm_deps;
+	protected DEPNode[]	ln_sibs, rn_sibs;
 	
 //	====================================== CONSTRUCTORS ======================================
 	
@@ -242,6 +248,55 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 		}
 	}
 	
+//	====================================== INITIALIZATION ======================================
+	
+	/** Initializes dependency arcs of all nodes. */
+	protected void initArcs()
+	{
+		DEPNode curr, prev, next;
+		List<DEPArc> deps;
+		DEPArc lmd, rmd;
+		int i, j, len;
+		
+		lm_deps = new DEPNode[t_size];
+		rm_deps = new DEPNode[t_size];
+		ln_sibs = new DEPNode[t_size];
+		rn_sibs = new DEPNode[t_size];
+		
+		d_tree.setDependents();
+		
+		for (i=1; i<t_size; i++)
+		{
+			deps = d_tree.get(i).getDependents();
+			if (deps.isEmpty())	continue;
+			
+			len = deps.size(); 
+			lmd = deps.get(0);
+			rmd = deps.get(len-1);
+			
+			if (lmd.getNode().id < i)	lm_deps[i] = lmd.getNode();
+			if (rmd.getNode().id > i)	rm_deps[i] = rmd.getNode();
+			
+			for (j=1; j<len; j++)
+			{
+				curr = deps.get(j  ).getNode();
+				prev = deps.get(j-1).getNode();
+
+				if (ln_sibs[curr.id] == null || ln_sibs[curr.id].id < prev.id)
+					ln_sibs[curr.id] = prev;
+			}
+			
+			for (j=0; j<len-1; j++)
+			{
+				curr = deps.get(j  ).getNode();
+				next = deps.get(j+1).getNode();
+
+				if (rn_sibs[curr.id] == null || rn_sibs[curr.id].id > next.id)
+					rn_sibs[curr.id] = next;
+			}
+		}
+	}
+	
 //	====================================== GETTERS/SETTERS ======================================
 	
 	/** @return all training spaces of this joint-components. */
@@ -271,6 +326,49 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	
 	/** @return multiple fields of the specific feature token (e.g., lemma, pos-tag). */
 	abstract protected String[] getFields(FtrToken token);
+	
+	/** @param the dependency node that is not {@code null}. */
+	protected String getDefaultField(FtrToken token, DEPNode node)
+	{
+		Matcher m;
+		
+		if (token.isField(JointFtrXml.F_FORM))
+		{
+			return node.form;
+		}
+		else if (token.isField(JointFtrXml.F_SIMPLIFIED_FORM))
+		{
+			return node.simplifiedForm;
+		}
+		else if (token.isField(JointFtrXml.F_LEMMA))
+		{
+			return node.lemma;
+		}
+		else if (token.isField(JointFtrXml.F_POS))
+		{
+			return node.pos;
+		}
+		else if (token.isField(JointFtrXml.F_DEPREL))
+		{
+			return node.getLabel();
+		}
+		else if ((m = JointFtrXml.P_FEAT.matcher(token.field)).find())
+		{
+			return node.getFeat(m.group(1));
+		}
+		
+		return null;
+	}
+	
+	protected String[] getDefaultFields(FtrToken token, DEPNode node)
+	{
+		if (token.isField(JointFtrXml.F_DEPREL_SET))
+		{
+			return getDeprelSet(node.getDependents());
+		}
+		
+		return null;
+	}
 	
 	/** @return a feature vector using the specific feature template. */
 	protected StringFeatureVector getFeatureVector(JointFtrXml xml)

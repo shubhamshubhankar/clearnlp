@@ -27,8 +27,9 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
@@ -37,6 +38,7 @@ import java.util.zip.ZipOutputStream;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.classification.model.StringModel;
+import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
@@ -51,6 +53,7 @@ import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
+import com.googlecode.clearnlp.util.pair.ObjectDoublePair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 /**
@@ -63,6 +66,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	private final String ENTRY_FEATURE		 = NLPLib.MODE_SRL + NLPLib.ENTRY_FEATURE;
 	private final String ENTRY_LEXICA		 = NLPLib.MODE_SRL + NLPLib.ENTRY_LEXICA;
 	private final String ENTRY_MODEL		 = NLPLib.MODE_SRL + NLPLib.ENTRY_MODEL;
+	private final String ENTRY_WEIGHTS	     = NLPLib.MODE_SRL + NLPLib.ENTRY_WEIGHTS;
 	
 	protected final int LEXICA_PATH_UP	 = 0;
 	protected final int LEXICA_PATH_DOWN = 1;
@@ -79,9 +83,8 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	protected IntOpenHashSet    s_skip;
 	protected List<String>		l_argns;
 	protected StringIntPair[][]	g_heads;
-	protected DEPNode[]			lm_deps, rm_deps;
-	protected DEPNode[]			ln_sibs, rn_sibs;
 	protected int				i_pred, i_arg;
+	protected Map<String,ObjectDoublePair<DEPNode>> m_argns;
 	
 	protected Prob1DMap			m_down, m_up;	// only for collecting
 	protected Set<String>		s_down, s_up;
@@ -123,8 +126,8 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	@Override @SuppressWarnings("unchecked")
 	protected void initLexia(Object[] lexica)
 	{
-		s_down = (Set<String>)lexica[0];
-		s_up   = (Set<String>)lexica[1];
+		s_down = (Set<String>)lexica[LEXICA_PATH_DOWN];
+		s_up   = (Set<String>)lexica[LEXICA_PATH_UP];
 	}
 	
 //	====================================== LOAD/SAVE MODELS ======================================
@@ -132,7 +135,6 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	@Override
 	public void loadModels(ZipInputStream zin)
 	{
-		int fLen = ENTRY_FEATURE.length(), mLen = ENTRY_MODEL.length();
 		f_xmls   = new JointFtrXml[1];
 		s_models = null;
 		ZipEntry zEntry;
@@ -147,11 +149,13 @@ public class CSRLabeler extends AbstractStatisticalComponent
 				if      (entry.equals(ENTRY_CONFIGURATION))
 					loadDefaultConfiguration(zin);
 				else if (entry.startsWith(ENTRY_FEATURE))
-					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(fLen)));
-				else if (entry.startsWith(ENTRY_MODEL))
-					loadStatisticalModels(zin, Integer.parseInt(entry.substring(mLen)));
+					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(ENTRY_FEATURE.length())));
 				else if (entry.equals(ENTRY_LEXICA))
 					loadLexica(zin);
+				else if (entry.startsWith(ENTRY_MODEL))
+					loadStatisticalModels(zin, Integer.parseInt(entry.substring(ENTRY_MODEL.length())));
+				else if (entry.startsWith(ENTRY_WEIGHTS))
+					loadWeightVector(zin, Integer.parseInt(entry.substring(ENTRY_WEIGHTS.length())));
 			}		
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -175,6 +179,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 			saveFeatureTemplates    (zout, ENTRY_FEATURE);
 			saveLexica              (zout);
 			saveStatisticalModels   (zout, ENTRY_MODEL);
+			saveWeightVector        (zout, ENTRY_WEIGHTS);
 			zout.close();
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -241,6 +246,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 		i_pred  = getNextPredId(0);
 		s_skip  = new IntOpenHashSet();
 		l_argns = new ArrayList<String>();
+		m_argns = new HashMap<String,ObjectDoublePair<DEPNode>>();
 		
 		if (i_flag != FLAG_DECODE)
 		{
@@ -258,53 +264,6 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	{
 		DEPNode pred = d_tree.getNextPredicate(prevId);
 		return (pred != null) ? pred.id : d_tree.size();
-	}
-	
-	/** Initializes dependency arcs of all nodes. */
-	private void initArcs()
-	{
-		DEPNode curr, prev, next;
-		List<DEPArc> deps;
-		DEPArc lmd, rmd;
-		int i, j, len;
-		
-		lm_deps = new DEPNode[t_size];
-		rm_deps = new DEPNode[t_size];
-		ln_sibs = new DEPNode[t_size];
-		rn_sibs = new DEPNode[t_size];
-		
-		d_tree.setDependents();
-		
-		for (i=1; i<t_size; i++)
-		{
-			deps = d_tree.get(i).getDependents();
-			if (deps.isEmpty())	continue;
-			
-			len = deps.size(); 
-			lmd = deps.get(0);
-			rmd = deps.get(len-1);
-			
-			if (lmd.getNode().id < i)	lm_deps[i] = lmd.getNode();
-			if (rmd.getNode().id > i)	rm_deps[i] = rmd.getNode();
-			
-			for (j=1; j<len; j++)
-			{
-				curr = deps.get(j  ).getNode();
-				prev = deps.get(j-1).getNode();
-
-				if (ln_sibs[curr.id] == null || ln_sibs[curr.id].id < prev.id)
-					ln_sibs[curr.id] = prev;
-			}
-			
-			for (j=0; j<len-1; j++)
-			{
-				curr = deps.get(j  ).getNode();
-				next = deps.get(j+1).getNode();
-
-				if (rn_sibs[curr.id] == null || rn_sibs[curr.id].id > next.id)
-					rn_sibs[curr.id] = next;
-			}
-		}
 	}
 	
 	private void addLexica(DEPTree tree)
@@ -409,6 +368,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 			s_skip .add(i_pred);
 			s_skip .add(DEPLib.ROOT_ID);
 			l_argns.clear();
+			m_argns.clear();
 			
 			d_lca = pred;
 
@@ -460,27 +420,27 @@ public class CSRLabeler extends AbstractStatisticalComponent
 		return (i_arg < i_pred) ? 0 : 1;
 	}
 	
-	private String getLabel(int idx)
+	private StringPrediction getLabel(int idx)
 	{
 		StringFeatureVector vector = getFeatureVector(f_xmls[0]);
-		String label = null;
+		StringPrediction p = null;
 		
 		if (i_flag == FLAG_TRAIN)
 		{
-			label = getGoldLabel();
-			s_spaces[idx].addInstance(label, vector);
+			p = new StringPrediction(getGoldLabel(), 1d);
+			s_spaces[idx].addInstance(p.label, vector);
 		}
 		else if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
-			label = getAutoLabel(idx, vector);
+			p = getAutoLabel(idx, vector);
 		}
 		else if (i_flag == FLAG_BOOTSTRAP)
 		{
-			label = getAutoLabel(idx, vector);
+			p = getAutoLabel(idx, vector);
 			s_spaces[idx].addInstance(getGoldLabel(), vector);
 		}
 
-		return label;
+		return p;
 	}
 	
 	/** Called by {@link CSRLabeler#getGoldLabel(byte)}. */
@@ -496,24 +456,38 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	}
 
 	/** Called by {@link CSRLabeler#getLabel(byte)}. */
-	private String getAutoLabel(int idx, StringFeatureVector vector)
+	private StringPrediction getAutoLabel(int idx, StringFeatureVector vector)
 	{
-		return s_models[idx].predictBest(vector).label;
+		return s_models[idx].predictBest(vector);
 	}
 
-	private void addArgument(String label)
+	private void addArgument(StringPrediction p)
 	{
 		s_skip.add(i_arg);
 		
-		if (!label.equals(LB_NO_ARG))
+		if (!p.label.equals(LB_NO_ARG))
 		{
 			DEPNode pred = d_tree.get(i_pred);
 			DEPNode arg  = d_tree.get(i_arg);
 			
-			arg.addSHead(pred, label);
+			if (SRLLib.isCoreNumberedArgument(p.label))
+			{
+				ObjectDoublePair<DEPNode> prev = m_argns.get(p.label);
+				
+				if (prev != null)
+				{
+					if (prev.d >= p.score) return;
+					DEPNode node = (DEPNode)prev.o;
+					node.removeSHeadsByLabel(p.label);
+				}
+				
+				m_argns.put(p.label, new ObjectDoublePair<DEPNode>(arg, p.score));
+			}
 			
-			if (SRLLib.isNumberedArgument(label))
-				l_argns.add(label);
+			arg.addSHead(pred, p.label);
+			
+			if (SRLLib.isNumberedArgument(p.label))
+				l_argns.add(p.label);
 		}
 	}
 	
@@ -603,19 +577,6 @@ public class CSRLabeler extends AbstractStatisticalComponent
 		}
 		
 		return null;
-	}
-	
-	private String[] getDeprelSet(List<DEPArc> deps)
-	{
-		if (deps.isEmpty())	return null;
-		
-		Set<String> set = new HashSet<String>();
-		for (DEPArc arc : deps)	set.add(arc.getLabel());
-		
-		String[] fields = new String[set.size()];
-		set.toArray(fields);
-		
-		return fields;		
 	}
 	
 	private String getDistance(DEPNode node)
@@ -752,7 +713,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 			build.append(node.getLabel());
 	}
 	
-	private DEPNode getNode(FtrToken token)
+	protected DEPNode getNode(FtrToken token)
 	{
 		DEPNode node = null;
 		

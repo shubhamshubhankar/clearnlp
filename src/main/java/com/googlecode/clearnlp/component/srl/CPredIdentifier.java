@@ -15,9 +15,6 @@
 */
 package com.googlecode.clearnlp.component.srl;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -29,7 +26,6 @@ import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
@@ -47,6 +43,7 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 	private final String ENTRY_CONFIGURATION = NLPLib.MODE_PRED + NLPLib.ENTRY_CONFIGURATION;
 	private final String ENTRY_FEATURE		 = NLPLib.MODE_PRED + NLPLib.ENTRY_FEATURE;
 	private final String ENTRY_MODEL		 = NLPLib.MODE_PRED + NLPLib.ENTRY_MODEL;
+	private final String ENTRY_WEIGHTS	     = NLPLib.MODE_PRED + NLPLib.ENTRY_WEIGHTS;
 	
 	protected Boolean[] g_preds;
 	protected int       i_pred;
@@ -84,7 +81,6 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 	@Override
 	public void loadModels(ZipInputStream zin)
 	{
-		int fLen = ENTRY_FEATURE.length(), mLen = ENTRY_MODEL.length();
 		f_xmls   = new JointFtrXml[1];
 		s_models = null;
 		ZipEntry zEntry;
@@ -99,9 +95,11 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 				if      (entry.equals(ENTRY_CONFIGURATION))
 					loadDefaultConfiguration(zin);
 				else if (entry.startsWith(ENTRY_FEATURE))
-					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(fLen)));
+					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(ENTRY_FEATURE.length())));
 				else if (entry.startsWith(ENTRY_MODEL))
-					loadStatisticalModels(zin, Integer.parseInt(entry.substring(mLen)));
+					loadStatisticalModels(zin, Integer.parseInt(entry.substring(ENTRY_MODEL.length())));
+				else if (entry.startsWith(ENTRY_WEIGHTS))
+					loadWeightVector(zin, Integer.parseInt(entry.substring(ENTRY_WEIGHTS.length())));
 			}		
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -115,6 +113,7 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 			saveDefaultConfiguration(zout, ENTRY_CONFIGURATION);
 			saveFeatureTemplates    (zout, ENTRY_FEATURE);
 			saveStatisticalModels   (zout, ENTRY_MODEL);
+			saveWeightVector        (zout, ENTRY_WEIGHTS);
 			zout.close();
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -179,7 +178,7 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 	protected void identify()
 	{
 		DEPNode pred;
-		String label;
+		String label, id;
 		
 		for (i_pred=1; i_pred<t_size; i_pred++)
 		{
@@ -190,7 +189,10 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 				label = getLabel();
 				
 				if (label.equals(AbstractModel.LABEL_TRUE))
-					pred.addFeat(DEPLib.FEAT_PB, pred.lemma+".XX");
+				{
+					id = ("'s".equals(pred.lemma)) ? "be.XX" : pred.lemma+".XX";
+					pred.addFeat(DEPLib.FEAT_PB, id);
+				}
 			}
 		}
 	}
@@ -274,27 +276,14 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 		return null;
 	}
 	
-	private String[] getDeprelSet(List<DEPArc> deps)
-	{
-		if (deps.isEmpty())	return null;
-		
-		Set<String> set = new HashSet<String>();
-		for (DEPArc arc : deps)	set.add(arc.getLabel());
-		
-		String[] fields = new String[set.size()];
-		set.toArray(fields);
-		
-		return fields;		
-	}
-	
-	private DEPNode getNode(FtrToken token)
+	protected DEPNode getNode(FtrToken token)
 	{
 		DEPNode node = getNodeAux(token);
 		if (node == null)	return null;
 		
 		if (token.relation != null)
 		{
-			     if (token.isRelation(JointFtrXml.R_H))	node = node.getHead();
+			     if (token.isRelation(JointFtrXml.R_H))		node = node.getHead();
 			else if (token.isRelation(JointFtrXml.R_LMD))	node = node.getLeftMostDependent();
 			else if (token.isRelation(JointFtrXml.R_RMD))	node = node.getRightMostDependent();
 		}

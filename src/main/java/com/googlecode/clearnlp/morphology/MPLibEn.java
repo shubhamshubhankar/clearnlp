@@ -145,4 +145,18 @@ public class MPLibEn extends MPLib
 	{
 		return pos.startsWith(CTLibEn.POS_RB) || pos.equals(CTLibEn.POS_WRB);
 	}
+	
+	/**
+	 * @param fpos a fine-grained POS tag.
+	 * @return the coarse-grained POS tag of the specific fine-grained POS tag.
+	 */
+	static public String toCPOSTag(String fpos)
+	{
+		if (isAdjective(fpos))	return CTLibEn.POS_JJ;
+		if (isAdverb(fpos))		return CTLibEn.POS_RB;
+		if (isNoun(fpos))		return CTLibEn.POS_NN;
+		if (isVerb(fpos))		return CTLibEn.POS_VB;
+		
+		return fpos;
+	}
 }

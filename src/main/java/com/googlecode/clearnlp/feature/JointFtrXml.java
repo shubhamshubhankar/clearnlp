@@ -70,10 +70,6 @@ public class JointFtrXml extends AbstractFtrXml
 	static public final String F_GRAND_DEPREL_SET		= "gds";
 	static public final String F_LEFT_VALENCY			= "lv";
 	static public final String F_RIGHT_VALENCY			= "rv";
-	static public final String F_LNPL					= "lnpl";	// left-nearest punctuation of lambda
-	static public final String F_RNPL					= "rnpl";	// right-nearest punctuation of lambda
-	static public final String F_LNPB					= "lnpb";	// left-nearest punctuation of beta
-	static public final String F_RNPB					= "rnpb";	// right-nearest punctuation of beta
 	
 	static public final Pattern P_BOOLEAN  	= Pattern.compile("^b(\\d+)$");
 	static public final Pattern P_PREFIX  	= Pattern.compile("^pf(\\d+)$");
@@ -84,7 +80,7 @@ public class JointFtrXml extends AbstractFtrXml
 	static public final Pattern P_ARGN 	 	= Pattern.compile("^argn(\\d+)$");
 
 	static protected final Pattern P_REL	= UTRegex.getORPattern(R_H, R_H2, R_LMD, R_RMD, R_LMD2, R_RMD2, R_LND, R_RND, R_LNS, R_RNS); 
-	static protected final Pattern P_FIELD	= UTRegex.getORPattern(F_FORM, F_SIMPLIFIED_FORM, F_LOWER_SIMPLIFIED_FORM, F_LEMMA, F_POS, F_POS_SET, F_AMBIGUITY_CLASS, F_NAMENT, F_DEPREL, F_DIRECTION, F_DISTANCE, F_DEPREL_SET, F_LEFT_VALENCY, F_RIGHT_VALENCY, F_LNPL, F_RNPL, F_LNPB, F_RNPB, F_LEFT_DEP_POS, F_RIGHT_DEP_POS, F_LEFT_DEP_DEPREL, F_RIGHT_DEP_DEPREL);
+	static protected final Pattern P_FIELD	= UTRegex.getORPattern(F_FORM, F_SIMPLIFIED_FORM, F_LOWER_SIMPLIFIED_FORM, F_LEMMA, F_POS, F_POS_SET, F_AMBIGUITY_CLASS, F_NAMENT, F_DEPREL, F_DIRECTION, F_DISTANCE, F_DEPREL_SET, F_LEFT_VALENCY, F_RIGHT_VALENCY, F_LEFT_DEP_POS, F_RIGHT_DEP_POS, F_LEFT_DEP_DEPREL, F_RIGHT_DEP_DEPREL);
 	
 	final String CUTOFF_AMBIGUITY			= "ambiguity";	// part-of-speech tagging
 	final String CUTOFF_DOCUMENT_FREQUENCY	= "df";			// part-of-speech tagging
@@ -169,7 +165,7 @@ public class JointFtrXml extends AbstractFtrXml
 	private void initMoreLexica(Document doc)
 	{
 		NodeList eList = doc.getElementsByTagName(XML_LEXICA);
-		int i, cutoff, size = eList.getLength();
+		int i, size = eList.getLength();
 		String type, label;
 		Element eLexica;
 		
@@ -180,10 +176,9 @@ public class JointFtrXml extends AbstractFtrXml
 			eLexica = (Element)eList.item(i);
 			type    = UTXml.getTrimmedAttribute(eLexica, XML_TYPE);
 			label   = UTXml.getTrimmedAttribute(eLexica, XML_LABEL);
-			cutoff  = Integer.parseInt(UTXml.getTrimmedAttribute(eLexica, XML_CUTOFF));
 			
 			if      (type.equals(LEXICA_PUNCTUATION))
-				p_punc.set(label, cutoff);
+				p_punc.set(label, Integer.parseInt(UTXml.getTrimmedAttribute(eLexica, XML_CUTOFF)));
 			else if (type.equals(LEXICA_PREDICATE))
 				p_predicates = Pattern.compile("^"+label+"$");
 		}

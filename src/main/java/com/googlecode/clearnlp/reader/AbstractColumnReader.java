@@ -52,6 +52,7 @@ abstract public class AbstractColumnReader<T> extends AbstractReader<T>
 	static public final String FIELD_XHEADS	= "xheads";
 	static public final String FIELD_NAMENT	= "nament";
 	static public final String FIELD_COREF	= "coref";
+	static public final String FIELD_GPOS	= "gpos";
 	
 	private final Pattern P_COLUMN = Pattern.compile(DELIM_COLUMN);
 	

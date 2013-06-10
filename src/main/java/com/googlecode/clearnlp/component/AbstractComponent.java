@@ -15,9 +15,14 @@
 */
 package com.googlecode.clearnlp.component;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPTree;
 
 /**
@@ -38,4 +43,17 @@ abstract public class AbstractComponent
 	
 	/** Process this joint-component. */
 	abstract public void process(DEPTree tree);
+	
+	protected String[] getDeprelSet(List<DEPArc> deps)
+	{
+		if (deps.isEmpty())	return null;
+		
+		Set<String> set = new HashSet<String>();
+		for (DEPArc arc : deps)	set.add(arc.getLabel());
+		
+		String[] fields = new String[set.size()];
+		set.toArray(fields);
+		
+		return fields;		
+	}
 }

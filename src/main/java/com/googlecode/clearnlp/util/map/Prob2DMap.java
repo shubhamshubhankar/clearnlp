@@ -23,7 +23,10 @@
 */
 package com.googlecode.clearnlp.util.map;
 
+import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+
 import java.util.HashMap;
+import java.util.Map;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
@@ -131,5 +134,26 @@ public class Prob2DMap extends HashMap<String,ObjectIntOpenHashMap<String>>
 		
 		double prior = (double)total / i_total; 
 		return new Pair<Double,StringDoublePair[]>(prior, probs);
+	}
+	
+	public Map<String,Object2DoubleOpenHashMap<String>> getProb1DMap(double threshold)
+	{
+		Map<String,Object2DoubleOpenHashMap<String>> map = new HashMap<String,Object2DoubleOpenHashMap<String>>();
+		Object2DoubleOpenHashMap<String> dm;
+		
+		for (String key : keySet())
+		{
+			dm = new Object2DoubleOpenHashMap<String>();
+			
+			for (StringDoublePair p : getProb1D(key))
+			{
+				if (p.d > threshold)
+					dm.put(p.s, p.d);
+			}
+			
+			if (!dm.isEmpty())	map.put(key, dm);
+		}
+		
+		return map;
 	}
 }

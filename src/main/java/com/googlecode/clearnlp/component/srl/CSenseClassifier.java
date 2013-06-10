@@ -35,7 +35,6 @@ import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
@@ -447,23 +446,9 @@ public class CSenseClassifier extends AbstractStatisticalComponent
 		return null;
 	}
 	
-	private String[] getDeprelSet(List<DEPArc> deps)
-	{
-		if (deps.isEmpty())	return null;
-		
-		Set<String> set = new HashSet<String>();
-		for (DEPArc arc : deps)	set.add(arc.getLabel());
-		
-		String[] fields = new String[set.size()];
-		set.toArray(fields);
-		
-		return fields;		
-	}
-	
 //	====================================== NODE GETTER ======================================
 	
-	/** @return a node specified by the feature token. */
-	private DEPNode getNode(FtrToken token)
+	protected DEPNode getNode(FtrToken token)
 	{
 		DEPNode node = getNodeAux(token);
 		if (node == null)	return null;

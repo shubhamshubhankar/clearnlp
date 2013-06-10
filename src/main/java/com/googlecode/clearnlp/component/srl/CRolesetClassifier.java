@@ -21,7 +21,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -35,7 +34,6 @@ import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
@@ -55,6 +53,7 @@ public class CRolesetClassifier extends AbstractStatisticalComponent
 	private final String ENTRY_FEATURE		 = NLPLib.MODE_ROLE + NLPLib.ENTRY_FEATURE;
 	private final String ENTRY_LEXICA		 = NLPLib.MODE_ROLE + NLPLib.ENTRY_LEXICA;
 	private final String ENTRY_MODEL		 = NLPLib.MODE_ROLE + NLPLib.ENTRY_MODEL;
+	private final String ENTRY_WEIGHTS	     = NLPLib.MODE_ROLE + NLPLib.ENTRY_WEIGHTS;
 	
 	protected final int LEXICA_ROLESETS  = 0;
 	protected final int LEXICA_LEMMAS    = 1;
@@ -104,7 +103,6 @@ public class CRolesetClassifier extends AbstractStatisticalComponent
 	@Override
 	public void loadModels(ZipInputStream zin)
 	{
-		int fLen = ENTRY_FEATURE.length(), mLen = ENTRY_MODEL.length();
 		f_xmls   = new JointFtrXml[1];
 		s_models = null;
 		ZipEntry zEntry;
@@ -119,11 +117,13 @@ public class CRolesetClassifier extends AbstractStatisticalComponent
 				if      (entry.equals(ENTRY_CONFIGURATION))
 					loadDefaultConfiguration(zin);
 				else if (entry.startsWith(ENTRY_FEATURE))
-					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(fLen)));
-				else if (entry.startsWith(ENTRY_MODEL))
-					loadStatisticalModels(zin, Integer.parseInt(entry.substring(mLen)));
+					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(ENTRY_FEATURE.length())));
 				else if (entry.equals(ENTRY_LEXICA))
 					loadLexica(zin);
+				else if (entry.startsWith(ENTRY_MODEL))
+					loadStatisticalModels(zin, Integer.parseInt(entry.substring(ENTRY_MODEL.length())));
+				else if (entry.startsWith(ENTRY_WEIGHTS))
+					loadWeightVector(zin, Integer.parseInt(entry.substring(ENTRY_WEIGHTS.length())));
 			}		
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -147,6 +147,7 @@ public class CRolesetClassifier extends AbstractStatisticalComponent
 			saveFeatureTemplates    (zout, ENTRY_FEATURE);
 			saveLexica              (zout);
 			saveStatisticalModels   (zout, ENTRY_MODEL);
+			saveWeightVector        (zout, ENTRY_WEIGHTS);
 			zout.close();
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -390,23 +391,9 @@ public class CRolesetClassifier extends AbstractStatisticalComponent
 		return null;
 	}
 	
-	private String[] getDeprelSet(List<DEPArc> deps)
-	{
-		if (deps.isEmpty())	return null;
-		
-		Set<String> set = new HashSet<String>();
-		for (DEPArc arc : deps)	set.add(arc.getLabel());
-		
-		String[] fields = new String[set.size()];
-		set.toArray(fields);
-		
-		return fields;		
-	}
-	
 //	====================================== NODE GETTER ======================================
 	
-	/** @return a node specified by the feature token. */
-	private DEPNode getNode(FtrToken token)
+	protected DEPNode getNode(FtrToken token)
 	{
 		DEPNode node = getNodeAux(token);
 		if (node == null)	return null;

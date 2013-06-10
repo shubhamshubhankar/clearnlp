@@ -719,22 +719,6 @@ public class CDEPParser extends AbstractStatisticalComponent
 		{
 			return Integer.toString(d_tree.getRightValency(node.id));
 		}
-		else if (token.isField(JointFtrXml.F_LNPL))
-		{
-			return getLeftNearestPunctuation (0, i_lambda);
-		}
-		else if (token.isField(JointFtrXml.F_RNPL))
-		{
-			return getRightNearestPunctuation(i_lambda, i_beta);
-		}
-		else if (token.isField(JointFtrXml.F_LNPB))
-		{
-			return getLeftNearestPunctuation (i_lambda, i_beta);
-		}
-		else if (token.isField(JointFtrXml.F_RNPB))
-		{
-			return getRightNearestPunctuation(i_beta, d_tree.size());
-		}
 		else if ((m = JointFtrXml.P_BOOLEAN.matcher(token.field)).find())
 		{
 			int field = Integer.parseInt(m.group(1));
@@ -762,44 +746,9 @@ public class CDEPParser extends AbstractStatisticalComponent
 		return null;
 	}
 	
-	/** Called by {@link CDEPParser#getField(FtrToken)}. */
-	private String getLeftNearestPunctuation(int lIdx, int rIdx)
-	{
-		String form;
-		int i;
-		
-		for (i=rIdx-1; i>lIdx; i--)
-		{
-			form = d_tree.get(i).form;
-			
-			if (s_punc.contains(form))
-				return form;
-		}
-		
-		return null;
-	}
-	
-	/** Called by {@link CDEPParser#getField(FtrToken)}. */
-	private String getRightNearestPunctuation(int lIdx, int rIdx)
-	{
-		String form;
-		int i;
-		
-		for (i=lIdx+1; i<rIdx; i++)
-		{
-			form = d_tree.get(i).form;
-			
-			if (s_punc.contains(form))
-				return form;
-		}
-		
-		return null;
-	}
-	
 //	================================ NODE GETTER ================================
 	
-	/** Called by {@link CDEPParser#getField(FtrToken)}. */
-	private DEPNode getNode(FtrToken token)
+	protected DEPNode getNode(FtrToken token)
 	{
 		DEPNode node = null;
 		

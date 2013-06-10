@@ -36,7 +36,8 @@ public class NLPLib
 	static public final String MODE_ROLE	= "role";
 	static public final String MODE_SRL		= "srl";
 	static public final String MODE_SENSE	= "sense";
-	
 	static public final String MODE_POS_SB	= "pos_sb";
 	static public final String MODE_DEP_SB	= "dep_sb";
+	
+	static public final String MODE_PD_ALIGN = "pd_align";
 }
