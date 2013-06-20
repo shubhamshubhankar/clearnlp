@@ -23,9 +23,21 @@
 */
 package com.googlecode.clearnlp.util;
 
+import java.util.regex.Pattern;
+
 
 public class UTString
 {
+	static final private Pattern PUNCT_FRONT = Pattern.compile("^\\p{Punct}+");
+	static final private Pattern PUNCT_BACK  = Pattern.compile("\\p{Punct}+$");
+	
+	static public String stripPunctuation(String str)
+	{
+		str = PUNCT_FRONT.matcher(str).replaceAll("");
+		str = PUNCT_BACK .matcher(str).replaceAll("");
+		return str.trim();
+	}
+	
 	static public boolean isAllUpperCase(String str)
 	{
 		int i, size = str.length();
@@ -105,5 +117,10 @@ public class UTString
 			suffixes[i] = form.substring(length-i);
 		
 		return suffixes;
+	}
+	
+	static public String setFirstCharToUpper(String s)
+	{
+		 return Character.toString(s.charAt(0)).toUpperCase() + s.substring(1);
 	}
 }

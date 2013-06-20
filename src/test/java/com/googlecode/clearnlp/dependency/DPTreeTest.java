@@ -34,11 +34,45 @@ import com.googlecode.clearnlp.dependency.DEPTree;
 public class DPTreeTest
 {
 	@Test
-	public void treeTest()
+	public void testCloneSRL()
 	{
 		DEPTree tree = new DEPTree();
 		
 		assertEquals(DEPLib.ROOT_ID, tree.get(0).id);
 		assertEquals(null, tree.get(1));
+		
+		DEPNode sbj = new DEPNode(1, "He", "he", "PRP", new DEPFeat());
+		DEPNode vbd = new DEPNode(2, "bought", "buy", "VBD", new DEPFeat());
+		DEPNode nns = new DEPNode(3, "cars", "car", "NNS", new DEPFeat());
+		
+		vbd.addFeat(DEPLibEn.FEAT_PB, "buy.01");
+		
+		sbj.setHead(vbd, "NSBJ");
+		vbd.setHead(tree.get(0), "ROOT");
+		nns.setHead(vbd, "DOBJ");
+		
+		sbj.initSHeads();
+		vbd.initSHeads();
+		nns.initSHeads();
+		
+		sbj.addSHead(vbd, "A0");
+		nns.addSHead(vbd, "A1");
+		
+		tree.add(sbj);
+		tree.add(vbd);
+		tree.add(nns);
+		
+		String s1 = tree.toStringSRL()+"\n";
+		
+		DEPTree copy = tree.cloneSRL();
+		
+		copy.get(1).setLabel("nsbuj");
+		copy.get(2).addFeat(DEPLibEn.FEAT_PB, "01");
+		copy.get(3).setHead(copy.get(0));
+		
+		String s2 = tree.toStringSRL()+"\n";
+		assertEquals(s1, s2);
+		
+	//	System.out.println(copy.toStringSRL()+"\n");
 	}
 }

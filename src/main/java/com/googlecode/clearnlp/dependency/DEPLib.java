@@ -28,7 +28,7 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
 /**
  * Dependency library.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class DEPLib
 {
@@ -55,6 +55,8 @@ public class DEPLib
 	static public final String FEAT_POS2 = "p2";
 	/** The feat-key of gold POS tag. */
 	static public final String FEAT_GPOS = "gp";
+	/** The feat-key of coreference value. */
+	static public final String FEAT_COREF = "coref";
 	
 	/** The delimiter between secondary/semantic heads. */
 	static public final String DELIM_HEADS     = ";";

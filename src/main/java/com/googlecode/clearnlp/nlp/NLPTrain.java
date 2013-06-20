@@ -31,6 +31,7 @@ import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
+import com.googlecode.clearnlp.classification.feature.JointFtrXml;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
@@ -44,7 +45,6 @@ import com.googlecode.clearnlp.component.srl.CSRLabeler;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
-import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.reader.JointReader;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;

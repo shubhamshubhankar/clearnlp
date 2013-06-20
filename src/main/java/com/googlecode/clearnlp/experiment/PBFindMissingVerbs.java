@@ -217,7 +217,7 @@ public class PBFindMissingVerbs extends AbstractRun
 			if (lemma.equals("'s"))	lemma = "be";
 			
 			arg = new PBArg();
-			arg.label = PBLib.SRL_REL;
+			arg.label = PBLib.PB_REL;
 			arg.addLoc(new PBLoc(predId, 0));
 			
 			inst = new PBInstance();

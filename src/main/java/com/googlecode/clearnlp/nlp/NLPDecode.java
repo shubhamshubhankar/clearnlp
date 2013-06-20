@@ -237,21 +237,7 @@ public class NLPDecode extends AbstractNLP
 			
 			modes.add(NLPLib.MODE_MORPH);
 		}
-		else if (mode.equals(NLPLib.MODE_DEP))
-		{
-			if (readerType.equals(AbstractReader.TYPE_RAW) || readerType.equals(AbstractReader.TYPE_LINE) || readerType.equals(AbstractReader.TYPE_TOK))
-			{
-				modes.add(NLPLib.MODE_POS);
-				modes.add(NLPLib.MODE_MORPH);
-			}
-			else if (readerType.equals(AbstractReader.TYPE_POS))
-			{
-				modes.add(NLPLib.MODE_MORPH);
-			}
-			
-			modes.add(NLPLib.MODE_DEP);
-		}
-		else if (mode.equals(NLPLib.MODE_DEP_SB))
+		else if (mode.startsWith(NLPLib.MODE_DEP))
 		{
 			if (readerType.equals(AbstractReader.TYPE_RAW) || readerType.equals(AbstractReader.TYPE_LINE) || readerType.equals(AbstractReader.TYPE_TOK))
 			{

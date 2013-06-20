@@ -34,7 +34,7 @@ import java.util.List;
  * Headrule map.
  * @see HeadRule
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 @SuppressWarnings("serial")
 public class HeadRuleMap extends HashMap<String, HeadRule>

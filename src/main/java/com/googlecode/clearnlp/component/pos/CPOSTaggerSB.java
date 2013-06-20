@@ -30,6 +30,8 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
+import com.googlecode.clearnlp.classification.feature.FtrToken;
+import com.googlecode.clearnlp.classification.feature.JointFtrXml;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
@@ -39,8 +41,6 @@ import com.googlecode.clearnlp.component.AbstractStatisticalComponentSB;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
-import com.googlecode.clearnlp.feature.FtrToken;
-import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.pos.POSState;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;

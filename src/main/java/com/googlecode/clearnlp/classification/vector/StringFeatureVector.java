@@ -33,7 +33,7 @@ import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 /**
  * Vector containing string features.
  * @since 0.1.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class StringFeatureVector extends AbstractFeatureVector
 {

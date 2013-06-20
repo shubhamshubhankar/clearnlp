@@ -37,7 +37,7 @@ import com.googlecode.clearnlp.constituent.CTTree;
  * @see PBLoc
  * @see PBArg
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class PBInstance implements Comparable<PBInstance>
 {
@@ -256,7 +256,7 @@ public class PBInstance implements Comparable<PBInstance>
 	public boolean isLVNounPredicate(CTTree cTree)
 	{
 		if (!isNounPredicate())	return false;
-		PBArg rel = getFirstArg(PBLib.SRL_REL);
+		PBArg rel = getFirstArg(PBLib.PB_REL);
 		if (rel == null)		return false;
 		
 		for (PBLoc loc : rel.l_locs)

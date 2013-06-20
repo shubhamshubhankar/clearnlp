@@ -156,10 +156,15 @@ public class C2DConvertMulti extends AbstractRun
 				else
 				{
 					if (morph   != null)	morph.process(dTree);
-					if (mProp   != null)	addRolesets(cTree, dTree, instances);
 					if (mSense  != null)	addWordSenses(cTree, dTree, mSense.get(n), DEPLibEn.FEAT_WS);
 					if (mVclass != null)	addWordSenses(cTree, dTree, mVclass.get(n), DEPLibEn.FEAT_VN);
 					if (mName   != null)	addNames(cTree, dTree, mName.get(n));
+					
+					if (mProp   != null)
+					{
+						addRolesets(cTree, dTree, instances);
+						reconfigureDEPTree(dTree);
+					}
 				
 					dTree = getDEPTreeWithoutEdited(cTree, dTree);
 					fout.println(dTree+"\n");					
@@ -260,17 +265,17 @@ public class C2DConvertMulti extends AbstractRun
 			
 			for (PBArg arg : instance.getArgs())
 			{
-				if (arg.label.startsWith(PBLib.SRL_LINK))
+				if (arg.label.startsWith(PBLib.PB_LINK))
 					continue;
 				
 				if (arg.label.endsWith("UNDEF"))
 					continue;
 				
-				label = arg.isLabel(PBLib.SRL_REL) ? PBLib.SRL_C_V : "A"+arg.label.substring(3);
+				label = arg.isLabel(PBLib.PB_REL) ? PBLib.PB_C_V : "A"+arg.label.substring(3);
 				
 				for (PBLoc loc : arg.getLocs())
 				{
-					if (arg.isLabel(PBLib.SRL_REL) && loc.terminalId == instance.predId)
+					if (arg.isLabel(PBLib.PB_REL) && loc.terminalId == instance.predId)
 						continue;
 					
 					cNode = cTree.getNode(loc);
@@ -280,6 +285,18 @@ public class C2DConvertMulti extends AbstractRun
 				}
 			}
 		}
+	}
+	
+	private void reconfigureDEPTree(DEPTree tree)
+	{
+		int i, size = tree.size();
+	//	DEPNode node;
+		
+		for (i=1; i<size; i++)
+		{
+			
+		}
+		
 	}
 	
 	private boolean isPBSkip(PBInstance instance, CTTree cTree)

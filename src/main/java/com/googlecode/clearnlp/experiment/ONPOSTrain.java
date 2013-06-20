@@ -21,11 +21,11 @@ import java.util.List;
 
 import org.w3c.dom.Element;
 
+import com.googlecode.clearnlp.classification.feature.JointFtrXml;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.component.pos.ONPOSTagger;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.nlp.NLPDevelop;
 import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.reader.JointReader;

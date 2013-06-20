@@ -41,7 +41,7 @@ import com.googlecode.clearnlp.reader.AbstractColumnReader;
 /**
  * Abstract constituent to dependency converter.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 abstract public class AbstractC2DConverter
 {

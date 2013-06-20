@@ -29,7 +29,7 @@ import com.googlecode.clearnlp.dependency.DEPFeat;
 /**
  * Constituent to dependency information.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class C2DInfo
 {

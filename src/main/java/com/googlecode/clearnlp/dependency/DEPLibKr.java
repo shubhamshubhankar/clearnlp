@@ -26,7 +26,7 @@ package com.googlecode.clearnlp.dependency;
 /**
  * Dependency library for English.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class DEPLibKr extends DEPLib
 {

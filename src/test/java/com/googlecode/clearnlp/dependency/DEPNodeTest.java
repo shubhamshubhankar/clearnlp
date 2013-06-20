@@ -95,4 +95,40 @@ public class DEPNodeTest
 		assertEquals(true , sbj .isDescendentOf(root));
 		assertEquals(true , sbj .isDescendentOf(verb));
 	}
+	
+	public void testSub()
+	{
+		DEPTree tree = new DEPTree();
+		DEPNode n1 = new DEPNode(1, "A", "A", "A", null);
+		DEPNode n2 = new DEPNode(2, "B", "B", "PRP$", null);
+		DEPNode n3 = new DEPNode(3, "C", "C", "A", null);
+		DEPNode n4 = new DEPNode(4, "D", "D", "A", null);
+		
+		tree.add(n1);
+		tree.add(n2);
+		tree.add(n3);
+		tree.add(n4);
+		
+		n1.setHead(n4, "A");
+		n2.setHead(n4, "A");
+		n3.setHead(n4, "nn");
+		
+		tree.setDependents();
+		assertEquals("B C D", n4.getSubLemmasEnNoun(" "));
+		
+		DEPNode n5 = new DEPNode(5, "F", "F", "PRP$", null);
+		DEPNode n6 = new DEPNode(6, "G", "G", "A", null);
+		DEPNode n7 = new DEPNode(7, "H", "H", "A", null);
+		
+		tree.add(n5);
+		tree.add(n6);
+		tree.add(n7);
+		
+		n5.setHead(n4, "A");
+		n6.setHead(n4, "nn");
+		n7.setHead(n4, "A");
+		
+		tree.resetDependents();
+		assertEquals("B C D E F", n4.getSubLemmasEnNoun(" "));
+	}
 }

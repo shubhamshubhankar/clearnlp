@@ -28,10 +28,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import com.googlecode.clearnlp.dependency.DEPArc;
+import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
-
-
 
 public class SRLLib
 {
@@ -39,9 +38,28 @@ public class SRLLib
 	static public final String DELIM_PATH_DOWN	= "|";
 	static public final String DELIM_SUBCAT		= "_";
 	
-	static private Pattern P_ARGN = Pattern.compile("^(A|C-A|R-A)\\d");
-	static private Pattern P_ARGM = Pattern.compile("^AM");
-	static private Pattern P_ARGN_CORE = Pattern.compile("^A\\d");
+	static public final String S_PREFIX_CONCATENATION = "C-";
+	static public final String S_PREFIX_REFERENT = "R-";
+	static public final String S_ARGM_MOD = "AM-MOD";
+	static public final String S_ARGM_NEG = "AM-NEG";
+	
+	static public final Pattern P_ARG_CONCATENATION = Pattern.compile("^"+S_PREFIX_CONCATENATION+".+$");
+	static public final Pattern P_ARG_REF = Pattern.compile("^"+S_PREFIX_REFERENT+".+$");
+	static public final Pattern P_ARGN_CORE = Pattern.compile("^A\\d");
+	
+	static public final Pattern P_ARGN = Pattern.compile("^(A|C-A|R-A)\\d");
+	static public final Pattern P_ARGM = Pattern.compile("^AM");
+	
+	
+	static public String getBaseLabel(String label)
+	{
+		if (label.startsWith(SRLLib.S_PREFIX_CONCATENATION))
+			return label.substring(SRLLib.S_PREFIX_CONCATENATION.length());
+		else if (label.startsWith(SRLLib.S_PREFIX_REFERENT))
+			return label.substring(SRLLib.S_PREFIX_REFERENT.length());
+		else
+			return label;
+	}
 	
 	static public boolean isNumberedArgument(String label)
 	{
@@ -79,5 +97,86 @@ public class SRLLib
 		}
 		
 		return list;
+	}
+
+	static public void relinkRelativeClause(SRLTree sTree)
+	{
+		DEPNode pred = sTree.getPredicate();
+		DEPArc ref = null, tmp;
+		DEPNode arg, dep;
+		
+		for (DEPArc arc : pred.getDependents())
+		{
+			dep = arc.getNode();
+			
+			if (dep.containsSHead(pred, P_ARG_REF))
+			{
+				ref = arc;
+				break;
+			}
+		}
+		
+		for (SRLArc sArc : sTree.getArguments())
+		{
+			arg = sArc.getNode();
+			
+			for (DEPArc dArc : arg.getDependents())
+			{
+				dep = dArc.getNode();
+				
+				if (dep == pred || pred.isDescendentOf(dep))
+				{
+					arg.removeDependent(dArc);
+					dep.setHead(arg.getHead(), arg.getLabel());
+					
+					if (ref != null) // && ref.isLabel(SRLLib.S_PREFIX_REFERENT+arg.getLabel())
+					{
+						if (ref.isLabel(DEPLibEn.DEP_PREP))
+						{
+							DEPNode prep = ref.getNode();
+							tmp = new DEPArc(arg, ref.getLabel());
+							arg.setHead(prep, ref.getLabel());
+							arg.id = prep.id + 1;
+							prep.clearDependents();
+							prep.addDependent(tmp);
+							prep.getSHead(pred).setLabel(sArc.getLabel());
+							arg.removeSHead(pred);
+						}
+						else if (ref.isLabel(DEPLibEn.P_SBJ))
+						{
+							arg.setHead(pred, ref.getLabel());
+							arg.id = ref.getNode().id;
+							ref.setNode(arg);
+						}
+						else
+						{
+							tmp = new DEPArc(arg, ref.getLabel());
+							arg.setHead(pred, ref.getLabel());
+							arg.id = pred.id + 1;
+							
+							if (ref.isLabel(DEPLibEn.P_OBJ) || ref.isLabel(DEPLibEn.DEP_ATTR))
+								pred.addDependentRightNextToSelf(tmp);
+							else
+								pred.addDependent(tmp);
+							
+							pred.removeDependent(ref);
+						}
+					}
+					else
+					{
+						tmp = new DEPArc(arg, DEPLibEn.DEP_DEP);
+						arg.setHead(pred, tmp.getLabel());
+						arg.id = pred.id + 1;
+						
+						if (sArc.isLabel(P_ARGN))
+							pred.addDependentRightNextToSelf(tmp);
+						else
+							pred.addDependent(tmp);
+					}
+					
+					break;
+				}
+			}
+		}
 	}
 }

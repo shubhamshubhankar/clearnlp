@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 /**
  * File extension filter.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class FileExtFilter implements FilenameFilter
 {

@@ -31,7 +31,7 @@ import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPNode;
 
 
-/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+/** @author Jinho D. Choi ({@code jdchoi77@gmail.com}) */
 public class DEPArcTest
 {
 	@Test

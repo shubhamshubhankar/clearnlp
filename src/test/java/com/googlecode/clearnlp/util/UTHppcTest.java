@@ -31,7 +31,7 @@ import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.util.UTHppc;
 
 
-/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+/** @author Jinho D. Choi ({@code jdchoi77@gmail.com}) */
 public class UTHppcTest
 {
 	@Test

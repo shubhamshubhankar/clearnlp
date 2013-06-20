@@ -42,21 +42,23 @@ import com.googlecode.clearnlp.util.UTOutput;
 /**
  * PropBank library.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class PBLib
 {
-	static final public String SRL_REL      = "rel";
-	static final public String SRL_DSP      = "DSP";
-	static final public String SRL_DIS	 	= "DIS";
-	static final public String SRL_ARG0 	= "ARG0";
-	static final public String SRL_ARGM 	= "ARGM";
-	static final public String SRL_ARGM_MOD = "ARGM-MOD";
-	static final public String SRL_LINK     = "LINK";
-	static final public String SRL_LINK_SLC = "LINK-SLC";
-	static final public String SRL_LINK_PRO = "LINK-PRO";
-	static final public String SRL_LINK_PSV = "LINK-PSV";
-	static final public String SRL_C_V 		= "C-V";
+	static final public String PB_REL		= "rel";
+	static final public String PB_DSP		= "DSP";
+	static final public String PB_DIS	 	= "DIS";
+	static final public String PB_ARG0		= "ARG0";
+	static final public String PB_ARGM		= "ARGM";
+	static final public String PB_ARGM_ADJ	= "ARGM-ADJ";
+	static final public String PB_ARGM_MOD	= "ARGM-MOD";
+	static final public String PB_ARGM_PRR	= "ARGM-PRR";
+	static final public String PB_LINK		= "LINK";
+	static final public String PB_LINK_SLC	= "LINK-SLC";
+	static final public String PB_LINK_PRO	= "LINK-PRO";
+	static final public String PB_LINK_PSV	= "LINK-PSV";
+	static final public String PB_C_V 		= "C-V";
 	
 	/** The delimiter between terminal ID and height ({@code ":"}). */
 	static final public String DELIM_LOC  = ":";

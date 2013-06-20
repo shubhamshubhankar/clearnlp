@@ -4,7 +4,7 @@
   <artifactId>clearnlp</artifactId>
   <version>1.4.0-SNAPSHOT</version>
   <packaging>jar</packaging>
-  <name>clearnlp</name>
+  <name>ClearNLP</name>
   <description>Fast and robust NLP components implemented in Java.</description>
   <url>https://clearnlp.googlecode.com</url>
 

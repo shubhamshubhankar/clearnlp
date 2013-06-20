@@ -36,7 +36,7 @@ import com.googlecode.clearnlp.propbank.PBLoc;
 import com.googlecode.clearnlp.util.UTInput;
 
 
-/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+/** @author Jinho D. Choi ({@code jdchoi77@gmail.com}) */
 public class PBArgTest
 {
 	@Test

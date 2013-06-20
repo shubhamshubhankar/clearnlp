@@ -55,7 +55,7 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
 /**
  * Constituent to dependency converter for English.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class EnglishC2DConverter extends AbstractC2DConverter
 {
@@ -1284,7 +1284,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			{
 				sHead = dTree.get(p.i);
 				
-				if (cNode.pTag.startsWith("WH"))
+				if (isRefArgument(cNode))
 					p.s = "R-"+p.s;
 				
 				if (!dNode.containsSHead(sHead) && dNode != sHead)
@@ -1294,6 +1294,34 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		
 		for (CTNode child : cNode.getChildren())
 			initPBArgs(dTree, cTree, child);
+	}
+	
+	private boolean isRefArgument(CTNode cNode)
+	{
+		if (CTLibEn.isRelPhrase(cNode))
+			return true;
+		
+		if (cNode.isPTag(CTLibEn.PTAG_PP) && containsRefArgument(cNode))
+			return true;
+
+		return false;
+	}
+	
+	private boolean containsRefArgument(CTNode cNode)
+	{
+		for (CTNode child : cNode.getChildren()) 
+		{
+			if (child.isPTagAny(CTLibEn.PTAG_ADJP, CTLibEn.PTAG_ADVP, CTLibEn.PTAG_NP, CTLibEn.PTAG_PP))
+			{
+				for (CTNode gc : child.getChildren())
+				{
+					if (!gc.isEmptyCategoryRec() && CTLibEn.isRelPhrase(gc))
+						return true;		
+				}
+			}
+		}
+		
+		return false;
 	}
 	
 	private void arrangePBArgs(DEPTree dTree)

@@ -18,10 +18,10 @@ package com.googlecode.clearnlp.experiment;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.googlecode.clearnlp.classification.feature.JointFtrXml;
 import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.component.dep.ONDEPPassParser;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.feature.JointFtrXml;
 import com.googlecode.clearnlp.nlp.NLPTrain;
 import com.googlecode.clearnlp.reader.JointReader;
 import com.googlecode.clearnlp.util.UTFile;

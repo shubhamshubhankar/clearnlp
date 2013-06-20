@@ -84,6 +84,7 @@ import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.generation.LGAnswerGenerator;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.MPLib;
@@ -105,8 +106,139 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
 public class Tmp
 {
 //	static Logger log = Logger.getLogger(Tmp.class.getName());
-	
+
 	public Tmp(String[] args) throws Exception
+	{
+		SRLReader fin = new SRLReader(0, 1, 2, 3, 4, 5, 6, 7);
+		fin.open(UTInput.createBufferedFileReader(args[0]));
+		LGAnswerGenerator lg = new LGAnswerGenerator();
+		DEPTree rTree = fin.next(), qTree;
+		int i;
+		
+	//	int[] rVerbIDs = {2,2,2,2,2,2,2,2,2,2}, qVerbIDs = {3,3,3,2,4,4,4,4,4,4};	// 3
+	//	int[] rVerbIDs = {2,2,2,2,2}, qVerbIDs = {3,3,4,4,4};	// 4
+	//	int[] rVerbIDs = {4,7,4,4,7}, qVerbIDs = {3,3,5,4,4};	// 5
+	//	int[] rVerbIDs = {2,2,2}, qVerbIDs = {1,1,2};	// 6
+	//	int[] rVerbIDs = {5,5}, qVerbIDs = {2,4};	// 7
+	//	int[] rVerbIDs = {4,4}, qVerbIDs = {2,4};	// 8
+	//	int[] rVerbIDs = {4,4}, qVerbIDs = {2,4};	// 9
+	//	int[] rVerbIDs = {6,6}, qVerbIDs = {1,2};	// 10
+	//	int[] rVerbIDs = {2,6,6}, qVerbIDs = {4,2,4};	// 11
+	//	int[] rVerbIDs = {2,6,6}, qVerbIDs = {2,4};	// 12
+	//	int[] rVerbIDs = {3,3,3,3,3,3}, qVerbIDs = {3,3,4,4,4,4};	// 13
+	//	int[] rVerbIDs = {4,4,4,4}, qVerbIDs = {3,3,4,4};	// 14
+		int[] rVerbIDs = {4,4,4}, qVerbIDs = {3,2,4};	// 15
+	//	int[] rVerbIDs = {6}, qVerbIDs = {4};	// 16
+	//	int[] rVerbIDs = {2}, qVerbIDs = {4};	// 17
+		
+		rTree.setDependents();
+		DEPLibEn.postLabel(rTree);
+		
+		for (i=0; (qTree = fin.next()) != null; i++)
+		{
+			qTree.setDependents();
+			DEPLibEn.postLabel(qTree);
+			System.out.println(qTree.toStringRaw());
+			System.out.println("  "+lg.getAnswer(qTree, rTree, qVerbIDs[i], rVerbIDs[i], " "));
+		}
+	}
+	
+	public void testException(int i) throws Exception
+	{
+		if (i == 0)
+			throw new Exception("NO");
+		
+		System.out.println("BINGO");
+	}
+	
+	boolean relabelLightVerb(DEPTree tree)
+	{
+		int i, j, size = tree.size();
+		DEPNode node, head, arg;
+		boolean change = false;
+		Set<DEPNode> verbs;
+		DEPArc arc;
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			
+			if (MPLibEn.isNoun(node.pos) && node.getFeat(DEPLib.FEAT_PB) != null)
+			{
+				verbs = new HashSet<DEPNode>();
+				
+				for (DEPArc pred : node.getSHeadsByLabel("AM-PRR"))
+					verbs.add(pred.getNode());
+				
+				for (j=1; j<size; j++)
+				{
+					if (i == j)	continue;
+					arg = tree.get(j);
+					
+					if ((arc = arg.getSHead(node)) != null)
+					{
+						head = arg.getHead();
+					
+						if (verbs.contains(head))
+							arc.setNode(head);
+						else
+							arg.removeSHead(arc);
+					}
+				}
+				
+				node.removeFeat(DEPLib.FEAT_PB);
+				change = true;
+			}
+		}
+		
+		return change;
+	}
+	
+	void printProb1DMap(Prob1DMap map)
+	{
+		for (StringIntPair p : map.toSortedList())
+			System.out.println(p.s+"\t"+p.i);
+	}
+	
+	void printProb2DMap(Prob2DMap map, double threshold)
+	{
+		List<String> keys = new ArrayList<String>(map.keySet());
+		Collections.sort(keys);
+		StringDoublePair[] ps;
+		StringBuilder build;
+		double sum;
+		int count;
+		
+		for (String key : keys)
+		{
+			count = map.getTotal1D(key);
+			if (count < 2)	continue;
+			
+			ps = map.getProb1D(key);
+			Arrays.sort(ps);
+
+			build = new StringBuilder();
+			build.append(key);
+			build.append("\t");
+			build.append(count);
+			sum = 0;
+				
+			for (StringDoublePair p : ps)
+			{
+				build.append("\t");
+				build.append(p.s);
+				build.append("\t");
+				build.append(100d * p.d);
+
+				sum += p.d;
+				if (sum >= threshold)	break;
+			}
+			
+			System.out.println(build.toString());
+		}
+	}
+	
+	void pdAlignerProcess(String[] args) throws Exception
 	{
 		DEPReader fin = new DEPReader(0, 1, 3, 5, 7, 9, 11);
 		CPDAligner pd = new CPDAligner(new ZipInputStream(new BufferedInputStream(new FileInputStream(args[1]))));
@@ -129,7 +261,6 @@ public class Tmp
 			fin.close();
 			fout.close();
 		}
-		
 	}
 	
 	void pdAligner(String[] args) throws Exception

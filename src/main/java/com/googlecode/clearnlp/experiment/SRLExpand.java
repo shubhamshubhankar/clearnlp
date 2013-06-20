@@ -130,10 +130,10 @@ public class SRLExpand
 	
 	private int[] getSpan(DEPNode pred, DEPNode arg)
 	{
-		IntOpenHashSet sArg = arg .getSubtreeIdSet();
+		IntOpenHashSet sArg = arg .getSubIdSet();
 		
 		if (pred.isDescendentOf(arg))
-			sArg.removeAll(pred.getSubtreeIdSet());			
+			sArg.removeAll(pred.getSubIdSet());			
 		
 		int[] span = sArg.toArray();
 		return span;

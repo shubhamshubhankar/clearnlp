@@ -31,7 +31,7 @@ import com.googlecode.clearnlp.constituent.CTLibEn;
 /**
  * Morphology library for English.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class MPLibEn extends MPLib
 {
@@ -144,6 +144,11 @@ public class MPLibEn extends MPLib
 	static public boolean isAdverb(String pos)
 	{
 		return pos.startsWith(CTLibEn.POS_RB) || pos.equals(CTLibEn.POS_WRB);
+	}
+	
+	static public boolean isRelativizer(String pos)
+	{
+		return pos.startsWith("W");
 	}
 	
 	/**

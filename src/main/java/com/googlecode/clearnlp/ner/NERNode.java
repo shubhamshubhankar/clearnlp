@@ -17,13 +17,17 @@ package com.googlecode.clearnlp.ner;
 
 import com.googlecode.clearnlp.pos.POSNode;
 
+/**
+ * @since 1.2.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
+ */
 public class NERNode extends POSNode
 {
 	/** The named entity tag of this node (default: null). */
 	public String nament;
 	
-	public boolean isNamex(String namex)
+	public boolean isNamedEntity(String entity)
 	{
-		return this.nament.equals(namex);
+		return this.nament.equals(entity);
 	}
 }

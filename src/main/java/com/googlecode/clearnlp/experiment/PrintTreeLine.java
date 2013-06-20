@@ -38,7 +38,7 @@ import com.googlecode.clearnlp.util.UTOutput;
  * Prints each tree in one line.
  * @see CTTree#toStringLine()
  * @since v0.1
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class PrintTreeLine extends AbstractRun
 {

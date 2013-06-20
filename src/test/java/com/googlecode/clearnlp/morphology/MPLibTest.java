@@ -30,7 +30,7 @@ import java.util.Arrays;
 import org.junit.Test;
 
 
-/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+/** @author Jinho D. Choi ({@code jdchoi77@gmail.com}) */
 public class MPLibTest
 {
 	@Test

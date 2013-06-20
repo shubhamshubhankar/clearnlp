@@ -32,7 +32,7 @@ import com.googlecode.clearnlp.morphology.MPLibEn;
 /**
  * Constituent library for English.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class CTLibEn extends CTLib
 {
@@ -841,5 +841,10 @@ public class CTLibEn extends CTLib
 		}
 		
 		return false;
+	}
+	
+	static public boolean isRelPhrase(CTNode node)
+	{
+		return node.pTag.startsWith("WH");
 	}
 }

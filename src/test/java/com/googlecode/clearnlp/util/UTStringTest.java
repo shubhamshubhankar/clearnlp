@@ -28,7 +28,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 
-/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+/** @author Jinho D. Choi ({@code jdchoi77@gmail.com}) */
 public class UTStringTest
 {
 	@Test
@@ -56,7 +56,7 @@ public class UTStringTest
 		assertEquals(false, UTString.isAllLowerCase(s));
 		assertEquals(false, UTString.containsDigit(s));
 		assertEquals(true , UTString.beginsWithUpperCase(s));
-			assertEquals(0, UTString.getNumOfCapitalsNotAtBeginning(s));
+		assertEquals(0, UTString.getNumOfCapitalsNotAtBeginning(s));
 		
 		s = "1bc";
 		assertEquals(true, UTString.containsDigit(s));
@@ -64,5 +64,8 @@ public class UTStringTest
 		assertEquals(true, UTString.containsDigit(s));
 		s = "ab3";
 		assertEquals(true, UTString.containsDigit(s));
+		
+		s = "!@# abc $%^";
+		assertEquals(UTString.stripPunctuation(s), "abc");
 	}
 }

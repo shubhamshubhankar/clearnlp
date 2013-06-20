@@ -26,12 +26,15 @@ package com.googlecode.clearnlp.dependency;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.googlecode.clearnlp.constituent.CTLibEn;
+import com.googlecode.clearnlp.dependency.srl.SRLLib;
+import com.googlecode.clearnlp.morphology.MPLibEn;
 import com.googlecode.clearnlp.util.pair.Pair;
 
 /**
  * Dependency library for English.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class DEPLibEn extends DEPLib
 {
@@ -156,6 +159,8 @@ public class DEPLibEn extends DEPLib
 	static public final String DEP_RNR			= "rnr";
 	
 	static public Pattern P_SBJ = Pattern.compile("^[nc]subj.*");
+	static public Pattern P_OBJ = Pattern.compile("^[di]obj");
+	static public Pattern P_AUX = Pattern.compile("^aux.*");
 	
 /*	static public final String CONLL_ADV	= "ADV";
 	static public final String CONLL_AMOD	= "AMOD";
@@ -186,8 +191,154 @@ public class DEPLibEn extends DEPLib
 	static public final String CONLL_VC		= "VC";
 	static public final String CONLL_XCOMP	= "XCOMP";*/
 	
+	static public void postLabel(DEPTree tree)
+	{
+		int i, size = tree.size();
+		DEPNode node;
+		
+		tree.setDependents();
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			
+			if (MPLibEn.isVerb(node.pos))
+			{
+				if (!relinkComplementizer(node))
+					relabelPrepositionWithReferent(node);
+			}
+			else if (node.isPos(CTLibEn.POS_IN))
+			{
+				relinkPreposition(node);
+			}
+		}
+		
+		tree.resetDependents();
+	}
 	
+	static private void relinkPreposition(DEPNode prep)
+	{
+		DEPNode head = prep.getHead();
+		
+		if (MPLibEn.isNoun(head.pos) || head.isPos(CTLibEn.POS_IN))
+		{
+			DEPNode gHead = head.getHead();
+			
+			if (gHead != null && prep.containsSHead(gHead))
+				prep.setHead(gHead);
+		}
+	}
 	
+	/** Called by {@link DEPLibEn#postLabel(DEPTree)}. */
+	static private boolean relinkComplementizer(DEPNode verb)
+	{
+		Pair<DEPNode,DEPArc> c = getFirstComplementizer(verb);
+		if (c == null)	return false;
+		Pair<DEPNode,DEPArc> p = getLastPrepositionWithNoDependent(verb);
+		if (p == null)	return false;
+		
+		DEPNode comp = c.o1;
+		
+		comp.setHead(p.o1, DEP_POBJ);
+		comp.removeSHead(c.o2);
+		toReferentArgument(p.o2);
+		
+		return true;
+	}
+	
+	/** Called by {@link DEPLibEn#relinkComplementizer(DEPNode)}. */
+	static private Pair<DEPNode,DEPArc> getFirstComplementizer(DEPNode head)
+	{
+		DEPArc  sHead;
+		DEPNode dep;
+		
+		for (DEPArc arc : head.getDependents())
+		{
+			dep = arc.getNode();
+			
+			if (dep.id > head.id)
+				return null;
+			
+			if ((sHead = dep.getSHead(head, SRLLib.P_ARG_REF)) != null)
+				return (dep.isPos(CTLibEn.POS_IN)) ? null : new Pair<DEPNode,DEPArc>(dep, sHead);
+		}
+		
+		return null;
+	}
+	
+	/** Called by {@link DEPLibEn#relinkComplementizer(DEPNode)}. */
+	static private Pair<DEPNode,DEPArc> getLastPrepositionWithNoDependent(DEPNode head)
+	{
+		List<DEPArc> arcs = head.getDependents();
+		DEPArc arc, sHead;
+		DEPNode dep;
+		int i;
+		
+		for (i=arcs.size()-1; i>=0; i--)
+		{
+			arc = arcs.get(i);
+			dep = arc.getNode();
+			
+			if (dep.id < head.id)
+				return null;
+			
+			if (dep.isPos(CTLibEn.POS_IN) && (sHead = dep.getSHead(head)) != null)
+				return dep.getDependents().isEmpty() ? new Pair<DEPNode,DEPArc>(dep, sHead) : null;
+		}
+		
+		return null;
+	}
+	
+	static private void toReferentArgument(DEPArc arc)
+	{
+		String label = arc.getLabel();
+		
+		if (label.startsWith("A"))
+			arc.setLabel(SRLLib.S_PREFIX_REFERENT + label);
+		else if (label.startsWith(SRLLib.S_PREFIX_CONCATENATION))
+			arc.setLabel(SRLLib.S_PREFIX_REFERENT + label.substring(SRLLib.S_PREFIX_CONCATENATION.length()));
+	}
+	
+	/** Called by {@link DEPLibEn#postLabel(DEPTree)}. */
+	static private void relabelPrepositionWithReferent(DEPNode head)
+	{
+		DEPNode dep, pobj;
+		DEPArc sHead;
+		
+		for (DEPArc arc : head.getDependents())
+		{
+			dep = arc.getNode();
+			
+			if (dep.isPos(CTLibEn.POS_IN) && (sHead = dep.getSHead(head)) != null && !sHead.isLabel(SRLLib.P_ARG_REF))
+			{
+				pobj = dep.getFirstDependentByLabel(DEPLibEn.DEP_POBJ);
+				
+				if (pobj != null)
+				{
+					for (DEPNode sub : pobj.getSubNodeSet())
+					{
+						if (sub.pos.startsWith("W"))
+						{
+							toReferentArgument(sHead);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/** @return a relativizer node in the subtree of the specific node; otherwise, {@code null}. */
+	static public DEPNode getRefDependentNode(DEPNode head)
+	{
+		for (DEPNode node : head.getSubNodeSet())
+		{
+			if (MPLibEn.isRelativizer(node.pos))
+				return node;	
+		}
+		
+		return null;
+	}
 	
 	/**
 	 * If the specific tree has only one root and is interrogative, return a declarative form of the tree.

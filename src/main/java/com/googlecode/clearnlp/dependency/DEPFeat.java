@@ -35,7 +35,7 @@ import com.googlecode.clearnlp.reader.DEPReader;
 /**
  * Dependency feature map.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 @SuppressWarnings("serial")
 public class DEPFeat extends HashMap<String,String>

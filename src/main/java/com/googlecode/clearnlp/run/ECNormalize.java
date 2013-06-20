@@ -40,7 +40,7 @@ import com.googlecode.clearnlp.util.UTOutput;
  * Normalizes indices of empty categories in constituent trees.
  * @see CTReader#normalizeIndices(CTTree)
  * @since v0.1
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class ECNormalize extends AbstractRun
 {

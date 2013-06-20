@@ -28,7 +28,7 @@ import com.googlecode.clearnlp.reader.AbstractColumnReader;
 /**
  * Part-of-speech library.
  * @since v0.1
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class POSLib
 {

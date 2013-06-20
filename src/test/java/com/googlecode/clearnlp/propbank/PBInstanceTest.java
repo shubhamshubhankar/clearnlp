@@ -30,7 +30,7 @@ import org.junit.Test;
 import com.googlecode.clearnlp.propbank.PBInstance;
 
 
-/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+/** @author Jinho D. Choi ({@code jdchoi77@gmail.com}) */
 public class PBInstanceTest
 {
 	@Test

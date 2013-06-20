@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectOpenHashMap;
@@ -46,7 +47,7 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
  * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/dependency/DPTreeTest.java">DPTreeTest</a> for the use of this class.
  * @see DEPNode
  * @since v0.1
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class DEPTree extends ArrayList<DEPNode>
 {
@@ -96,6 +97,22 @@ public class DEPTree extends ArrayList<DEPNode>
 		{
 			return null;
 		}
+	}
+	
+	public DEPNode getFirstRoot()
+	{
+		DEPNode node, root = get(0);
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			node = get(i);
+			
+			if (node.getHead() == root)
+				return node;
+		}
+		
+		return null;
 	}
 	
 	/** @return a list of root nodes in this tree. */
@@ -318,13 +335,23 @@ public class DEPTree extends ArrayList<DEPNode>
 		return false;
 	}
 	
+	/** 
+	 * Sets dependents of each node in this tree only if no dependent has ever been set before.
+	 * If you are not sure if you have set any dependent or not, use {@link DEPTree#resetDependents()} instead.
+	 */
 	public void setDependents()
+	{
+		if (get(0).l_dependents != null)
+			return;
+
+		resetDependents();
+	}
+	
+	/** Resets dependents of each node in this tree. */
+	public void resetDependents()
 	{
 		int i, size = size();
 		DEPNode node, head;
-		
-		if (get(0).l_dependents != null)
-			return;
 		
 		for (i=0; i<size; i++)
 			get(i).l_dependents = new ArrayList<DEPArc>();
@@ -337,6 +364,14 @@ public class DEPTree extends ArrayList<DEPNode>
 			if (head != null)
 				head.addDependent(node, node.getLabel());
 		}
+	}
+	
+	public void resetIDs()
+	{
+		int i, size = size();
+		
+		for (i=0; i<size; i++)
+			get(i).id = i;
 	}
 	
 	public List<List<DEPArc>> getArgumentList()
@@ -896,6 +931,71 @@ public class DEPTree extends ArrayList<DEPNode>
 		}
 
 		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
+	public String getSentenceFromPA(int verbId, Pattern labels, String delim)
+	{
+		List<DEPNode> subs = new ArrayList<DEPNode>();
+		StringBuilder build = new StringBuilder();
+		DEPNode node, verb = get(verbId);
+		int i, size = size();
+		
+		subs.add(verb);
+		
+		for (i=1; i<size; i++)
+		{
+			if (i != verbId)
+			{
+				node = get(i);
+				
+				if (node.isArgumentOf(verb, labels))
+					subs.addAll(node.getSubNodeSet());				
+			}
+		}
+		
+		Collections.sort(subs);
+		
+		for (DEPNode sub : subs)
+		{
+			build.append(delim);
+			build.append(sub.form);
+		}
+		
+		return build.substring(delim.length());
+	}
+	
+	public DEPTree cloneSRL()
+	{
+		DEPTree tree = new DEPTree();
+		DEPNode oNode, nNode, oHead;
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			oNode = get(i);
+			nNode = new DEPNode(oNode);
+			tree.add(nNode);
+			
+			if (oNode.s_heads != null)
+				nNode.initSHeads();
+		}
+		
+		for (i=1; i<size; i++)
+		{
+			oNode = get(i);
+			nNode = tree.get(i);
+			oHead = oNode.getHead();
+			
+			nNode.setHead(tree.get(oHead.id), oNode.getLabel());
+			
+			for (DEPArc sHead : oNode.s_heads)
+			{
+				oHead = sHead.getNode();
+				nNode.addSHead(tree.get(oHead.id), sHead.getLabel());
+			}
+		}
+		
+		return tree;
 	}
 	
 	// --------------------------------- depredicated ---------------------------------

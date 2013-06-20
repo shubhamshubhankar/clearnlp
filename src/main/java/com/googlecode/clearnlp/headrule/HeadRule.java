@@ -27,7 +27,7 @@ package com.googlecode.clearnlp.headrule;
  * Headrule.
  * @see HeadTagSet
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class HeadRule
 {

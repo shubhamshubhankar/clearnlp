@@ -26,7 +26,7 @@ package com.googlecode.clearnlp.classification.prediction;
 /**
  * String prediction.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class IntPrediction implements Comparable<IntPrediction>
 {

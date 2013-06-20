@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
+import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.ner.NERNode;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
@@ -40,15 +41,13 @@ import com.googlecode.clearnlp.reader.DEPReader;
 
 
 /**
- * Dependency node.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/dependency/DPNodeTest.java">DPNodeTest</a> for the use of this class.
- * @since v0.1
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class DEPNode extends NERNode implements Comparable<DEPNode>
 {
 	/** The ID of this node (default: {@link DEPLib#NULL_ID}). */
-	public int             id;
+	public   int           id;
 	/** The extra features of this node (default: empty). */
 	protected DEPFeat      d_feats;
 	/** The dependency head of this node (default: empty). */
@@ -59,25 +58,12 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	protected List<DEPArc> s_heads;
 	/** The sorted list of all dependents of this node (default: empty). */
 	protected List<DEPArc> l_dependents;
-	/** {@code true} if this node is a terminal. */
-	public boolean         b_terminal;
 	
-	/**
-	 * Constructs a null dependency node.
-	 * Calls {@link DEPNode#initNull()}.
-	 */
+	//	====================================== CONSTRUCTOR ======================================
+	
 	public DEPNode()
 	{
 		super();
-	}
-	
-	/**
-	 * Constructs a dependency node using the specific values.
-	 * Calls {@link DEPNode#init(int, String, String, String, String, int, String)}.
-	 */
-	public DEPNode(int id, String form, String lemma, String pos, DEPFeat feats)
-	{
-		init(id, form, lemma, pos, feats);
 	}
 	
 	public DEPNode(int id, String form)
@@ -89,6 +75,18 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	{
 		init(id, node.form, node.lemma, node.pos, new DEPFeat());
 	}
+	
+	public DEPNode(int id, String form, String lemma, String pos, DEPFeat feats)
+	{
+		init(id, form, lemma, pos, feats);
+	}
+	
+	public DEPNode(DEPNode node)
+	{
+		copy(node);
+	}
+	
+	//	====================================== INITIALIZATION ======================================
 	
 	/** Initializes this node as an artificial root node. */
 	public void initRoot()
@@ -103,8 +101,6 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	 * @param lemma the lemma of the word-form.
 	 * @param pos the part-of-speech tag of this node.
 	 * @param feats the extra features of this node.
-	 * @param headId the ID of the head of this node.
-	 * @param s the dependency label of this node to its head.
 	 */
 	public void init(int id, String form, String lemma, String pos, DEPFeat feats)
 	{
@@ -112,63 +108,51 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		this.form    = form;
 		this.lemma   = lemma;
 		this.pos     = pos;
-		this.nament   = AbstractColumnReader.BLANK_COLUMN;
-		d_feats      = feats;
-		d_head       = new DEPArc();
-	//	x_heads      = new ArrayList<DEPArc>();
-	//	s_heads      = new ArrayList<DEPArc>();
-	//	l_dependents = new ArrayList<DEPArc>();
+		this.nament  = AbstractColumnReader.BLANK_COLUMN;
+		this.d_feats = feats;
+		this.d_head  = new DEPArc();
 	}
-	
+
+	/** Initializes semantic heads of this node. */
 	public void initSHeads()
 	{
 		s_heads = new ArrayList<DEPArc>();
 	}
 	
-	/**
-	 * Returns {@code true} if this node is an artificial root.
-	 * @return {@code true} if this node is an artificial root.
-	 */
-	public boolean isRoot()
+	public void copy(DEPNode node)
 	{
-		DEPNode head = getHead();
-		return head != null && head.id == DEPLib.ROOT_ID;
+		init(node.id, node.form, node.lemma, node.pos, (DEPFeat)node.d_feats.clone());
 	}
 	
-	/**
-	 * Returns the value of the specific feature.
-	 * If the feature does not exist, returns {@code null}.
-	 * @param key the key of the feature.
-	 * @return the value of the specific feature.
-	 */
+	//	====================================== FEATS ======================================
+
+	/** @return the value of the specific feature if exists; otherwise, {@code null}. */
 	public String getFeat(String key)
 	{
 		return d_feats.get(key);
 	}
 	
 	/**
-	 * Adds an extra feature to this node using the specific key and value.
-	 * @param key the key of the feature.
-	 * @param value the value of the feature.
+	 * Puts an extra feature to this node using the specific key and value.
+	 * This method overwrites an existing value of the same key with the current value. 
 	 */
 	public void addFeat(String key, String value)
 	{
 		d_feats.put(key, value);
 	}
 	
-	/**
-	 * Removes the feature with the specific key.
-	 * @param key the key of the feature to be removed.
-	 */
+	public void setFeats(DEPFeat feats)
+	{
+		d_feats = feats;
+	}
+	
+	/** Removes the feature with the specific key. */
 	public void removeFeat(String key)
 	{
 		d_feats.remove(key);
 	}
 	
-	public void setFeats(DEPFeat feats)
-	{
-		d_feats = feats;
-	}
+	//	====================================== DEPENDENCY LABEL ======================================
 	
 	/**
 	 * Returns the dependency label of this node to its head. 
@@ -197,6 +181,26 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	{
 		return d_head.label != null && d_head.isLabel(label);
 	}
+	
+	public boolean isLabel(Pattern regex)
+	{
+		return d_head.label != null && d_head.isLabel(regex);
+	}
+	
+	//	====================================== BOOLEAN ======================================
+	
+	/** @return {@code true} if this node is a dependent of an artificial root. */
+	public boolean isRoot()
+	{
+		DEPNode head = getHead();
+		return head != null && head.id == DEPLib.ROOT_ID;
+	}
+	
+	
+	
+	
+	
+	
 	
 	/**
 	 * Returns the dependency head of this node.
@@ -236,6 +240,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	public void clearHead()
 	{
 		d_head.clear();
+	}
+	
+	public void clearDependents()
+	{
+		l_dependents.clear();
 	}
 	
 	public DEPNode getGrandHead()
@@ -288,6 +297,33 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return null;
 	}
 	
+	public boolean hasSHead()
+	{
+		return s_heads != null && !s_heads.isEmpty();
+	}
+	
+	public DEPArc getSHead(DEPNode head)
+	{
+		for (DEPArc arc : s_heads)
+		{
+			if (arc.isNode(head))
+				return arc;
+		}
+		
+		return null;
+	}
+	
+	public DEPArc getSHead(DEPNode head, Pattern labels)
+	{
+		for (DEPArc arc : s_heads)
+		{
+			if (arc.isNode(head) && arc.isLabel(labels))
+				return arc;
+		}
+		
+		return null;
+	}
+	
 	public List<DEPArc> getSHeads()
 	{
 		return s_heads;
@@ -311,9 +347,36 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return sHeads;
 	}
 	
+	public DEPArc getFirstSHead(DEPNode head, Pattern label)
+	{
+		for (DEPArc arc : s_heads)
+		{
+			if (arc.isNode(head) && arc.isLabel(label))
+				return arc;
+		}
+		
+		return null;
+	}
+	
 	public void addSHead(DEPNode head, String label)
 	{
 		s_heads.add(new DEPArc(head, label));
+	}
+	
+	public boolean removeSHead(DEPNode head)
+	{
+		for (DEPArc arc : s_heads)
+		{
+			if (arc.isNode(head))
+				return s_heads.remove(arc);
+		}
+		
+		return false;
+	}
+	
+	public void removeSHead(DEPArc sHead)
+	{
+		s_heads.remove(sHead);
 	}
 	
 	public void removeSHeads(Collection<DEPArc> sHeads)
@@ -348,6 +411,17 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return false;
 	}
 	
+	public boolean containsSHead(DEPNode sHead, Pattern p)
+	{
+		for (DEPArc arc : s_heads)
+		{
+			if (arc.isNode(sHead) && arc.isLabel(p))
+				return true;
+		}
+		
+		return false;
+	}
+	
 	public boolean isArgumentOf(DEPNode sHead)
 	{
 		for (DEPArc arc : s_heads)
@@ -370,10 +444,53 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return false;
 	}
 	
+	public boolean isArgumentOf(DEPNode sHead, Pattern regex)
+	{
+		for (DEPArc arc : s_heads)
+		{
+			if (arc.isNode(sHead) && regex.matcher(arc.getLabel()).find())
+				return true;
+		}
+		
+		return false;
+	}
+	
 	public List<DEPArc> getDependents()
 	{
 		return l_dependents;
 	}
+	
+	public void addDependent(DEPArc arc)
+	{
+		l_dependents.add(arc);
+	}
+	
+	public boolean removeDependent(DEPArc arc)
+	{
+		return l_dependents.remove(arc);
+	}
+	
+	public void addDependentRightNextToSelf(DEPArc dep)
+	{
+		int i, size = l_dependents.size();
+		boolean added = false;
+		DEPArc arc;
+		
+		for (i=0; i<size; i++)
+		{
+			arc = l_dependents.get(i);
+			
+			if (arc.getNode().id > id)
+			{
+				l_dependents.add(i, dep);
+				added = true;
+				break;
+			}
+		}
+		
+		if (!added) l_dependents.add(dep);
+	}
+	
 	
 	public List<DEPNode> getLeftDependents()
 	{
@@ -562,6 +679,28 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return set;
 	}
 	
+	public DEPNode getFirstDependentByLabel(String label)
+	{
+		for (DEPArc arc : l_dependents)
+		{
+			if (arc.isLabel(label))
+				return arc.getNode();
+		}
+		
+		return null;
+	}
+	
+	public DEPNode getFirstDependentByLabels(Pattern p)
+	{
+		for (DEPArc arc : l_dependents)
+		{
+			if (p.matcher(arc.getLabel()).find())
+				return arc.getNode();
+		}
+		
+		return null;
+	}
+	
 	public List<DEPNode> getDependentsByLabels(String... labels)
 	{
 		List<DEPNode> list = new ArrayList<DEPNode>();
@@ -583,6 +722,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		l_dependents.add(new DEPArc(node, label));
 	}
 	
+	void removeDependent(DEPNode node)
+	{
+		l_dependents.remove(node);
+	}
+	
 	public boolean containsDependent(String label)
 	{
 		for (DEPArc node : l_dependents)
@@ -594,25 +738,58 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return false;
 	}
 	
-	public IntOpenHashSet getSubtreeIdSet()
+	/** @return a set of nodes in the subtree of this node (inclusive). */
+	public Set<DEPNode> getSubNodeSet()
+	{
+		Set<DEPNode> set = new HashSet<DEPNode>();
+		
+		getSubNodeCollectionAux(set, this);
+		return set;
+	}
+	
+	/** @return a sorted list of nodes in the subtree of this node (inclusive). */
+	public List<DEPNode> getSubNodeSortedList()
+	{
+		List<DEPNode> list = new ArrayList<DEPNode>();
+		
+		getSubNodeCollectionAux(list, this);
+		Collections.sort(list);
+		
+		return list;
+	}
+	
+	private void getSubNodeCollectionAux(Collection<DEPNode> col, DEPNode curr)
+	{
+		col.add(curr);
+		
+		for (DEPArc arc : curr.getDependents())
+			getSubNodeCollectionAux(col, arc.getNode());
+	}
+	
+	public IntOpenHashSet getSubIdSet()
 	{
 		IntOpenHashSet set = new IntOpenHashSet();
 		
-		getSubtreeIdSetAux(set, this);
+		getSubIdSetAux(set, this);
 		return set;
 	}
 
-	private void getSubtreeIdSetAux(IntOpenHashSet set, DEPNode curr)
+	private void getSubIdSetAux(IntOpenHashSet set, DEPNode curr)
 	{
 		set.add(curr.id);
 		
 		for (DEPArc arc : curr.getDependents())
-			getSubtreeIdSetAux(set, arc.getNode());
+			getSubIdSetAux(set, arc.getNode());
 	}
 	
-	public int[] getSubtreeIdArray()
+	/**
+	 * Returns an array of IDs from the subtree of this node, including the ID of this node.
+	 * The array is sorted in ascending order.
+	 * @return an array of IDs from the subtree of this node, including the ID of this node.
+	 */
+	public int[] getSubIdArray()
 	{
-		IntOpenHashSet set = getSubtreeIdSet();
+		IntOpenHashSet set = getSubIdSet();
 		int[] list = set.toArray();
 		Arrays.sort(list);
 		
@@ -751,6 +928,53 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 			return build.substring(DEPLib.DELIM_HEADS.length());
 		else
 			return AbstractColumnReader.BLANK_COLUMN;
+	}
+	
+	public String getSubForms(String delim)
+	{
+		StringBuilder build = new StringBuilder();
+		
+		for (DEPNode node : getSubNodeSortedList())
+		{
+			build.append(delim);
+			build.append(node.form);
+		}
+		
+		return build.substring(delim.length());
+	}
+	
+	/** @return a sequence of lemmas for nouns (used for a very specific purpose).  */
+	public String getSubLemmasEnNoun(String delim)
+	{
+		StringBuilder build = new StringBuilder();
+		boolean add = true;
+		DEPNode dep;
+		
+		for (DEPArc arc : getDependents())
+		{
+			dep = arc.getNode();
+			
+			if (add && dep.id > id)
+			{
+				build.append(delim);
+				build.append(lemma);
+				add = false;
+			}
+			
+			if (arc.isLabel(DEPLibEn.DEP_NN) || dep.isPos(CTLibEn.POS_PRPS))
+			{
+				build.append(delim);
+				build.append(dep.lemma);
+			}
+		}
+		
+		if (add)
+		{
+			build.append(delim);
+			build.append(lemma);
+		}
+		
+		return build.substring(delim.length());
 	}
 
 	@Override

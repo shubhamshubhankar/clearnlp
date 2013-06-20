@@ -180,7 +180,7 @@ public class PBPostProcess extends AbstractRun
 			{
 				if (arg.label.endsWith("PRR"))
 					nInst = mNouns.get(instance.getKey(arg.getLoc(0).terminalId));
-				else if (arg.label.startsWith("LINK") || arg.isLabel(PBLib.SRL_ARG0))
+				else if (arg.label.startsWith("LINK") || arg.isLabel(PBLib.PB_ARG0))
 					args.add(arg);
 			}
 			
@@ -199,14 +199,14 @@ public class PBPostProcess extends AbstractRun
 			else
 			{
 				nInst.addArgs(args);
-				rel = nInst.getFirstArg(PBLib.SRL_REL);
+				rel = nInst.getFirstArg(PBLib.PB_REL);
 				rel.addLoc(new PBLoc(instance.predId, 0, ","));
 				
 				args.clear();
 				
 				for (PBArg arg : instance.getArgs())
 				{
-					if (!arg.isLabel(PBLib.SRL_REL) && !arg.label.endsWith("PRR"))
+					if (!arg.isLabel(PBLib.PB_REL) && !arg.label.endsWith("PRR"))
 						args.add(arg);
 				}
 				
@@ -227,7 +227,7 @@ public class PBPostProcess extends AbstractRun
 			(instance.isVerbPredicate() && !tree.getTerminal(instance.predId).pTag.startsWith("VB")) ||
 			(instance.isNounPredicate() && !tree.getTerminal(instance.predId).pTag.startsWith("NN")))
 		{
-			label = PBLib.SRL_REL;
+			label = PBLib.PB_REL;
 		}
 		else
 		{
@@ -278,7 +278,7 @@ public class PBPostProcess extends AbstractRun
 		
 		for (PBArg arg : instance.getArgs())
 		{
-			if (arg.isLabel(PBLib.SRL_REL))	continue;
+			if (arg.isLabel(PBLib.PB_REL))	continue;
 			ids.clear();
 			
 			for (PBLoc loc : arg.getLocs())
@@ -330,15 +330,15 @@ public class PBPostProcess extends AbstractRun
 		
 		for (PBArg arg : instance.getArgs())
 		{
-			if (arg.isLabel(PBLib.SRL_REL))	continue;
+			if (arg.isLabel(PBLib.PB_REL))	continue;
 			
 			for (PBLoc loc : arg.getLocs())
 			{
 				if ((node = tree.getNode(loc)).getSubTerminalIdSet().contains(predId))
 				{
-					if (arg.isLabel(PBLib.SRL_ARGM_MOD))
+					if (arg.isLabel(PBLib.PB_ARGM_MOD))
 						loc.height = 0;
-					else if (arg.isLabel(PBLib.SRL_LINK_SLC) && node.isPTag(CTLibEn.PTAG_SBAR) && (tmp = node.getFirstChild("+WH.*")) != null)
+					else if (arg.isLabel(PBLib.PB_LINK_SLC) && node.isPTag(CTLibEn.PTAG_SBAR) && (tmp = node.getFirstChild("+WH.*")) != null)
 						loc.set(tmp.getPBLoc(), loc.type);
 					else if (node.isPTag(CTLibEn.PTAG_NP) && (tmp = node.getChild(0)).isPTag(CTLibEn.PTAG_NP) && !tmp.getSubTerminalIdSet().contains(predId))
 						loc.height--;
@@ -399,7 +399,7 @@ public class PBPostProcess extends AbstractRun
 		
 		for (PBArg arg : instance.getArgs())
 		{
-			if (arg.isLabel(PBLib.SRL_REL))	continue;
+			if (arg.isLabel(PBLib.PB_REL))	continue;
 			
 			for (PBLoc loc : arg.getLocs())
 			{
@@ -482,7 +482,7 @@ public class PBPostProcess extends AbstractRun
 		
 		for (PBArg arg : instance.getArgs())
 		{
-			if (arg.isLabel(PBLib.SRL_REL))	continue;
+			if (arg.isLabel(PBLib.PB_REL))	continue;
 			lDel.clear();
 			
 			for (i=0; i<arg.getLocSize(); i++)	// size() gets changed dynamically
@@ -657,16 +657,16 @@ public class PBPostProcess extends AbstractRun
 				if (node.pTag.startsWith("WH"))
 				{
 					if ((comp = CTLibEn.getComplementizer(node)) != null && (ante = comp.getAntecedent()) != null)
-						label = PBLib.SRL_LINK_SLC;
+						label = PBLib.PB_LINK_SLC;
 				}
 				else if (node.isEmptyCategory())
 				{
 					if ((ante = node.getAntecedent()) != null)
 					{
 						if (node.form.equals(CTLibEn.EC_NULL))
-							label = PBLib.SRL_LINK_PSV;
+							label = PBLib.PB_LINK_PSV;
 						else if (node.form.equals(CTLibEn.EC_PRO))
-							label = PBLib.SRL_LINK_PRO;
+							label = PBLib.PB_LINK_PRO;
 					}
 				}
 				
@@ -694,7 +694,7 @@ public class PBPostProcess extends AbstractRun
 		
 		for (PBArg arg : instance.getArgs())
 		{
-			if (arg.isLabel(PBLib.SRL_REL))	continue;
+			if (arg.isLabel(PBLib.PB_REL))	continue;
 			size = arg.getLocSize();
 			
 			for (i=0; i<size; i++)
@@ -750,7 +750,7 @@ public class PBPostProcess extends AbstractRun
 		
 		for (PBArg arg : instance.getArgs())
 		{
-			if (!PBLib.isNumberedArgument(arg) || arg.isLabel(PBLib.SRL_ARG0))
+			if (!PBLib.isNumberedArgument(arg) || arg.isLabel(PBLib.PB_ARG0))
 				continue;
 			
 			set = arg.getTerminalIdSet(tree);
@@ -773,7 +773,7 @@ public class PBPostProcess extends AbstractRun
 		{
 			PBArg arg = new PBArg();
 			arg.addLoc(dsp.getPBLoc());
-			arg.label = max.o1.label+"-"+PBLib.SRL_DSP;
+			arg.label = max.o1.label+"-"+PBLib.PB_DSP;
 			instance.removeArgs(max.o1.label);
 			
 			return arg;

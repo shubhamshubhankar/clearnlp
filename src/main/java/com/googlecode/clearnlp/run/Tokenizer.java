@@ -50,7 +50,7 @@ public class Tokenizer extends AbstractRun
 	private String i_format = AbstractReader.TYPE_RAW;
 	@Option(name="-of", usage="output format (default: "+AbstractReader.TYPE_LINE+")", required=false, metaVar="<string>")
 	private String o_format = AbstractReader.TYPE_LINE;
-	@Option(name="-twit", usage="if set, tokenize for twits", required=false, metaVar="<boolean>")
+	@Option(name="-twit", usage="if set, do not tokenize special punctuation used in twitter", required=false, metaVar="<boolean>")
 	protected boolean b_twit;
 	
 	public Tokenizer() {}

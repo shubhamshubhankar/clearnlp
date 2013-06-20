@@ -17,7 +17,7 @@ package com.googlecode.clearnlp.classification.algorithm;
 
 /**
  * @since 1.3.2
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 abstract public class AbstractLiblinear extends AbstractAlgorithm
 {

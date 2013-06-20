@@ -34,7 +34,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
 /**
  * Train space containing sparse vectors.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class SparseTrainSpace extends AbstractTrainSpace
 {
