@@ -42,6 +42,11 @@ public class PVRoleset extends HashMap<String,PVRoles>
 	
 	public PVRoleset(Element eRoleset, String rolesetId, boolean fromMap)
 	{
+		init(eRoleset, rolesetId, fromMap);
+	}
+	
+	private void init(Element eRoleset, String rolesetId, boolean fromMap)
+	{
 		s_rolesetId = rolesetId;
 		
 		if (fromMap)	initRolesFromMap(eRoleset);

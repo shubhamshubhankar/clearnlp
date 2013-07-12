@@ -21,6 +21,16 @@ public class UTRegex
 {
 	static public Pattern getORPattern(String... regex)
 	{
+		return Pattern.compile(getORString(regex));
+	}
+	
+	static public Pattern getORPatternExact(String... regex)
+	{
+		return Pattern.compile("^("+getORString(regex)+")$");
+	}
+	
+	static public String getORString(String... regex)
+	{
 		StringBuilder build = new StringBuilder();
 		
 		for (String r : regex)
@@ -29,6 +39,6 @@ public class UTRegex
 			build.append(r);
 		}
 		
-		return Pattern.compile(build.substring(1));
+		return build.substring(1);		
 	}
 }

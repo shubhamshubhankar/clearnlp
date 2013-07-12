@@ -21,7 +21,7 @@ import java.io.InputStream;
 import java.util.zip.ZipInputStream;
 
 import com.googlecode.clearnlp.component.AbstractComponent;
-import com.googlecode.clearnlp.component.dep.CDEPParser;
+import com.googlecode.clearnlp.component.dep.CDEPParserSB;
 import com.googlecode.clearnlp.component.morph.CDefaultMPAnalyzer;
 import com.googlecode.clearnlp.component.morph.CEnglishMPAnalyzer;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
@@ -102,7 +102,7 @@ public class EngineGetter implements EngineLib
 		else if (mode.equals(NLPLib.MODE_MORPH))
 			return getCMPAnalyzer(zin, language);
 		else if (mode.equals(NLPLib.MODE_DEP))
-			return new CDEPParser(zin);
+			return new CDEPParserSB(zin);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(zin);
 		else if (mode.equals(NLPLib.MODE_ROLE))

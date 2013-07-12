@@ -30,12 +30,10 @@ import org.w3c.dom.NodeList;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.component.AbstractComponent;
-import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.component.dep.CDEPParserSB;
 import com.googlecode.clearnlp.component.morph.CDefaultMPAnalyzer;
 import com.googlecode.clearnlp.component.morph.CEnglishMPAnalyzer;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
-import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
 import com.googlecode.clearnlp.component.srl.CSRLabeler;
@@ -190,13 +188,9 @@ public class NLPDecode extends AbstractNLP
 		
 		if      (mode.equals(NLPLib.MODE_POS))
 			return (s_posFile == null) ? new CPOSTagger(zin) : new CPOSTagger(zin, UTInput.createBufferedFileReader(s_posFile));
-		else if (mode.equals(NLPLib.MODE_POS_SB))
-			return new CPOSTaggerSB(zin);
 		else if (mode.equals(NLPLib.MODE_MORPH))
 			return getMPAnalyzer(zin, language);
-		else if (mode.equals(NLPLib.MODE_DEP))
-			return new CDEPParser(zin);
-		else if (mode.equals(NLPLib.MODE_DEP_SB))
+		else if (mode.startsWith(NLPLib.MODE_DEP))
 			return new CDEPParserSB(zin);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(zin);
@@ -226,11 +220,7 @@ public class NLPDecode extends AbstractNLP
 		{
 			modes.add(NLPLib.MODE_POS);
 		}
-		if (mode.equals(NLPLib.MODE_POS_SB))
-		{
-			modes.add(NLPLib.MODE_POS_SB);
-		}
-		if (mode.equals(NLPLib.MODE_MORPH))
+		else if (mode.equals(NLPLib.MODE_MORPH))
 		{
 			if (readerType.equals(AbstractReader.TYPE_RAW) || readerType.equals(AbstractReader.TYPE_LINE) || readerType.equals(AbstractReader.TYPE_TOK))
 				modes.add(NLPLib.MODE_POS);

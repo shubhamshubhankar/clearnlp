@@ -72,7 +72,7 @@ public class NLPTrain extends AbstractNLP
 	protected String s_mode;
 	@Option(name="-margin", usage="margin between the 1st and 2nd predictions (default: 0.5)", required=false, metaVar="<double>")
 	protected double d_margin = 0.5;
-	@Option(name="-beams", usage="the size of beam (default: 1)", required=false, metaVar="<double>")
+	@Option(name="-beam", usage="the size of beam (default: 1)", required=false, metaVar="<double>")
 	protected int n_beams = 1;
 	
 	public NLPTrain() {}

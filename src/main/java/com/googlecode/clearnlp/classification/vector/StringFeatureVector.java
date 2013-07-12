@@ -94,8 +94,8 @@ public class StringFeatureVector extends AbstractFeatureVector
 	 */
 	public void addFeature(String type, String value, double weight)
 	{
-		s_types  .add(type);
-		s_values .add(value);
+		s_types .add(type);
+		s_values.add(value);
 		d_weights.add(weight);
 	}
 	

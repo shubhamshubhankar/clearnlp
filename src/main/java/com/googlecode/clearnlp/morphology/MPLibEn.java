@@ -36,15 +36,20 @@ import com.googlecode.clearnlp.constituent.CTLibEn;
 public class MPLibEn extends MPLib
 {
 	/** Derivations of a verb "be". */
-	static public Pattern RE_BE		= Pattern.compile("^(be|been|being|am|is|was|are|were|'m|'s|'re)$");
+	static public final Pattern RE_BE = Pattern.compile("^(be|been|being|am|is|was|are|were|'m|'s|'re)$");
+	static public final Pattern BE_FINITE = Pattern.compile("^(am|is|was|are|were)$");
 	/** Derivations of a verb "become". */
-	static public Pattern RE_BECOME	= Pattern.compile("^(become|becomes|became|becoming)$");
+	static public final Pattern RE_BECOME	= Pattern.compile("^(become|becomes|became|becoming)$");
 	/** Derivations of a verb "get". */
-	static public Pattern RE_GET	= Pattern.compile("^(get|gets|got|gotten|getting)$");
+	static public final Pattern RE_GET	= Pattern.compile("^(get|gets|got|gotten|getting)$");
 	/** Derivations of a verb "have". */
-	static public Pattern RE_HAVE	= Pattern.compile("^(have|has|had|having|'ve|'d)$");
+	static public final Pattern RE_HAVE	= Pattern.compile("^(have|has|had|having|'ve|'d)$");
 	/** Derivations of a verb "do". */
-	static public Pattern RE_DO		= Pattern.compile("^(do|does|did|done|doing)$");
+	static public final Pattern RE_DO		= Pattern.compile("^(do|does|did|done|doing)$");
+	/** Common wh-pronouns. */
+	static public final Pattern RE_WH_COMMON = Pattern.compile("^(how|what|which|who|whom|whose|where|when)$");
+	/** Negations. */
+	static public final Pattern RE_NEG = Pattern.compile("^(never|not|n't|'nt|no)$");
 
 	static public String[][] RULE_SUFFIXES = {
 		{"s"	,""},		{"ses"	,"s"},		{"xes"	,"x"},		{"zes"	,"z"},
@@ -146,11 +151,6 @@ public class MPLibEn extends MPLib
 		return pos.startsWith(CTLibEn.POS_RB) || pos.equals(CTLibEn.POS_WRB);
 	}
 	
-	static public boolean isRelativizer(String pos)
-	{
-		return pos.startsWith("W");
-	}
-	
 	/**
 	 * @param fpos a fine-grained POS tag.
 	 * @return the coarse-grained POS tag of the specific fine-grained POS tag.
@@ -163,5 +163,11 @@ public class MPLibEn extends MPLib
 		if (isVerb(fpos))		return CTLibEn.POS_VB;
 		
 		return fpos;
+	}
+	
+	static public boolean isVowel(char c)
+	{
+		c = Character.toLowerCase(c);
+		return c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' || c == 'w' || c == 'y';
 	}
 }

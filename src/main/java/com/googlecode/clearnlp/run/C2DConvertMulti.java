@@ -28,7 +28,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.kohsuke.args4j.Option;
@@ -47,7 +49,9 @@ import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.srl.SRLLib;
 import com.googlecode.clearnlp.engine.EngineGetter;
+import com.googlecode.clearnlp.morphology.MPLibEn;
 import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.propbank.PBArg;
 import com.googlecode.clearnlp.propbank.PBInstance;
@@ -160,10 +164,11 @@ public class C2DConvertMulti extends AbstractRun
 					if (mVclass != null)	addWordSenses(cTree, dTree, mVclass.get(n), DEPLibEn.FEAT_VN);
 					if (mName   != null)	addNames(cTree, dTree, mName.get(n));
 					
-					if (mProp   != null)
+					if (mProp != null)
 					{
 						addRolesets(cTree, dTree, instances);
-						reconfigureDEPTree(dTree);
+						if (b_verbs_only) relabelLightVerb(dTree);
+						DEPLibEn.postLabel(dTree);
 					}
 				
 					dTree = getDEPTreeWithoutEdited(cTree, dTree);
@@ -287,16 +292,43 @@ public class C2DConvertMulti extends AbstractRun
 		}
 	}
 	
-	private void reconfigureDEPTree(DEPTree tree)
+	private void relabelLightVerb(DEPTree tree)
 	{
-		int i, size = tree.size();
-	//	DEPNode node;
+		int i, j, size = tree.size();
+		DEPNode noun, head, arg;
+		Set<DEPNode> verbs;
+		DEPArc arc;
 		
 		for (i=1; i<size; i++)
 		{
+			noun = tree.get(i);
 			
+			if (MPLibEn.isNoun(noun.pos) && noun.getFeat(DEPLib.FEAT_PB) != null)
+			{
+				verbs = new HashSet<DEPNode>();
+				
+				for (DEPArc verb : noun.getSHeadsByLabel(SRLLib.ARGM_PRR))
+					verbs.add(verb.getNode());
+				
+				for (j=1; j<size; j++)
+				{
+					if (i == j)	continue;
+					arg = tree.get(j);
+					
+					if ((arc = arg.getSHead(noun)) != null)
+					{
+						head = arg.getHead();
+					
+						if (verbs.contains(head))
+							arc.setNode(head);
+						else
+							arg.removeSHead(arc);
+					}
+				}
+				
+				noun.removeFeat(DEPLib.FEAT_PB);
+			}
 		}
-		
 	}
 	
 	private boolean isPBSkip(PBInstance instance, CTTree cTree)

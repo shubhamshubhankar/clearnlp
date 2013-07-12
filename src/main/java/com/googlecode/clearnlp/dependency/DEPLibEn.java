@@ -23,9 +23,12 @@
 */
 package com.googlecode.clearnlp.dependency;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.googlecode.clearnlp.constant.english.STConstant;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.srl.SRLLib;
 import com.googlecode.clearnlp.morphology.MPLibEn;
@@ -158,9 +161,11 @@ public class DEPLibEn extends DEPLib
 	/** The secondary dependency label for right node raising. */
 	static public final String DEP_RNR			= "rnr";
 	
-	static public Pattern P_SBJ = Pattern.compile("^[nc]subj.*");
+	static public Pattern P_SBJ = Pattern.compile("^[nc]subj");
 	static public Pattern P_OBJ = Pattern.compile("^[di]obj");
-	static public Pattern P_AUX = Pattern.compile("^aux.*");
+	static public Pattern P_AUX = Pattern.compile("^aux");
+	static public Pattern P_NSUBJ = Pattern.compile("^nsubj");
+	static public Pattern P_PUNCT = Pattern.compile("^(hyph|punct)$");
 	
 /*	static public final String CONLL_ADV	= "ADV";
 	static public final String CONLL_AMOD	= "AMOD";
@@ -191,85 +196,212 @@ public class DEPLibEn extends DEPLib
 	static public final String CONLL_VC		= "VC";
 	static public final String CONLL_XCOMP	= "XCOMP";*/
 	
+	static public boolean isSubject(String label)
+	{
+		return P_SBJ.matcher(label).find();
+	}
+	
+	static public boolean isObject(String label)
+	{
+		return P_OBJ.matcher(label).find();
+	}
+	
+	static public boolean isAuxiliary(String label)
+	{
+		return P_AUX.matcher(label).find();
+	}
+
+	static public Deque<DEPNode> getPreviousConjuncts(DEPNode node)
+	{
+		Deque<DEPNode> deque = new ArrayDeque<DEPNode>();
+		
+		while (node.isLabel(DEPLibEn.DEP_CONJ))
+		{
+			node = node.getHead();
+			deque.add(node);
+		}
+		
+		return deque;
+	}
+	
+	static public Deque<DEPNode> getNextConjuncts(DEPNode node)
+	{
+		Deque<DEPNode> deque = new ArrayDeque<DEPNode>();
+		
+		getNextConjunctsAux(node, deque);
+		return deque;
+	}
+	
+	static private void getNextConjunctsAux(DEPNode node, Deque<DEPNode> deque)
+	{
+		for (DEPNode dep : node.getDependentsByLabels(DEPLibEn.DEP_CONJ))
+		{
+			deque.add(dep);
+			getNextConjunctsAux(dep, deque);
+		}
+	}
+	
+	static public boolean isSmallClause(DEPNode verb)
+	{
+		DEPNode sbj = verb.getFirstDependentByLabel(P_SBJ);
+		
+		if (sbj != null)
+			return isSmallClauseAux(verb);
+		
+		return false;
+	}
+	
+	static public boolean isSmallClauseAux(DEPNode verb)
+	{
+		DEPNode aux = verb.getFirstDependentByLabel(DEP_AUX);
+		
+		if (aux == null)	return verb.isPos(CTLibEn.POS_VBG);
+		else				return aux.isPos(CTLibEn.POS_TO);
+	}
+	
 	static public void postLabel(DEPTree tree)
 	{
+		List<List<DEPArc>> argLists;
 		int i, size = tree.size();
+		List<DEPArc> argList;
 		DEPNode node;
 		
 		tree.setDependents();
+		argLists = tree.getArgumentList();
 		
 		for (i=1; i<size; i++)
 		{
 			node = tree.get(i);
+			argList = argLists.get(i);
 			
-			if (MPLibEn.isVerb(node.pos))
-			{
-				if (!relinkComplementizer(node))
-					relabelPrepositionWithReferent(node);
-			}
-			else if (node.isPos(CTLibEn.POS_IN))
+			if (node.isLabel(DEP_PREP))
 			{
 				relinkPreposition(node);
+			}
+			else if (MPLibEn.isVerb(node.pos))
+			{
+				labelReferentOfRelativeClause(node, argList);
+				
+				if (!relinkReferent(node))
+					relabelPrepositionWithReferent(node);
 			}
 		}
 		
 		tree.resetDependents();
 	}
 	
+	/**
+	 * Called by {@link DEPLibEn#postLabel(DEPTree)}.
+	 * @param verb a dependency node whose dependency relation to its head is {@link DEPLibEn#DEP_PREP}.
+	 */
 	static private void relinkPreposition(DEPNode prep)
 	{
 		DEPNode head = prep.getHead();
 		
-		if (MPLibEn.isNoun(head.pos) || head.isPos(CTLibEn.POS_IN))
+		if (MPLibEn.isNoun(head.pos) || head.isPos(CTLibEn.POS_IN) || head.isPos(CTLibEn.POS_RP))
 		{
 			DEPNode gHead = head.getHead();
+			DEPArc  sp, sh;
 			
-			if (gHead != null && prep.containsSHead(gHead))
-				prep.setHead(gHead);
+			if (gHead != null && (sp = prep.getSHead(gHead)) != null)
+			{
+				if ((sh = head.getSHead(gHead)) != null)
+				{
+					if (head.isPos(CTLibEn.POS_IN) && sh.isLabel(SRLLib.C_V))
+					{
+						head.pos = CTLibEn.POS_RP;
+						head.setLabel(DEP_PRT);
+					}
+					
+					prep.setHead(gHead);
+				}
+				else
+				{
+					prep.removeSHead(sp);
+					head.addSHead(gHead, sp.getLabel());
+				}
+			}
+			
+//			if (gHead != null && (sp = prep.getSHead(gHead)) != null && (sh = head.getSHead(gHead)) != null)
+//				prep.setHead(gHead);
 		}
 	}
 	
 	/** Called by {@link DEPLibEn#postLabel(DEPTree)}. */
-	static private boolean relinkComplementizer(DEPNode verb)
+	static private void labelReferentOfRelativeClause(DEPNode verb, List<DEPArc> argList)
 	{
-		Pair<DEPNode,DEPArc> c = getFirstComplementizer(verb);
+		DEPNode top  = getTopVerbChain(verb);
+		DEPNode head = top.getHead();
+		
+		if (top.isLabel(DEPLibEn.DEP_RCMOD) && !head.containsSHead(verb))
+		{
+			for (DEPArc arc : argList)
+			{
+				if (arc.isLabel(SRLLib.P_ARG_REF) && isReferentArgument(arc.getNode()))
+				{
+					head.addSHead(verb, SRLLib.getBaseLabel(arc.getLabel()));
+					return;
+				}
+			}
+		}
+	}
+	
+	/** Called by {@link DEPLibEn#labelReferentOfRelativeClause(DEPNode, List)}. */
+	static private DEPNode getTopVerbChain(DEPNode verb)
+	{
+		while (MPLibEn.isVerb(verb.getHead().pos) && (verb.isLabel(DEP_CONJ) || verb.isLabel(DEP_XCOMP)))
+			verb = verb.getHead();
+			
+		return verb;
+	}
+	
+	/** Called by {@link DEPLibEn#labelReferentOfRelativeClause(DEPNode, List)}. */
+	static boolean isReferentArgument(DEPNode arg)
+	{
+		return arg.getFirstDependentByLabel(DEP_POBJ) != null || arg.isLemma("that") || arg.isLemma("which");
+	}
+	
+	/** Called by {@link DEPLibEn#postLabel(DEPTree)}. */
+	static private boolean relinkReferent(DEPNode verb)
+	{
+		Pair<DEPNode,DEPArc> c = getFirstRelativizer(verb);
 		if (c == null)	return false;
-		Pair<DEPNode,DEPArc> p = getLastPrepositionWithNoDependent(verb);
+		Pair<DEPNode,DEPArc> p = getLastPrepositionWithoutDependent(verb);
 		if (p == null)	return false;
 		
 		DEPNode comp = c.o1;
 		
 		comp.setHead(p.o1, DEP_POBJ);
 		comp.removeSHead(c.o2);
-		toReferentArgument(p.o2);
+		SRLLib.toReferentArgument(p.o2);
 		
 		return true;
 	}
 	
-	/** Called by {@link DEPLibEn#relinkComplementizer(DEPNode)}. */
-	static private Pair<DEPNode,DEPArc> getFirstComplementizer(DEPNode head)
+	/** Called by {@link DEPLibEn#relinkReferent(DEPNode)}. */
+	static private Pair<DEPNode,DEPArc> getFirstRelativizer(DEPNode verb)
 	{
 		DEPArc  sHead;
 		DEPNode dep;
 		
-		for (DEPArc arc : head.getDependents())
+		for (DEPArc arc : verb.getDependents())
 		{
 			dep = arc.getNode();
 			
-			if (dep.id > head.id)
+			if (dep.id > verb.id)
 				return null;
 			
-			if ((sHead = dep.getSHead(head, SRLLib.P_ARG_REF)) != null)
+			if ((sHead = dep.getSHead(verb, SRLLib.P_ARG_REF)) != null)
 				return (dep.isPos(CTLibEn.POS_IN)) ? null : new Pair<DEPNode,DEPArc>(dep, sHead);
 		}
 		
 		return null;
 	}
 	
-	/** Called by {@link DEPLibEn#relinkComplementizer(DEPNode)}. */
-	static private Pair<DEPNode,DEPArc> getLastPrepositionWithNoDependent(DEPNode head)
+	/** Called by {@link DEPLibEn#relinkReferent(DEPNode)}. */
+	static private Pair<DEPNode,DEPArc> getLastPrepositionWithoutDependent(DEPNode verb)
 	{
-		List<DEPArc> arcs = head.getDependents();
+		List<DEPArc> arcs = verb.getDependents();
 		DEPArc arc, sHead;
 		DEPNode dep;
 		int i;
@@ -279,50 +411,34 @@ public class DEPLibEn extends DEPLib
 			arc = arcs.get(i);
 			dep = arc.getNode();
 			
-			if (dep.id < head.id)
+			if (dep.id < verb.id)
 				return null;
 			
-			if (dep.isPos(CTLibEn.POS_IN) && (sHead = dep.getSHead(head)) != null)
+			if (dep.isPos(CTLibEn.POS_IN) && (sHead = dep.getSHead(verb)) != null)
 				return dep.getDependents().isEmpty() ? new Pair<DEPNode,DEPArc>(dep, sHead) : null;
 		}
 		
 		return null;
 	}
 	
-	static private void toReferentArgument(DEPArc arc)
-	{
-		String label = arc.getLabel();
-		
-		if (label.startsWith("A"))
-			arc.setLabel(SRLLib.S_PREFIX_REFERENT + label);
-		else if (label.startsWith(SRLLib.S_PREFIX_CONCATENATION))
-			arc.setLabel(SRLLib.S_PREFIX_REFERENT + label.substring(SRLLib.S_PREFIX_CONCATENATION.length()));
-	}
-	
 	/** Called by {@link DEPLibEn#postLabel(DEPTree)}. */
-	static private void relabelPrepositionWithReferent(DEPNode head)
+	static private void relabelPrepositionWithReferent(DEPNode verb)
 	{
 		DEPNode dep, pobj;
 		DEPArc sHead;
 		
-		for (DEPArc arc : head.getDependents())
+		for (DEPArc arc : verb.getDependents())
 		{
 			dep = arc.getNode();
 			
-			if (dep.isPos(CTLibEn.POS_IN) && (sHead = dep.getSHead(head)) != null && !sHead.isLabel(SRLLib.P_ARG_REF))
+			if (dep.isPos(CTLibEn.POS_IN) && (sHead = dep.getSHead(verb)) != null && !sHead.isLabel(SRLLib.P_ARG_REF))
 			{
 				pobj = dep.getFirstDependentByLabel(DEPLibEn.DEP_POBJ);
 				
-				if (pobj != null)
+				if (pobj != null && getRefDependentNode(pobj) != null)
 				{
-					for (DEPNode sub : pobj.getSubNodeSet())
-					{
-						if (sub.pos.startsWith("W"))
-						{
-							toReferentArgument(sHead);
-							break;
-						}
-					}
+					SRLLib.toReferentArgument(sHead);
+					break;
 				}
 			}
 		}
@@ -331,84 +447,35 @@ public class DEPLibEn extends DEPLib
 	/** @return a relativizer node in the subtree of the specific node; otherwise, {@code null}. */
 	static public DEPNode getRefDependentNode(DEPNode head)
 	{
-		for (DEPNode node : head.getSubNodeSet())
+		if (isCommonRelativizer(head))
+			return head;
+		
+		DEPNode dep, ref;
+		
+		for (DEPArc arc : head.getDependents())
 		{
-			if (MPLibEn.isRelativizer(node.pos))
-				return node;	
-		}
-		
-		return null;
-	}
-	
-	/**
-	 * If the specific tree has only one root and is interrogative, return a declarative form of the tree.
-	 * Otherwise, return {@code null}.
-	 * PRE: {@link DEPTree#setDependents()} must be called.
-	 */
-	static public DEPTree fromInterrogativeToDeclarative(DEPTree tree)
-	{
-		List<DEPNode> roots = tree.getRoots();
-		if (roots.size() != 1)	return null;
-		DEPNode root = roots.get(0);
-		
-		Pair<DEPNode,DEPNode> p = getInterrogativeClues(root);
-		DEPNode aux = p.o1, sbj = p.o2;
-		
-		
-		if (aux != null)
-		{
-			aux.form = aux.form.toLowerCase();
-			tree.removeNode(aux.id);
-			tree.insertNode(root.id, aux);
-		}
-		else if (sbj != null)
-		{
+			dep = arc.getNode();
 			
-		}
-		
-		return null;
-	}
-	
-	static private Pair<DEPNode,DEPNode> getInterrogativeClues(DEPNode verb)
-	{
-		List<DEPArc> deps = verb.getDependents();
-		int i, size = deps.size();
-		DEPNode aux = null, node;
-		DEPArc curr;
-		String label;
-		
-		for (i=0; i<size; i++)
-		{
-			curr  = deps.get(i);
-			node  = curr.getNode();
-			label = curr.getLabel();
-			
-			if (node.id < verb.id)
+			if (!MPLibEn.isVerb(dep.pos) && !dep.isLabel(DEP_RCMOD) && !dep.isLabel(DEP_CCOMP) && !dep.isLabel(DEP_XCOMP) && !dep.isLabel(DEP_DEP) && !dep.isLabel(DEP_CONJ))
 			{
-				if (curr.isLabel(DEPLibEn.DEP_PRECONJ))
-					return null;
-				else if (label.startsWith(DEP_AUX))
-					aux = node;
-				else if (P_SBJ.matcher(label).find())
-					return new Pair<DEPNode,DEPNode>(aux, node);
+				ref = getRefDependentNode(dep);
+				if (ref != null)	return ref;
 			}
-			else
-				break;
-		}
-		
-		if (verb.isLemma("be"))
-		{
-			for (; i<size; i++)
-			{
-				curr  = deps.get(i);
-				node  = curr.getNode();
-				label = curr.getLabel();
-				
-				if (P_SBJ.matcher(label).find())
-					return new Pair<DEPNode,DEPNode>(aux, node);
-			}			
 		}
 		
 		return null;
+	}
+	
+	static public boolean isCommonRelativizer(DEPNode node)
+	{
+		return node.pos.startsWith("W") && MPLibEn.RE_WH_COMMON.matcher(node.lemma).find();
+	}
+	
+	static public void convertFirstFormToLowerCase(DEPTree tree)
+	{
+		DEPNode fst = tree.get(1);
+		
+		if (!fst.pos.startsWith(CTLibEn.POS_NNP) || fst.isLemma(STConstant.I))
+			fst.form = fst.form.toLowerCase();
 	}
 }

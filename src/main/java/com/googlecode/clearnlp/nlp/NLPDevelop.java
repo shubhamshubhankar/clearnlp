@@ -50,8 +50,6 @@ public class NLPDevelop extends NLPTrain
 {
 	@Option(name="-d", usage="the directory containing development files (required)", required=true, metaVar="<directory>")
 	protected String s_devDir;
-	@Option(name="-r", usage="the random seed", required=false, metaVar="<directory>")
-	protected int i_rand = 0;
 	@Option(name="-g", usage="if set, generate files", required=false, metaVar="<boolean>")
 	protected boolean b_generate = false;
 	

@@ -24,13 +24,16 @@
 package com.googlecode.clearnlp.dependency.srl;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.generation.LGLibEn;
 
 public class SRLLib
 {
@@ -38,13 +41,23 @@ public class SRLLib
 	static public final String DELIM_PATH_DOWN	= "|";
 	static public final String DELIM_SUBCAT		= "_";
 	
-	static public final String S_PREFIX_CONCATENATION = "C-";
-	static public final String S_PREFIX_REFERENT = "R-";
-	static public final String S_ARGM_MOD = "AM-MOD";
-	static public final String S_ARGM_NEG = "AM-NEG";
+	static public final String PREFIX_CONCATENATION = "C-";
+	static public final String PREFIX_REFERENT = "R-";
+	static public final String ARGM_MOD = "AM-MOD";
+	static public final String ARGM_NEG = "AM-NEG";
+	static public final String ARGM_LOC = "AM-LOC";
+	static public final String ARGM_DIR = "AM-DIR";
+	static public final String ARGM_GOL = "AM-GOL";
+	static public final String ARGM_ADV = "AM-ADV";
+	static public final String ARGM_TMP = "AM-TMP";
+	static public final String ARGM_MNR = "AM-MNR";
+	static public final String ARGM_PRR	= "AM-PRR";
+	static public final String ARG1 	= "A1";
+	static public final String ARG2 	= "A2";
+	static public final String C_V	 	= "C-V";
 	
-	static public final Pattern P_ARG_CONCATENATION = Pattern.compile("^"+S_PREFIX_CONCATENATION+".+$");
-	static public final Pattern P_ARG_REF = Pattern.compile("^"+S_PREFIX_REFERENT+".+$");
+	static public final Pattern P_ARG_CONCATENATION = Pattern.compile("^"+PREFIX_CONCATENATION+".+$");
+	static public final Pattern P_ARG_REF = Pattern.compile("^"+PREFIX_REFERENT+".+$");
 	static public final Pattern P_ARGN_CORE = Pattern.compile("^A\\d");
 	
 	static public final Pattern P_ARGN = Pattern.compile("^(A|C-A|R-A)\\d");
@@ -53,10 +66,10 @@ public class SRLLib
 	
 	static public String getBaseLabel(String label)
 	{
-		if (label.startsWith(SRLLib.S_PREFIX_CONCATENATION))
-			return label.substring(SRLLib.S_PREFIX_CONCATENATION.length());
-		else if (label.startsWith(SRLLib.S_PREFIX_REFERENT))
-			return label.substring(SRLLib.S_PREFIX_REFERENT.length());
+		if (label.startsWith(SRLLib.PREFIX_CONCATENATION))
+			return label.substring(SRLLib.PREFIX_CONCATENATION.length());
+		else if (label.startsWith(SRLLib.PREFIX_REFERENT))
+			return label.substring(SRLLib.PREFIX_REFERENT.length());
 		else
 			return label;
 	}
@@ -102,8 +115,8 @@ public class SRLLib
 	static public void relinkRelativeClause(SRLTree sTree)
 	{
 		DEPNode pred = sTree.getPredicate();
-		DEPArc ref = null, tmp;
-		DEPNode arg, dep;
+		DEPArc ref = null;
+		DEPNode dep, arg;
 		
 		for (DEPArc arc : pred.getDependents())
 		{
@@ -131,27 +144,44 @@ public class SRLLib
 					
 					if (ref != null) // && ref.isLabel(SRLLib.S_PREFIX_REFERENT+arg.getLabel())
 					{
-						if (ref.isLabel(DEPLibEn.DEP_PREP))
+						DEPNode rDep = ref.getNode();
+						DEPArc rHead = rDep.getSHead(pred);
+						DEPArc whose = rDep.getAnyDescendentArcByPOS(CTLibEn.POS_WPS);
+						
+						if (whose != null)
 						{
-							DEPNode prep = ref.getNode();
-							tmp = new DEPArc(arg, ref.getLabel());
-							arg.setHead(prep, ref.getLabel());
-							arg.id = prep.id + 1;
-							prep.clearDependents();
-							prep.addDependent(tmp);
-							prep.getSHead(pred).setLabel(sArc.getLabel());
+							DEPNode tmp = whose.getNode();
+							arg.setHead(tmp.getHead(), tmp.getLabel());
+							arg.id = tmp.id;
+							whose.setNode(arg);
+							rHead.setLabel(sArc.getLabel());
+							arg.removeSHead(pred);
+							
+							tmp = arg.getLastNode();
+							tmp.form = LGLibEn.getPossessiveForm(tmp.form);
+						}
+						else if (ref.isLabel(DEPLibEn.DEP_PREP))
+						{
+							DEPArc tmp = new DEPArc(arg, DEPLibEn.DEP_POBJ);
+							
+							arg.setHead(rDep, tmp.getLabel());
+							arg.id = rDep.id + 1;
+							rDep.clearDependents();
+							rDep.addDependent(tmp);
+							rHead.setLabel(sArc.getLabel());
 							arg.removeSHead(pred);
 						}
 						else if (ref.isLabel(DEPLibEn.P_SBJ))
 						{
 							arg.setHead(pred, ref.getLabel());
-							arg.id = ref.getNode().id;
+							arg.id = rDep.id;
 							ref.setNode(arg);
+							rHead.setLabel(sArc.getLabel());
 						}
 						else
 						{
-							tmp = new DEPArc(arg, ref.getLabel());
-							arg.setHead(pred, ref.getLabel());
+							DEPArc tmp = new DEPArc(arg, ref.getLabel());
+							arg.setHead(pred, tmp.getLabel());
 							arg.id = pred.id + 1;
 							
 							if (ref.isLabel(DEPLibEn.P_OBJ) || ref.isLabel(DEPLibEn.DEP_ATTR))
@@ -164,7 +194,7 @@ public class SRLLib
 					}
 					else
 					{
-						tmp = new DEPArc(arg, DEPLibEn.DEP_DEP);
+						DEPArc tmp = new DEPArc(arg, DEPLibEn.DEP_DEP);
 						arg.setHead(pred, tmp.getLabel());
 						arg.id = pred.id + 1;
 						
@@ -178,5 +208,88 @@ public class SRLLib
 				}
 			}
 		}
+	}
+
+	static public void relinkCoordination(SRLTree sTree)
+	{
+		DEPNode pred = sTree.getPredicate();
+		boolean noSbj = pred.getDependentsByLabels(DEPLibEn.P_SBJ).isEmpty();
+		Deque<DEPNode> conjuncts;
+		List<DEPArc> arcs;
+		DEPNode conj, dep;
+		DEPArc sArc;
+	
+		conjuncts = DEPLibEn.getPreviousConjuncts(pred);
+		
+		if (!conjuncts.isEmpty())
+		{
+			conj = conjuncts.getLast();
+			arcs = conj.getDependents();
+			
+			int i; for (i=arcs.size()-1; i>=0; i--)
+			{
+				dep = arcs.get(i).getNode();
+				sArc = dep.getSHead(pred);
+				
+				if (noSbj && (dep.isLabel(DEPLibEn.P_SBJ) || dep.isLabel(DEPLibEn.P_AUX)) || (sArc != null && sArc.isLabel(ARGM_NEG)))
+				{
+					dep.setHead(pred);
+					pred.addDependentFront(new DEPArc(dep, dep.getLabel()));
+				}
+				else if (dep.containsSHead(pred))
+				{
+					dep.setHead(pred);
+					dep.id = pred.id+1;
+					pred.addDependent(new DEPArc(dep, dep.getLabel()));
+				}
+			}
+		}
+		
+		conjuncts = DEPLibEn.getNextConjuncts(pred);
+		
+		if (!conjuncts.isEmpty())
+		{
+			conj = conjuncts.getLast();
+			
+			for (DEPArc arc : conj.getDependents())
+			{
+				dep = arc.getNode();
+				
+				if (dep.containsSHead(pred))
+				{
+					dep.setHead(pred);
+					pred.addDependent(new DEPArc(dep, dep.getLabel()));
+				}
+			}
+		}
+	}
+
+	static public void toReferentArgument(DEPArc arc)
+	{
+		String label = arc.getLabel();
+		
+		if (label.startsWith("A"))
+			arc.setLabel(PREFIX_REFERENT + label);
+		else if (label.startsWith(PREFIX_CONCATENATION))
+			arc.setLabel(PREFIX_REFERENT + label.substring(PREFIX_CONCATENATION.length()));
+	}
+	
+	static public boolean containsNegation(SRLTree tree)
+	{
+		DEPNode pred = tree.getPredicate();
+		
+		for (DEPArc arc : pred.getDependents())
+		{
+			if (arc.isLabel(DEPLibEn.DEP_NEG))
+				return true;
+		}
+		
+		for (SRLArc arc : tree.getArguments())
+		{
+			if (arc.isLabel(SRLLib.ARGM_NEG))
+				return true;
+		}
+		
+		return false;
 	}
 }

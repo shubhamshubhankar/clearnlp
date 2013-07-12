@@ -185,8 +185,8 @@ public class StringModel extends AbstractModel
 	public SparseFeatureVector toSparseFeatureVector(StringFeatureVector vector)
 	{
 		SparseFeatureVector sparse = new SparseFeatureVector(vector.hasWeight());
-		ObjectIntOpenHashMap<String> map;
 		int i, index, size = vector.size();
+		ObjectIntOpenHashMap<String> map;
 		String type, value;
 		
 		for (i=0; i<size; i++)
@@ -205,6 +205,40 @@ public class StringModel extends AbstractModel
 		
 		sparse.trimToSize();
 		return sparse;
+	}
+	
+	public StringFeatureVector trimFeatures(StringFeatureVector oVector, String label, double threshold)
+	{
+		StringFeatureVector nVector = new StringFeatureVector(oVector.hasWeight());
+		int i, size = oVector.size(), fIndex, lIndex = getLabelIndex(label);
+		ObjectIntOpenHashMap<String> map;
+		String type, value;
+		boolean add;
+		
+		for (i=0; i<size; i++)
+		{
+			type  = oVector.getType(i);
+			value = oVector.getValue(i);
+			add   = false;
+			
+			if ((map = m_features.get(type)) != null && (fIndex = map.get(value)) > 0)
+			{
+				if (d_weights[getWeightIndex(lIndex, fIndex)] == threshold)
+					add = true;
+			}
+			else
+				add = true;
+			
+			if (add)
+			{
+				if (nVector.hasWeight())
+					nVector.addFeature(type, value, oVector.getWeight(i));
+				else
+					nVector.addFeature(type, value);
+			}
+		}
+		
+		return nVector;
 	}
 	
 	public StringPrediction predictBest(StringFeatureVector x)

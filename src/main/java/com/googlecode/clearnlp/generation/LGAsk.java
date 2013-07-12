@@ -20,31 +20,218 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipInputStream;
 
+import com.googlecode.clearnlp.component.morph.CEnglishMPAnalyzer;
+import com.googlecode.clearnlp.constant.english.STConstant;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPFeat;
+import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.srl.SRLLib;
 import com.googlecode.clearnlp.morphology.MPLibEn;
-import com.googlecode.clearnlp.reader.SRLReader;
-import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTString;
 import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 /**
+ * Used for Eliza.
  * @since 1.4.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class LGAsk
 {
-	final String FEAT_INF = "inf";
+	final String VERB_TENSE = CEnglishMPAnalyzer.LANG_DIR+"verb.tense";
 	
-	public String genarateQuestionFromAsk(DEPTree tree, String delim)
+	static private final String NON_FINITE    = "non-finite";
+	static private final String WH_NON_FINITE = "wh-non-finite";
+	
+	private LGVerbEn g_verb;
+	
+	public LGAsk(ZipInputStream inputStream)
 	{
-		tree = tree.cloneSRL();
+		g_verb = new LGVerbEn(inputStream);
+	}
+	
+	public String genarateAskFromQuestion(DEPTree tree, String delim)
+	{
+		tree = tree.clone();
+		tree.setDependents();
+		
+		DEPNode root = tree.getFirstRoot();
+		return (root == null) ? null : genarateAskFromQuestionAux(tree, root, delim);
+	}
+	
+	private String genarateAskFromQuestionAux(DEPTree tree, DEPNode verb, String delim)
+	{
+		DEPLibEn.convertFirstFormToLowerCase(tree);
+		DEPNode ref = getReferentArgument(verb);
+		
+		if (ref == null || !ref.isLabel(DEPLibEn.P_SBJ))
+			relocateAuxiliary(tree, verb);
+
+		tree.resetIDs();
+		tree.resetDependents();
+		
+		return getAsk(tree, verb, ref, delim);
+	}
+	
+	private DEPNode getReferentArgument(DEPNode verb)
+	{
+		DEPNode dep;
+		
+		for (DEPArc arc : verb.getDependents())
+		{
+			dep = arc.getNode();
+			
+			if (dep.containsSHead(verb, SRLLib.P_ARG_REF))
+				return dep;
+		}
+		
+		return null;
+	}
+	
+	private void relocateAuxiliary(DEPTree tree, DEPNode verb)
+	{
+		List<DEPNode> auxes = new ArrayList<DEPNode>();
+		DEPNode sbj = null;
+
+		for (DEPArc arc : verb.getDependents())
+		{
+			if (arc.isLabel(DEPLibEn.P_AUX))
+				auxes.add(arc.getNode());
+			else if (arc.isLabel(DEPLibEn.P_SBJ))
+				sbj = arc.getNode();
+		}
+		
+		if (sbj != null)
+		{
+			if (!auxes.isEmpty() && auxes.get(0).id < sbj.id)
+			{
+				relocateAuxiliaryAux(tree, verb, auxes, sbj);
+			}
+			else if (verb.isLemma(STConstant.BE) && verb.id < sbj.id)
+			{
+				tree.remove(verb);
+				tree.add(sbj.getLastNode().id, verb);
+				setBeVerbForm(verb, sbj);
+			}
+		}
+	}
+	
+	private void relocateAuxiliaryAux(DEPTree tree, DEPNode verb, List<DEPNode> auxes, DEPNode sbj)
+	{
+		DEPNode aux = auxes.get(0);
+		tree.remove(aux);
+		
+		if (aux.isLemma(STConstant.DO))
+		{
+			if (auxes.size() > 1)
+			{
+				DEPNode node = auxes.get(1);
+				
+				if (MPLibEn.isVerb(node.pos))
+					verb = node;
+			}
+			
+			verb.pos = aux.pos;
+			
+			if (aux.isPos(CTLibEn.POS_VBD))
+				verb.form = g_verb.getPastForm(verb.lemma);
+			else if (aux.isPos(CTLibEn.POS_VBZ))
+				verb.form = LGVerbEn.get3rdSingularForm(verb.lemma);
+			else if (aux.isPos(CTLibEn.POS_VBP) && sbj.isLemma(STConstant.YOU))
+			{
+				verb.form = LGVerbEn.get3rdSingularForm(verb.lemma);
+				verb.pos  = CTLibEn.POS_VBZ;
+			}
+		}
+		else
+		{
+			tree.add(sbj.getLastNode().id, aux);
+			
+			if (aux.isLemma(STConstant.BE))
+				setBeVerbForm(aux, sbj);
+			else if (aux.isLemma(STConstant.HAVE))
+				set3rdSingularVerbForm(aux, sbj);
+		}
+	}
+	
+	private void setBeVerbForm(DEPNode verb, DEPNode sbj)
+	{
+		if (sbj.isLemma(STConstant.YOU))
+		{
+			if (verb.isPos(CTLibEn.POS_VBD))
+				verb.form = "was";
+			else if (verb.isPos(CTLibEn.POS_VBP))
+			{
+				verb.form = "is";
+				verb.pos  = CTLibEn.POS_VBZ;
+			}
+		}
+	}
+	
+	private void set3rdSingularVerbForm(DEPNode verb, DEPNode sbj)
+	{
+		if (sbj.isLemma(STConstant.YOU))
+		{
+			if (verb.isPos(CTLibEn.POS_VBP))
+			{
+				verb.form = LGVerbEn.get3rdSingularForm(verb.lemma);
+				verb.pos  = CTLibEn.POS_VBZ;
+			}
+		}
+	}
+	
+	private boolean hasRelativizer(DEPTree tree)
+	{
+		int i, size = tree.size();
+		DEPNode node;
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			
+			if (node.containsSHead(SRLLib.P_ARG_REF))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	private String getAsk(DEPTree tree, DEPNode verb, DEPNode ref, String delim)
+	{
+		StringBuilder build = new StringBuilder();
+		build.append("Ask");
+		
+		if (ref == null && !hasRelativizer(tree))
+		{
+			build.append(delim);
+			build.append("whether");
+		}
+		
+		for (DEPNode node : verb.getSubNodeSortedList())
+		{
+			build.append(delim);
+			
+			if (node.isLemma(STConstant.YOU))
+				build.append("the user");
+			else if (node.isLemma(STConstant.YOUR) || node.isLemma(STConstant.YOURS))
+				build.append("the user's");
+			else
+				build.append(node.form);
+		}
+		
+		return UTString.stripPunctuation(build.toString())+".";
+	}
+	
+	/** Generates a question from the ask lemma. */
+	static public String genarateQuestionFromAsk(DEPTree tree, String delim)
+	{
+		tree = tree.clone();
 		tree.setDependents();
 		
 		DEPNode root = tree.getFirstRoot();
@@ -67,7 +254,8 @@ public class LGAsk
 		return null;
 	}
 	
-	private void matchNumber(DEPNode verb, DEPNode aux)
+	/** Called by {@link LGAsk#genarateQuestionFromAsk(DEPTree, String)}. */
+	static private void matchNumber(DEPNode verb, DEPNode aux)
 	{
 		for (DEPArc arc : verb.getDependents())
 		{
@@ -75,7 +263,7 @@ public class LGAsk
 			{
 				DEPNode dep = arc.getNode();
 				
-				if (dep.isLemma("user") || (dep.isPos(CTLibEn.POS_PRP) && !dep.isLemma("i")))
+				if (dep.isLemma("user") || (dep.isPos(CTLibEn.POS_PRP) && !dep.isLemma("I")))
 				{
 					if (aux.isLemma("do"))
 					{
@@ -113,7 +301,8 @@ public class LGAsk
 		}
 	}
 	
-	private String generateQuestionForms(DEPNode verb, String delim)
+	/** Called by {@link LGAsk#genarateQuestionFromAsk(DEPTree, String)}. */
+	static private String generateQuestionForms(DEPNode verb, String delim)
 	{
 		List<StringIntPair> list = new ArrayList<StringIntPair>();
 		generateQuestionFormsRec(list, verb, delim);
@@ -121,9 +310,10 @@ public class LGAsk
 		
 		StringBuilder build = new StringBuilder();
 		String end = "?";
+		String vtype;
 		int i;
 		
-		if (verb.getFeat(FEAT_INF) != null)
+		if ((vtype = verb.getFeat(DEPLib.FEAT_VERB_TYPE)) != null && vtype.equals(NON_FINITE))
 		{
 			build.append(delim);
 			build.append("please");
@@ -143,16 +333,17 @@ public class LGAsk
 		else
 			tmp += end;
 		
-		return UTString.setFirstCharToUpper(tmp);
+		return UTString.convertFirstCharToUpper(tmp);
 	}
 	
-	private void generateQuestionFormsRec(List<StringIntPair> list, DEPNode node, String delim)
+	/** Called by {@link LGAsk#generateQuestionForms(DEPNode, String)}. */
+	static private void generateQuestionFormsRec(List<StringIntPair> list, DEPNode node, String delim)
 	{
 		List<DEPArc> deps = node.getDependents();
 		
 		if (node.isLabel(DEPLibEn.DEP_POSS) && !node.isLemma("my"))
 			list.add(new StringIntPair("your", node.id));
-		else if (node.isPos(CTLibEn.POS_PRP) && !node.isLemma("i") && !node.isLemma("me"))
+		else if (node.isPos(CTLibEn.POS_PRP) && !node.isLemma("I") && !node.isLemma("me"))
 			list.add(new StringIntPair("you", node.id));
 		else if (node.isLemma("user"))
 			list.add(new StringIntPair("you", node.id));
@@ -160,7 +351,7 @@ public class LGAsk
 			list.add(new StringIntPair(node.form, node.id));
 		else
 		{
-			boolean added = false;
+			boolean notAdded = true;
 			boolean hasPoss = !node.getDependentsByLabels(DEPLibEn.DEP_POSS).isEmpty();
 			DEPNode dep;
 			
@@ -171,26 +362,30 @@ public class LGAsk
 				
 				dep = arc.getNode();
 				
-				if (!added && dep.id > node.id)
+				if (notAdded && dep.id > node.id)
 				{
 					list.add(new StringIntPair(node.form, node.id));
-					added = true;
+					notAdded = false;
 				}
 				
 				generateQuestionFormsRec(list, arc.getNode(), delim);
 			}
 			
-			if (!added)
+			if (notAdded)
 				list.add(new StringIntPair(node.form, node.id));
 		}
 	}
+
+	/** @param verb a dependecy node whose pos tag is a verb type and dependency relation is either {@link DEPLibEn#DEP_CCOMP} or {@link DEPLibEn#DEP_XCOMP}. */
+	static public DEPTree generateInterrogativeOrImperative(DEPNode verb)
+	{
+		DEPTree tree = generateQuestion(verb).o1;
+		String vType = verb.getFeat(DEPLib.FEAT_VERB_TYPE);
+		return (vType == null || !vType.equals(WH_NON_FINITE)) ? tree : null;
+	}
 	
-	/**
-	 * Returns a dependency tree representing an interrogative form of the specific subordinating clause.
-	 * @param verb the root of the subordinating clause.
-	 * @return a dependency tree representing an interrogative form of the specific subordinating clause.
-	 */
-	public Pair<DEPTree,DEPNode> generateQuestion(DEPNode verb)
+	/** Called by {@link LGAsk#genarateQuestionFromAsk(DEPTree, String)}. */
+	static public Pair<DEPTree,DEPNode> generateQuestion(DEPNode verb)
 	{
 		Set<DEPNode> added = new HashSet<DEPNode>();
 		DEPTree tree = new DEPTree();
@@ -204,7 +399,7 @@ public class LGAsk
 		return new Pair<DEPTree,DEPNode>(tree, aux);
 	}
 	
-	private DEPNode setRelativizer(DEPTree tree, DEPNode verb, Set<DEPNode> added)
+	static private DEPNode setRelativizer(DEPTree tree, DEPNode verb, Set<DEPNode> added)
 	{
 		DEPNode dep, rel, head;
 		
@@ -244,7 +439,7 @@ public class LGAsk
 		return null;
 	}
 	
-	private DEPNode setAuxiliary(DEPTree tree, DEPNode verb, Set<DEPNode> added, DEPNode rel)
+	static private DEPNode setAuxiliary(DEPTree tree, DEPNode verb, Set<DEPNode> added, DEPNode rel)
 	{
 		if (rel != null && DEPLibEn.P_SBJ.matcher(rel.getLabel()).find())
 			return null;
@@ -275,12 +470,13 @@ public class LGAsk
 			{
 				dep = getNode(verb, "should", "should", CTLibEn.POS_MD, DEPLibEn.DEP_AUX, "AM-MOD");
 				tree.add(dep);
-				tree.add(getNode(verb, "I", "i", CTLibEn.POS_PRP, DEPLibEn.DEP_NSUBJ, "A01"));
+				tree.add(getNode(verb, "I", "I", CTLibEn.POS_PRP, DEPLibEn.DEP_NSUBJ, "A01"));
+				verb.addFeat(DEPLib.FEAT_VERB_TYPE, WH_NON_FINITE);
 				return dep;
 			}
 			else
 			{
-				verb.addFeat(FEAT_INF, "true");
+				verb.addFeat(DEPLib.FEAT_VERB_TYPE, NON_FINITE);
 				return null;
 			}
 		}
@@ -294,7 +490,7 @@ public class LGAsk
 			return addDoAuxiliary(tree, verb);
 	}
 	
-	private DEPNode addDoAuxiliary(DEPTree tree, DEPNode verb)
+	static private DEPNode addDoAuxiliary(DEPTree tree, DEPNode verb)
 	{
 		DEPNode aux;
 		
@@ -309,7 +505,7 @@ public class LGAsk
 		return aux;
 	}
 	
-	private void setRest(DEPTree tree, DEPNode verb,  Set<DEPNode> added)
+	static private void setRest(DEPTree tree, DEPNode verb,  Set<DEPNode> added)
 	{
 		for (DEPNode node : verb.getSubNodeSortedList())
 		{
@@ -322,14 +518,14 @@ public class LGAsk
 		}
 	}
 	
-	private void setRoot(DEPTree tree, DEPNode verb)
+	static private void setRoot(DEPTree tree, DEPNode verb)
 	{
 		verb.setHead(tree.get(0), DEPLibEn.DEP_ROOT);
 		tree.resetIDs();
 		tree.resetDependents();
 	}
 	
-	private void addSubtree(DEPTree tree, DEPNode head, Set<DEPNode> added)
+	static private void addSubtree(DEPTree tree, DEPNode head, Set<DEPNode> added)
 	{
 		List<DEPNode> list = head.getSubNodeSortedList();
 		
@@ -337,31 +533,21 @@ public class LGAsk
 		added.addAll(list);
 	}
 	
-	private void toNonFinite(DEPNode verb)
+	static private void toNonFinite(DEPNode verb)
 	{
 		verb.form = verb.lemma;
 		verb.pos  = CTLibEn.POS_VB;
 	}
 	
-	private DEPNode getNode(DEPNode verb, String form, String lemma, String pos, String deprel, String label)
+	static private DEPNode getNode(DEPNode verb, String form, String lemma, String pos, String deprel, String label)
 	{
 		DEPNode aux = new DEPNode(0, form, lemma, pos, new DEPFeat());
+		aux.initXHeads();
 		aux.initSHeads();
 		
 		aux.setHead (verb, deprel);
 		if (label != null)	aux.addSHead(verb, label);
 
 		return aux;
-	}
-	
-	static public void main(String[] args)
-	{
-		SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 7);
-		reader.open(UTInput.createBufferedFileReader(args[0]));
-		LGAsk ask = new LGAsk();
-		DEPTree tree;
-		
-		while ((tree = reader.next()) != null)
-			System.out.println(ask.genarateQuestionFromAsk(tree, " "));
 	}
 }

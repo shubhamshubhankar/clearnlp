@@ -72,6 +72,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntDeque;
 import com.googlecode.clearnlp.component.dep.CDEPParserSB;
 import com.googlecode.clearnlp.component.joint.CPDAligner;
+import com.googlecode.clearnlp.constant.english.STConstant;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
@@ -84,7 +85,7 @@ import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.generation.LGAnswerGenerator;
+import com.googlecode.clearnlp.generation.LGVerbEn;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.MPLib;
@@ -109,89 +110,86 @@ public class Tmp
 
 	public Tmp(String[] args) throws Exception
 	{
-		SRLReader fin = new SRLReader(0, 1, 2, 3, 4, 5, 6, 7);
+		getVerbForms(args);
+	}
+	
+	void getVerbForms(String[] args)
+	{
+		DEPReader fin = new DEPReader(0, 1, 2, 3, 4, 5, 6);
 		fin.open(UTInput.createBufferedFileReader(args[0]));
-		LGAnswerGenerator lg = new LGAnswerGenerator();
-		DEPTree rTree = fin.next(), qTree;
-		int i;
+		Set<String> keys = new TreeSet<String>();
+		Prob2DMap mVBD = new Prob2DMap();
+		Prob2DMap mVBN = new Prob2DMap();
+		String form, base, past, part;
+		int i, size, cutoff = 1;
+		DEPTree tree;
+		DEPNode node;
 		
-	//	int[] rVerbIDs = {2,2,2,2,2,2,2,2,2,2}, qVerbIDs = {3,3,3,2,4,4,4,4,4,4};	// 3
-	//	int[] rVerbIDs = {2,2,2,2,2}, qVerbIDs = {3,3,4,4,4};	// 4
-	//	int[] rVerbIDs = {4,7,4,4,7}, qVerbIDs = {3,3,5,4,4};	// 5
-	//	int[] rVerbIDs = {2,2,2}, qVerbIDs = {1,1,2};	// 6
-	//	int[] rVerbIDs = {5,5}, qVerbIDs = {2,4};	// 7
-	//	int[] rVerbIDs = {4,4}, qVerbIDs = {2,4};	// 8
-	//	int[] rVerbIDs = {4,4}, qVerbIDs = {2,4};	// 9
-	//	int[] rVerbIDs = {6,6}, qVerbIDs = {1,2};	// 10
-	//	int[] rVerbIDs = {2,6,6}, qVerbIDs = {4,2,4};	// 11
-	//	int[] rVerbIDs = {2,6,6}, qVerbIDs = {2,4};	// 12
-	//	int[] rVerbIDs = {3,3,3,3,3,3}, qVerbIDs = {3,3,4,4,4,4};	// 13
-	//	int[] rVerbIDs = {4,4,4,4}, qVerbIDs = {3,3,4,4};	// 14
-		int[] rVerbIDs = {4,4,4}, qVerbIDs = {3,2,4};	// 15
-	//	int[] rVerbIDs = {6}, qVerbIDs = {4};	// 16
-	//	int[] rVerbIDs = {2}, qVerbIDs = {4};	// 17
-		
-		rTree.setDependents();
-		DEPLibEn.postLabel(rTree);
-		
-		for (i=0; (qTree = fin.next()) != null; i++)
+		while ((tree = fin.next()) != null)
 		{
-			qTree.setDependents();
-			DEPLibEn.postLabel(qTree);
-			System.out.println(qTree.toStringRaw());
-			System.out.println("  "+lg.getAnswer(qTree, rTree, qVerbIDs[i], rVerbIDs[i], " "));
+			size = tree.size();
+			
+			for (i=1; i<size; i++)
+			{
+				node = tree.get(i);
+				base = node.lemma;
+				form = node.form.toLowerCase();
+				past = LGVerbEn.getPastRegularForm(base);
+				
+				if (node.isPos(CTLibEn.POS_VBD))
+				{
+					if (!form.equals(past))
+						mVBD.add(base, form);
+				}
+				else if (node.isPos(CTLibEn.POS_VBN))
+				{
+					if (!form.equals(past))
+						mVBN.add(base, form);
+				}
+			}
+		}
+		
+		keys.addAll(mVBD.keySet());
+		keys.addAll(mVBN.keySet());
+		
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(args[1]);
+		
+		for (String key : keys)
+		{
+			past = (mVBD.getTotal1D(key) > cutoff) ? mVBD.getBestProb1D(key).s : STConstant.UNDERSCORE;
+			part = (mVBN.getTotal1D(key) > cutoff) ? mVBN.getBestProb1D(key).s : STConstant.UNDERSCORE;
+			
+			if (!past.equals(STConstant.UNDERSCORE) || !part.equals(STConstant.UNDERSCORE))
+				fout.println(key+"\t"+past+"\t"+part);
+		}
+		
+		fout.close();
+	}
+	
+	void testParseLabel(String[] args) throws Exception
+	{
+		SRLReader fin = new SRLReader(0, 1, 2, 3, 4, 5, 6, 8);
+		fin.open(UTInput.createBufferedFileReader(args[0]));
+		PrintStream fold = UTOutput.createPrintBufferedFileStream(args[0]+".o");
+		PrintStream fnew = UTOutput.createPrintBufferedFileStream(args[0]+".n");
+	//	ObjectInputStream oin = new ObjectInputStream(new BufferedInputStream(new FileInputStream(args[1])));
+	//	PBFrameset p = (PBFrameset)oin.readObject();
+		DEPTree tree;
+		
+		while ((tree = fin.next()) != null)
+		{
+			fold.println(tree.toStringSRL()+"\n");
+			DEPLibEn.postLabel(tree);
+			fnew.println(tree.toStringSRL()+"\n");
 		}
 	}
 	
-	public void testException(int i) throws Exception
+	void testException(int i) throws Exception
 	{
 		if (i == 0)
 			throw new Exception("NO");
 		
 		System.out.println("BINGO");
-	}
-	
-	boolean relabelLightVerb(DEPTree tree)
-	{
-		int i, j, size = tree.size();
-		DEPNode node, head, arg;
-		boolean change = false;
-		Set<DEPNode> verbs;
-		DEPArc arc;
-		
-		for (i=1; i<size; i++)
-		{
-			node = tree.get(i);
-			
-			if (MPLibEn.isNoun(node.pos) && node.getFeat(DEPLib.FEAT_PB) != null)
-			{
-				verbs = new HashSet<DEPNode>();
-				
-				for (DEPArc pred : node.getSHeadsByLabel("AM-PRR"))
-					verbs.add(pred.getNode());
-				
-				for (j=1; j<size; j++)
-				{
-					if (i == j)	continue;
-					arg = tree.get(j);
-					
-					if ((arc = arg.getSHead(node)) != null)
-					{
-						head = arg.getHead();
-					
-						if (verbs.contains(head))
-							arc.setNode(head);
-						else
-							arg.removeSHead(arc);
-					}
-				}
-				
-				node.removeFeat(DEPLib.FEAT_PB);
-				change = true;
-			}
-		}
-		
-		return change;
 	}
 	
 	void printProb1DMap(Prob1DMap map)

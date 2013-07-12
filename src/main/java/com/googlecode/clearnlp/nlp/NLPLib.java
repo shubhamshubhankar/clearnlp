@@ -40,4 +40,5 @@ public class NLPLib
 	static public final String MODE_DEP_SB	= "dep_sb";
 	
 	static public final String MODE_PD_ALIGN = "pd_align";
+	static public final String FORMAT_EN_CLEAR = "en_clear";
 }

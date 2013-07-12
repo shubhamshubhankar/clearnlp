@@ -44,6 +44,7 @@ import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.srl.SRLLib;
 import com.googlecode.clearnlp.headrule.HeadRule;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.morphology.MPLibEn;
@@ -391,6 +392,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		findHeadsSmallClause(curr);
 
 		CTNode head = getHead(rule, curr.getChildren(), SIZE_HEAD_FLAGS);
+		if (head.c2d.getLabel() != null)	head.c2d.setLabel(null); 
 		curr.c2d = new C2DInfo(head);
 	}
 	
@@ -545,6 +547,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		int i, size = node.getChildrenSize();
 		CTNode prev, hyph, next;
 		boolean isFound = false;
+		boolean isVP = node.isPTag(CTLibEn.PTAG_VP);
 		
 		for (i=0; i<size-2; i++)
 		{
@@ -554,8 +557,18 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			
 			if (hyph.isPTag(CTLibEn.POS_HYPH))
 			{
-				prev.c2d.setHead(next, DEPLibEn.DEP_HMOD);
-				hyph.c2d.setHead(next, DEPLibEn.DEP_HYPH);
+				if (isVP)
+				{
+					prev.c2d.setLabel(DEPLibEn.DEP_HMOD);
+					hyph.c2d.setLabel(DEPLibEn.DEP_HYPH);
+					next.c2d.setLabel(DEPLibEn.DEP_HMOD);
+				}
+				else
+				{
+					prev.c2d.setHead(next, DEPLibEn.DEP_HMOD);
+					hyph.c2d.setHead(next, DEPLibEn.DEP_HYPH);
+				}
+				
 				isFound = true;
 				i++;
 			}
@@ -761,6 +774,9 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			return DEPLibEn.DEP_ADVMOD;
 		}
 		
+		if (d.c2d != null && (label = d.c2d.getLabel()) != null)
+			return label;
+		
 		return DEPLibEn.DEP_DEP;
 	}
 	
@@ -802,6 +818,9 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	private String getSimpleLabel(CTNode C)
 	{
 		String label;
+		
+		if (isHyph(C))
+			return DEPLibEn.DEP_HYPH;
 		
 		if (isAmod(C))
 			return DEPLibEn.DEP_AMOD;
@@ -899,6 +918,11 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			return DEPLibEn.DEP_POBJ;
 		else
 			return DEPLibEn.DEP_PCOMP;	
+	}
+	
+	private boolean isHyph(CTNode node)
+	{
+		return node.isPTag(CTLibEn.POS_HYPH);
 	}
 	
 	private boolean isAmod(CTNode node)
@@ -1130,7 +1154,6 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		int i, size = tree.size();
 		List<DEPNode> list;
 		DEPNode node;
-		String lower;
 
 		tree.setDependents();
 		
@@ -1140,9 +1163,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			
 			if (node.isLabel(DEPLibEn.DEP_ADVMOD))
 			{
-				lower = node.form.toLowerCase();
-				
-				if (lower.equals("never") || lower.equals("not") || lower.equals("n't") || lower.equals("'nt") || lower.equals("no"))
+				if (MPLibEn.RE_NEG.matcher(node.form.toLowerCase()).find())
 					node.setLabel(DEPLibEn.DEP_NEG);
 			}
 			
@@ -1392,7 +1413,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			
 			for (DEPArc arc : node.getSHeads())
 			{
-				if (arc.getLabel().startsWith("R-"))
+				if (arc.getLabel().startsWith(SRLLib.PREFIX_REFERENT))
 					continue;
 				
 				if (arc.getLabel().startsWith("AM"))
@@ -1401,7 +1422,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 				key = arc.toString();
 				
 				if (map.containsKey(key))
-					arc.setLabel("C-"+arc.getLabel());
+					arc.setLabel(SRLLib.PREFIX_CONCATENATION + arc.getLabel());
 				else
 					map.put(key, node);
 			}

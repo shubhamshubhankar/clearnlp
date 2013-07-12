@@ -52,6 +52,7 @@ public class PVMap extends HashMap<String,PVVerb>
 	static public final String E_PBVNMAP	= "pbvnmap";
 	static public final String E_FRAMESET	= "frameset";
 	static public final String E_VERB		= "verb";
+	static public final String E_PREDICATE	= "predicate";
 	static public final String E_ROLESET	= "roleset";
 	static public final String E_ROLES		= "roles";
 	static public final String E_ROLE		= "role";

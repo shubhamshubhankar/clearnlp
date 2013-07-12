@@ -39,7 +39,7 @@ public class DemoNLPDecoder
 {
 	final String language = AbstractReader.LANG_EN;
 	
-	public DemoNLPDecoder(String dictFile, String posModelFile, String depModelFile, String predModelFile, String roleModelFile, String vnModelFile, String srlModelFile, String inputFile, String outputFile) throws Exception
+	public DemoNLPDecoder(String dictFile, String posModelFile, String depModelFile, String predModelFile, String roleModelFile, String srlModelFile, String inputFile, String outputFile) throws Exception
 	{
 		AbstractTokenizer tokenizer  = EngineGetter.getTokenizer(language, new FileInputStream(dictFile));
 		AbstractComponent tagger     = EngineGetter.getComponent(new FileInputStream(posModelFile) , language, NLPLib.MODE_POS);
@@ -47,10 +47,9 @@ public class DemoNLPDecoder
 		AbstractComponent parser     = EngineGetter.getComponent(new FileInputStream(depModelFile) , language, NLPLib.MODE_DEP);
 		AbstractComponent identifier = EngineGetter.getComponent(new FileInputStream(predModelFile), language, NLPLib.MODE_PRED);
 		AbstractComponent classifier = EngineGetter.getComponent(new FileInputStream(roleModelFile), language, NLPLib.MODE_ROLE);
-		AbstractComponent verbnet    = EngineGetter.getComponent(new FileInputStream(vnModelFile)  , language, NLPLib.MODE_SENSE+"_vn");
 		AbstractComponent labeler    = EngineGetter.getComponent(new FileInputStream(srlModelFile) , language, NLPLib.MODE_SRL);
 		
-		AbstractComponent[] components = {tagger, analyzer, parser, identifier, classifier, verbnet, labeler};
+		AbstractComponent[] components = {tagger, analyzer, parser, identifier, classifier, labeler};
 		
 		String sentence = "I'd like to meet Dr. Choi.";
 		process(tokenizer, components, sentence);
@@ -89,19 +88,18 @@ public class DemoNLPDecoder
 
 	public static void main(String[] args)
 	{
-		String dictFile      = args[0];	// e.g., dictionary-1.3.1.zip
-		String posModelFile  = args[1];	// e.g., ontonotes-en-pos-1.3.0.jar
-		String depModelFile  = args[2];	// e.g., ontonotes-en-dep-1.3.0.jar
-		String predModelFile = args[3];	// e.g., ontonotes-en-pred-1.3.0.jar
-		String roleModelFile = args[4];	// e.g., ontonotes-en-role-1.3.0.jar
-		String vnModelFile   = args[5];	// e.g., ontonotes-en-sense-vn-1.3.1.jar
-		String srlModelFile  = args[6];	// e.g., ontonotes-en-srl-1.3.0.jar
-		String inputFile     = args[7];
-		String outputFile    = args[8];
+		String dictFile      = args[0];	// e.g., dictionary.zip
+		String posModelFile  = args[1];	// e.g., ontonotes-en-pos.tgz
+		String depModelFile  = args[2];	// e.g., ontonotes-en-dep.tgz
+		String predModelFile = args[3];	// e.g., ontonotes-en-pred.tgz
+		String roleModelFile = args[4];	// e.g., ontonotes-en-role.tgz
+		String srlModelFile  = args[5];	// e.g., ontonotes-en-srl.tgz
+		String inputFile     = args[6];
+		String outputFile    = args[7];
 
 		try
 		{
-			new DemoNLPDecoder(dictFile, posModelFile, depModelFile, predModelFile, roleModelFile, vnModelFile, srlModelFile, inputFile, outputFile);
+			new DemoNLPDecoder(dictFile, posModelFile, depModelFile, predModelFile, roleModelFile, srlModelFile, inputFile, outputFile);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}

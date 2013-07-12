@@ -64,7 +64,7 @@ public class DPTreeTest
 		
 		String s1 = tree.toStringSRL()+"\n";
 		
-		DEPTree copy = tree.cloneSRL();
+		DEPTree copy = tree.clone();
 		
 		copy.get(1).setLabel("nsbuj");
 		copy.get(2).addFeat(DEPLibEn.FEAT_PB, "01");

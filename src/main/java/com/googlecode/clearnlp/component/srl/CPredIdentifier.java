@@ -190,7 +190,10 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 				
 				if (label.equals(AbstractModel.LABEL_TRUE))
 				{
-					id = ("'s".equals(pred.lemma)) ? "be.XX" : pred.lemma+".XX";
+					if (pred.isLemma("'s"))
+						pred.lemma = "be";
+					
+					id = pred.lemma+".XX";
 					pred.addFeat(DEPLib.FEAT_PB, id);
 				}
 			}

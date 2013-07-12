@@ -126,6 +126,17 @@ public class POSNode
 		return this.pos.equals(pos);
 	}
 	
+	public boolean isPosAny(String... posTags)
+	{
+		for (String pos : posTags)
+		{
+			if (this.pos.equals(pos))
+				return true;
+		}
+		
+		return false;
+	}
+	
 	/**
 	 * Returns {@code true} if this node's word-lemma equals to the specific lemma.
 	 * @param lemma the word-lemma to be compared.

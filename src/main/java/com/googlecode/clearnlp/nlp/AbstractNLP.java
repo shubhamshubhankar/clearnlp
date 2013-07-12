@@ -70,6 +70,9 @@ abstract public class AbstractNLP
 	final public String TAG_MODE					= "mode";
 	final public String TAG_PATH					= "path";
 	
+//	@Option(name="-r", usage="the random seed", required=false, metaVar="<integer>")
+	protected int i_rand = 5;
+	
 	/** Initializes arguments using args4j. */
 	protected void initArgs(String[] args)
 	{
@@ -228,11 +231,10 @@ abstract public class AbstractNLP
 			String[] tmp = UTXml.getTrimmedAttribute(eAlgorithm, "iter").split(",");
 			
 			int    iter  = Integer.parseInt   (tmp[boot]);
-			int    rand  = Integer.parseInt   (UTXml.getTrimmedAttribute(eAlgorithm, "rand"));
 			double alpha = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "alpha"));
 			double rho   = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "rho"));
 			
-			return getAdaGradModel(space, numThreads, iter, rand, alpha, rho);
+			return getAdaGradModel(space, numThreads, iter, i_rand, alpha, rho);
 		}
 		
 		else if (name.equals("adagrad-lr"))
@@ -240,11 +242,10 @@ abstract public class AbstractNLP
 			String[] tmp = UTXml.getTrimmedAttribute(eAlgorithm, "iter").split(",");
 			
 			int    iter  = Integer.parseInt   (tmp[boot]);
-			int    rand  = Integer.parseInt   (UTXml.getTrimmedAttribute(eAlgorithm, "rand"));
 			double alpha = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "alpha"));
 			double rho   = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "rho"));
 			
-			return getAdaGradLRModel(space, numThreads, iter, rand, alpha, rho);
+			return getAdaGradLRModel(space, numThreads, iter, i_rand, alpha, rho);
 		}
 		
 		return null;

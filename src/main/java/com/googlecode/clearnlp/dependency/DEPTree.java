@@ -603,14 +603,18 @@ public class DEPTree extends ArrayList<DEPNode>
 	
 	public void clearXHeads()
 	{
-		for (DEPNode node : this)
-			node.x_heads.clear();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+			get(i).x_heads.clear();
 	}
 	
 	public void clearSHeads()
 	{
-		for (DEPNode node : this)
-			node.s_heads.clear();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+			get(i).s_heads.clear();
 	}
 	
 	public void clearPredicates()
@@ -631,11 +635,11 @@ public class DEPTree extends ArrayList<DEPNode>
 	
 	public void resetHeads(StringIntPair[] heads)
 	{
-		int i, size = size();
+		int i, size = size(), len = heads.length;
 		StringIntPair head;
 		DEPNode node;
 		
-		for (i=1; i<size; i++)
+		for (i=1; i<len && i<size; i++)
 		{
 			node = get(i);
 			head = heads[i];
@@ -645,6 +649,9 @@ public class DEPTree extends ArrayList<DEPNode>
 			else
 				node.setHead(get(head.i), head.s);
 		}
+		
+		for (i=len; i<size; i++)
+			get(i).clearHead();
 	}
 	
 	public StringIntPair[] getDiff(StringIntPair[] heads)
@@ -699,13 +706,19 @@ public class DEPTree extends ArrayList<DEPNode>
 	
 	public StringIntPair[] getHeads()
 	{
-		int i, size = size();
+		return getHeads(size());
+	}
+	
+	/** @param endIndex the ending index (exclusive). */
+	public StringIntPair[] getHeads(int endIndex)
+	{
 		DEPArc head;
+		int i;
 		
-		StringIntPair[] heads = new StringIntPair[size];
+		StringIntPair[] heads = new StringIntPair[endIndex];
 		heads[0] = new StringIntPair(DEPLib.ROOT_TAG, DEPLib.NULL_ID);
 		
-		for (i=1; i<size; i++)
+		for (i=1; i<endIndex; i++)
 		{
 			head = get(i).d_head;
 			heads[i] = (head.node != null) ? new StringIntPair(head.label, head.getNode().id) : new StringIntPair(null, DEPLib.NULL_ID);
@@ -800,7 +813,13 @@ public class DEPTree extends ArrayList<DEPNode>
 	public SRLTree getSRLTree(int predId)
 	{
 		DEPNode pred = get(predId);
-		if (pred.getFeat(DEPLib.FEAT_PB) == null) return null;
+		return getSRLTree(pred);
+	}
+	
+	public SRLTree getSRLTree(DEPNode pred)
+	{
+		if (pred.getFeat(DEPLib.FEAT_PB) == null)
+			return null;
 		
 		SRLTree tree = new SRLTree(pred);
 		int i, size = size();
@@ -964,7 +983,7 @@ public class DEPTree extends ArrayList<DEPNode>
 		return build.substring(delim.length());
 	}
 	
-	public DEPTree cloneSRL()
+	public DEPTree clone()
 	{
 		DEPTree tree = new DEPTree();
 		DEPNode oNode, nNode, oHead;
@@ -975,6 +994,9 @@ public class DEPTree extends ArrayList<DEPNode>
 			oNode = get(i);
 			nNode = new DEPNode(oNode);
 			tree.add(nNode);
+			
+			if (oNode.x_heads != null)
+				nNode.initXHeads();
 			
 			if (oNode.s_heads != null)
 				nNode.initSHeads();
@@ -988,11 +1010,25 @@ public class DEPTree extends ArrayList<DEPNode>
 			
 			nNode.setHead(tree.get(oHead.id), oNode.getLabel());
 			
-			for (DEPArc sHead : oNode.s_heads)
+			if (oNode.x_heads != null)
 			{
-				oHead = sHead.getNode();
-				nNode.addSHead(tree.get(oHead.id), sHead.getLabel());
+				for (DEPArc xHead : oNode.x_heads)
+				{
+					oHead = xHead.getNode();
+					nNode.addXHead(tree.get(oHead.id), xHead.getLabel());
+				}				
 			}
+			
+			if (oNode.s_heads != null)
+			{
+				for (DEPArc sHead : oNode.s_heads)
+				{
+					oHead = sHead.getNode();
+					nNode.addSHead(tree.get(oHead.id), sHead.getLabel());
+				}				
+			}
+			
+			nNode.nament = oNode.nament;
 		}
 		
 		return tree;

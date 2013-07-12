@@ -44,9 +44,9 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class CEnglishMPAnalyzer extends AbstractComponent
 {
+	static final public String LANG_DIR = AbstractReader.LANG_EN + "/";
 	final public String FIELD_DELIM = "_";
 	
-	final String LANG_DIR  = AbstractReader.LANG_EN + "/";
 	final String NOUN_EXC  = LANG_DIR+"noun.exc";
 	final String VERB_EXC  = LANG_DIR+"verb.exc";
 	final String ADJ_EXC   = LANG_DIR+"adj.exc";
@@ -243,15 +243,11 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 	{
 		int i, size = tree.size();
 		DEPNode node;
-	//	String  p2;
 		
 		for (i=1; i<size; i++)
 		{
 			node = tree.get(i);
 			node.lemma = getLemma(node.form, node.pos);
-			
-	//		p2 = node.getFeat(DEPLib.FEAT_POS2);
-	//		if (p2 != null)	node.addFeat(DEPLib.FEAT_LEMMA2, getLemma(node.form, p2));
 		}
 	}
 	
@@ -261,31 +257,15 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 		return getLemmaAux(form.toLowerCase(), pos);
 	}
 	
-	public Set<String> getPOSTags(String form)
-	{
-		Set<String> set = new HashSet<String>();
-		form = form.toLowerCase();
-		
-		if (m_noun_exc.containsKey(form) || getBaseAux(form, s_noun_base, a_noun_rule) != null)
-			set.add(POS_NOUN);
-		
-		if (m_verb_exc.containsKey(form) || getBaseAux(form, s_verb_base, a_verb_rule) != null)
-			set.add(POS_VERB);
-		
-		if (m_adj_exc.containsKey(form) || getBaseAux(form, s_adj_base , a_adj_rule) != null)
-			set.add(POS_ADJ);
-		
-		if (m_adv_exc .containsKey(form))
-			set.add(POS_ADV);
-
-		return set;
-	}
-	
 	/** Called by {@link CEnglishMPAnalyzer#getLemma(String, String)}. */
 	private String getLemmaAux(String form, String pos)
 	{
+		// abbreviations
+		String morphem = getAbbreviation(form, pos);
+		if (morphem != null)	return morphem;
+		
 		// numbers
-		String morphem = getNumber(form, pos);
+		morphem = getNumber(form, pos);
 		if (morphem != null)	return morphem;
 		
 		// exceptions
@@ -296,10 +276,6 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 		morphem = getBase(form, pos);
 		if (morphem != null)	return morphem;
 				
-		// abbreviations
-		morphem = getAbbreviation(form, pos);
-		if (morphem != null)	return morphem;
-
 		return form;
 	}
 	
@@ -365,5 +341,25 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 		String key = form + FIELD_DELIM + pos;
 
 		return m_abbr_rule.get(key);
+	}
+	
+	public Set<String> getPOSTags(String form)
+	{
+		Set<String> set = new HashSet<String>();
+		form = form.toLowerCase();
+		
+		if (m_noun_exc.containsKey(form) || getBaseAux(form, s_noun_base, a_noun_rule) != null)
+			set.add(POS_NOUN);
+		
+		if (m_verb_exc.containsKey(form) || getBaseAux(form, s_verb_base, a_verb_rule) != null)
+			set.add(POS_VERB);
+		
+		if (m_adj_exc.containsKey(form) || getBaseAux(form, s_adj_base , a_adj_rule) != null)
+			set.add(POS_ADJ);
+		
+		if (m_adv_exc .containsKey(form))
+			set.add(POS_ADV);
+
+		return set;
 	}
 }

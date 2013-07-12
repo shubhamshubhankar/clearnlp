@@ -119,7 +119,7 @@ public class UTString
 		return suffixes;
 	}
 	
-	static public String setFirstCharToUpper(String s)
+	static public String convertFirstCharToUpper(String s)
 	{
 		 return Character.toString(s.charAt(0)).toUpperCase() + s.substring(1);
 	}

@@ -100,10 +100,10 @@ public class MPLib
 	 */
 	static public String normalizeBasic(String form)
 	{
-		if (MPLib.containsURL(form))	return "#url#";
+		if (containsURL(form))	return "#url#";
 		
-		form = MPLib.normalizeDigits(form);
-		form = MPLib.normalizePunctuation(form);
+		form = normalizeDigits(form);
+		form = normalizePunctuation(form);
 		
 		return form;
 	}

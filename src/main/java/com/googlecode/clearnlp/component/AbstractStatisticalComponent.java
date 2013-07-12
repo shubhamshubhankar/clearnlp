@@ -47,6 +47,7 @@ import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -67,6 +68,8 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 
 	protected DEPNode[]	lm_deps, rm_deps;
 	protected DEPNode[]	ln_sibs, rn_sibs;
+	
+	protected String s_format = NLPLib.FORMAT_EN_CLEAR;
 	
 //	====================================== CONSTRUCTORS ======================================
 	
@@ -309,6 +312,11 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	public StringModel[] getModels()
 	{
 		return s_models;
+	}
+	
+	public void setFormat(String format)
+	{
+		s_format = format;
 	}
 	
 	/** @return all objects containing lexica. */

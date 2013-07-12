@@ -147,9 +147,9 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	}
 	
 	/** Removes the feature with the specific key. */
-	public void removeFeat(String key)
+	public String removeFeat(String key)
 	{
-		d_feats.remove(key);
+		return d_feats.remove(key);
 	}
 	
 	//	====================================== DEPENDENCY LABEL ======================================
@@ -411,6 +411,17 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return false;
 	}
 	
+	public boolean containsSHead(Pattern regex)
+	{
+		for (DEPArc arc : s_heads)
+		{
+			if (regex.matcher(arc.getLabel()).find())
+				return true;
+		}
+		
+		return false;
+	}
+	
 	public boolean containsSHead(DEPNode sHead, Pattern p)
 	{
 		for (DEPArc arc : s_heads)
@@ -460,6 +471,45 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return l_dependents;
 	}
 	
+	public DEPNode getFirstNode()
+	{
+		return getFirstNodeAux(this);
+	}
+	
+	public DEPNode getFirstNodeAux(DEPNode node)
+	{
+		List<DEPArc> deps = node.getDependents();
+		if (deps.isEmpty())	return node;
+		
+		DEPNode dep = getFirstNodeAux(deps.get(0).getNode());
+		return (dep.id > node.id) ? node : dep;
+	}
+	
+	/** @return the last node in the subtree (inclusive). */
+	public DEPNode getLastNode()
+	{
+		return getLastNodeAux(this);
+	}
+	
+	private DEPNode getLastNodeAux(DEPNode node)
+	{
+		List<DEPArc> deps = node.getDependents();
+		if (deps.isEmpty())	return node;
+		
+		DEPNode dep = getLastNodeAux(deps.get(deps.size()-1).getNode());
+		return (dep.id < node.id) ? node : dep;
+	}
+	
+	public void initDependents()
+	{
+		l_dependents = new ArrayList<DEPArc>();
+	}
+	
+	public void addDependentFront(DEPArc arc)
+	{
+		l_dependents.add(0, arc);
+	}
+	
 	public void addDependent(DEPArc arc)
 	{
 		l_dependents.add(arc);
@@ -468,6 +518,36 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	public boolean removeDependent(DEPArc arc)
 	{
 		return l_dependents.remove(arc);
+	}
+	
+	public boolean removeDependents(Collection<DEPArc> arcs)
+	{
+		return l_dependents.removeAll(arcs);
+	}
+	
+	public void removeFirstDependentByLabel(String label)
+	{
+		for (DEPArc arc : l_dependents)
+		{
+			if (arc.isLabel(label))
+			{
+				l_dependents.remove(arc);
+				break;
+			}
+		}
+	}
+	
+	public void removeDependentsByLabels(Pattern regex)
+	{
+		List<DEPArc> remove = new ArrayList<DEPArc>();
+		
+		for (DEPArc arc : l_dependents)
+		{
+			if (arc.isLabel(regex))
+				remove.add(arc);
+		}
+		
+		l_dependents.removeAll(remove);
 	}
 	
 	public void addDependentRightNextToSelf(DEPArc dep)
@@ -628,7 +708,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return list;
 	}
 	
-	public void getDescendentsAux(DEPNode curr, List<DEPArc> list, int depth)
+	private void getDescendentsAux(DEPNode curr, List<DEPArc> list, int depth)
 	{
 		List<DEPArc> deps = curr.getDependents();
 		list.addAll(deps);
@@ -679,6 +759,65 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return set;
 	}
 	
+	public DEPArc getAnyDescendentArcByPOS(String label)
+	{
+		return getAnyDescendentArcByPOSAux(this, label);
+	}
+	
+	private DEPArc getAnyDescendentArcByPOSAux(DEPNode node, String pos)
+	{
+		DEPNode dep;
+		
+		for (DEPArc arc : node.getDependents())
+		{
+			dep = arc.getNode();
+			if (dep.isPos(pos)) return arc;
+			
+			arc = getAnyDescendentArcByPOSAux(dep, pos);
+			if (arc != null) return arc;
+		}
+		
+		return null;
+	}
+	
+	public List<DEPNode> getPreviousDependentsExcluding(Pattern exclude)
+	{
+		List<DEPNode> deps = new ArrayList<DEPNode>();
+		DEPNode dep;
+		
+		for (DEPArc arc : l_dependents)
+		{
+			dep = arc.getNode();
+			
+			if (dep.id > id)
+				break;
+			
+			if (!dep.isLabel(exclude))
+				deps.add(dep);
+		}
+		
+		return deps;
+	}
+	
+	public List<DEPNode> getNextDependentsExcluding(Pattern exclude)
+	{
+		List<DEPNode> deps = new ArrayList<DEPNode>();
+		DEPNode dep;
+		
+		for (DEPArc arc : l_dependents)
+		{
+			dep = arc.getNode();
+			
+			if (dep.id < id)
+				continue;
+			
+			if (!dep.isLabel(exclude))
+				deps.add(dep);
+		}
+		
+		return deps;
+	}
+	
 	public DEPNode getFirstDependentByLabel(String label)
 	{
 		for (DEPArc arc : l_dependents)
@@ -690,7 +829,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return null;
 	}
 	
-	public DEPNode getFirstDependentByLabels(Pattern p)
+	public DEPNode getFirstDependentByLabel(Pattern p)
 	{
 		for (DEPArc arc : l_dependents)
 		{
@@ -699,6 +838,19 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		}
 		
 		return null;
+	}
+	
+	public List<DEPNode> getDependentsByLabels(Pattern regex)
+	{
+		List<DEPNode> list = new ArrayList<DEPNode>();
+		
+		for (DEPArc arc : l_dependents)
+		{
+			if (arc.isLabel(regex))
+				list.add(arc.getNode());
+		}
+		
+		return list;
 	}
 	
 	public List<DEPNode> getDependentsByLabels(String... labels)
@@ -1081,6 +1233,16 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		}
 		
 		return false;
+	}
+	
+	public void initXHeads()
+	{
+		x_heads = new ArrayList<DEPArc>();
+	}
+	
+	public void setXHeads(List<DEPArc> xHeads)
+	{
+		x_heads = xHeads;
 	}
 	
 /*	protected void addChild(DPNode child)

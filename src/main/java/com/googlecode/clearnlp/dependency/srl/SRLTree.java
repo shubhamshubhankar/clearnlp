@@ -41,6 +41,7 @@ public class SRLTree
 		l_arguments = new ArrayList<SRLArc>();
 	}
 	
+	/** This methods converts the specific label to its base form automatically. */
 	public boolean containsLabel(String label)
 	{
 		label = SRLLib.getBaseLabel(label);
@@ -54,22 +55,12 @@ public class SRLTree
 		return false;
 	}
 	
-	public Set<String> getLabels()
+	public Set<String> getBaseLabelSet()
 	{
 		Set<String> labels = new HashSet<String>();
-		String label;
 		
 		for (SRLArc arc : l_arguments)
-		{
-			label = arc.getLabel();
-			
-			if (label.startsWith(SRLLib.S_PREFIX_CONCATENATION))
-				label = label.substring(SRLLib.S_PREFIX_CONCATENATION.length());
-			else if (label.startsWith(SRLLib.S_PREFIX_REFERENT))
-				label = label.substring(SRLLib.S_PREFIX_REFERENT.length());
-			
-			labels.add(label);
-		}
+			labels.add(SRLLib.getBaseLabel(arc.getLabel()));
 		
 		return labels;
 	}
@@ -108,6 +99,19 @@ public class SRLTree
 		{
 			if (arc.isLabel(regex))
 				args.add(arc);
+		}
+		
+		return args;
+	}
+	
+	public List<DEPNode> getArgumentNodes(Pattern regex)
+	{
+		List<DEPNode> args = new ArrayList<DEPNode>();
+		
+		for (SRLArc arc : l_arguments)
+		{
+			if (arc.isLabel(regex))
+				args.add(arc.getNode());
 		}
 		
 		return args;

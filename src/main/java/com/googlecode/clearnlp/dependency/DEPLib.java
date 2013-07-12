@@ -54,9 +54,11 @@ public class DEPLib
 	/** The feat-key of 2nd POS prediction. */
 	static public final String FEAT_POS2 = "p2";
 	/** The feat-key of gold POS tag. */
-	static public final String FEAT_GPOS = "gp";
+	static public final String FEAT_GPOS = "gpos";
 	/** The feat-key of coreference value. */
 	static public final String FEAT_COREF = "coref";
+	/** The feat-key of verb type. */
+	static public final String FEAT_VERB_TYPE = "vtype";
 	
 	/** The delimiter between secondary/semantic heads. */
 	static public final String DELIM_HEADS     = ";";

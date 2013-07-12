@@ -100,6 +100,7 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 		i_sheads = iSHeads;
 		i_nament = iNament;
 		i_coref  = iCoref;
+		i_gpos   = -1;
 	}
 	
 	public void initGoldPOSTag(int gpos)
@@ -136,8 +137,11 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 		for (i=0; i<size; i++)
 			tree.add(new DEPNode());
 		
+		if (i_xheads >= 0)
+			tree.get(0).setXHeads(new ArrayList<DEPArc>());
+		
 		if (i_sheads >= 0)
-			tree.get(0).setSHeads(new ArrayList<DEPArc>());
+			tree.get(0).setXHeads(new ArrayList<DEPArc>());
 		
 		for (i=0; i<size; i++)
 		{
@@ -155,6 +159,9 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 			
 			if (i_headId >= 0 && !tmp[i_headId].equals(AbstractColumnReader.BLANK_COLUMN))
 				node.setHead(tree.get(Integer.parseInt(tmp[i_headId])), tmp[i_deprel]);
+			
+			if (i_xheads >= 0)
+				node.setXHeads(getSHeads(tree, tmp[i_xheads]));
 			
 			if (i_sheads >= 0)
 				node.setSHeads(getSHeads(tree, tmp[i_sheads]));

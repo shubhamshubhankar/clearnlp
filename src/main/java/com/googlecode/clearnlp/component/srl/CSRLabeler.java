@@ -44,6 +44,7 @@ import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
+import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
@@ -458,7 +459,15 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	/** Called by {@link CSRLabeler#getLabel(byte)}. */
 	private StringPrediction getAutoLabel(int idx, StringFeatureVector vector)
 	{
-		return s_models[idx].predictBest(vector);
+		StringPrediction p = s_models[idx].predictBest(vector);
+		
+		if (!p.label.equals(LB_NO_ARG))
+		{
+			String label = getHardLabel(d_tree.get(i_arg));
+			if (label != null)	p.label = label;
+		}
+		
+		return p;
 	}
 
 	private void addArgument(StringPrediction p)
@@ -733,5 +742,18 @@ public class CSRLabeler extends AbstractStatisticalComponent
 		}
 		
 		return node;
+	}
+	
+	private String getHardLabel(DEPNode node)
+	{
+		DEPNode dep;
+		
+		if (node.isLemma("at"))
+		{
+			if ((dep = rm_deps[node.id]) != null && dep.isPos(CTLibEn.POS_NN) && (dep.isLemma("am") || dep.isLemma("pm")))
+				return SRLLib.ARGM_TMP;
+		}
+		
+		return null;
 	}
 }
