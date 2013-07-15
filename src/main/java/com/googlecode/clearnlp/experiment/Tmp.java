@@ -110,7 +110,15 @@ public class Tmp
 
 	public Tmp(String[] args) throws Exception
 	{
-		getVerbForms(args);
+		String inputFile = "path to your input file";
+		String outputFile = "path to your output file";
+		
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(inputFile));
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		CTTree tree;
+		
+		while ((tree = reader.nextTree()) != null)
+			fout.println(tree.toStringLine());
 	}
 	
 	void getVerbForms(String[] args)

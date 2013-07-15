@@ -1034,16 +1034,16 @@ public class CDEPParserSB extends AbstractStatisticalComponentSB
 		if (label.isArc(LB_LEFT))
 		{
 			if (lambda.hasHead())
-				rerankVerbPOSTag(beta, lambda);
+				resetVerbPOSTag(beta, lambda);
 		}
 		else if (label.isArc(LB_RIGHT))
 		{
 			if (beta.hasHead())
-				rerankVerbPOSTag(lambda, beta);
+				resetVerbPOSTag(lambda, beta);
 		}
 	}
 
-	private void rerankVerbPOSTag(DEPNode head, DEPNode dep)
+	private void resetVerbPOSTag(DEPNode head, DEPNode dep)
 	{
 		String p2 = head.getFeat(DEPLib.FEAT_POS2);
 		

@@ -49,11 +49,9 @@ public class LGAnswerGenerator
 	/** For short answers. */
 	public LGAnswerGenerator() {}
 	
-	public String getAnswer(DEPTree qTree, ArgInfo qArg, List<DEPTree> rTrees, List<ArgInfo> rArgs, String conjunction, String delim, boolean verbose)
+	public String getAnswer(List<DEPTree> rTrees, List<ArgInfo> rArgs, String conjunction, String delim, boolean verbose, boolean trivialize)
 	{
-		if (qArg == null)	return null;
-
-		List<Pair<String,String>> answers = getShortAnswers(rTrees, rArgs, conjunction, delim);
+		List<Pair<String,String>> answers = getShortAnswers(rTrees, rArgs, conjunction, delim, trivialize);
 		if (verbose) answers = getLongAnswers(rTrees, rArgs, conjunction, delim);
 		return joinAnswers(answers, conjunction, delim);
 	}
@@ -75,7 +73,7 @@ public class LGAnswerGenerator
 		return answers;
 	}
 	
-	public List<Pair<String,String>> getShortAnswers(List<DEPTree> rTrees, List<ArgInfo> rArgs, String conjunction, String delim)
+	public List<Pair<String,String>> getShortAnswers(List<DEPTree> rTrees, List<ArgInfo> rArgs, String conjunction, String delim, boolean trivialize)
 	{
 		List<Pair<String,String>> answers = new ArrayList<Pair<String,String>>();
 		Pair<DEPTree,SRLTree> p;
@@ -86,20 +84,20 @@ public class LGAnswerGenerator
 		{
 			rArg = rArgs.get(i);
 			p = getTrees(rTrees.get(i), rArg.getPredicateId());
-			answers.add(getShortAnswer(p.o1, p.o2, rArg, delim));
+			answers.add(getShortAnswer(p.o1, p.o2, rArg, delim, trivialize));
 			rTrees.set(i, p.o1);
 		}
 		
 		return answers;
 	}
 	
-	public Pair<String,String> getShortAnswer(DEPTree rTree, SRLTree sTree, ArgInfo rArg, String delim)
+	public Pair<String,String> getShortAnswer(DEPTree rTree, SRLTree sTree, ArgInfo rArg, String delim, boolean trivialize)
 	{
 		removeDependents(rTree.get(DEPLib.ROOT_ID), sTree.getPredicate());
 		SRLLib.relinkRelativeClause(sTree);
 		SRLLib.relinkCoordination(sTree);
 		
-		return getShortAnswerAux(rTree, sTree, rArg, delim);
+		return getShortAnswerAux(rTree, sTree, rArg, delim, trivialize);
 	}
 	
 	private Pair<DEPTree,SRLTree> getTrees(DEPTree dTree, int predID)
@@ -128,7 +126,7 @@ public class LGAnswerGenerator
 		verb.removeDependents(remove);
 	}
 	
-	private void removeDependents(DEPNode root, DEPNode verb, Set<DEPNode> keep)
+	private void removeDependents(DEPNode root, DEPNode verb, Set<DEPNode> keep, boolean trivialize)
 	{
 		List<DEPArc> remove = new ArrayList<DEPArc>();
 		boolean changeDo = true, hasModal = false;
@@ -154,7 +152,7 @@ public class LGAnswerGenerator
 		
 		verb.removeDependents(remove);
 		
-		if (changeDo && !verb.isLemma(STConstant.BE))
+		if (trivialize && changeDo && !verb.isLemma(STConstant.BE))
 		{
 			if (hasModal)
 				verb.form = STConstant.EMPTY;
@@ -176,7 +174,7 @@ public class LGAnswerGenerator
 		}
 	}
 	
-	private Pair<String,String> getShortAnswerAux(DEPTree rTree, SRLTree sTree, ArgInfo rArg, String delim)
+	private Pair<String,String> getShortAnswerAux(DEPTree rTree, SRLTree sTree, ArgInfo rArg, String delim, boolean trivialize)
 	{
 		DEPNode root = rTree.get(DEPLib.ROOT_ID);
 		DEPNode pred = sTree.getPredicate();
@@ -189,7 +187,8 @@ public class LGAnswerGenerator
 				return null;
 			else
 			{
-				removeDependents(root, pred, new HashSet<DEPNode>(nodes));
+				removeDependents(root, pred, getSubNodeSet(pred, nodes), trivialize);
+				stripArgs(pred, nodes);
 				return getAnswerString(nodes, delim);
 			}
 		}
@@ -202,14 +201,50 @@ public class LGAnswerGenerator
 				return null;
 			else
 			{
-				Set<DEPNode> keep = new HashSet<DEPNode>();
-				keep.add(dep);
-				removeDependents(root, pred, keep);
+				removeDependents(root, pred, getSubNodeSet(pred, dep), trivialize);
 				return getAnswerString(dep, delim);				
 			}
 		}
 		
 		return getAnswerString(pred, delim);
+	}
+	
+	private void stripArgs(DEPNode pred, List<DEPNode> args)
+	{
+		if (args.size() >= 2)
+		{
+			DEPNode fst = args.get(0);
+			DEPNode snd = args.get(1);
+			
+			if (fst.id < pred.id && fst.isLabel(DEPLibEn.P_SBJ) && snd.id > pred.id && snd.getSHead(pred, SRLLib.P_ARG_CONCATENATION) != null)
+				args.remove(fst);			
+		}
+	}
+	
+	private Set<DEPNode> getSubNodeSet(DEPNode pred, DEPNode node)
+	{
+		Set<DEPNode> set = new HashSet<DEPNode>();
+		set.add(getDependent(pred, node));
+				
+		return set;
+	}
+	
+	private Set<DEPNode> getSubNodeSet(DEPNode pred, List<DEPNode> nodes)
+	{
+		Set<DEPNode> set = new HashSet<DEPNode>();
+		
+		for (DEPNode node : nodes)
+			set.add(getDependent(pred, node));
+		
+		return set;
+	}
+	
+	private DEPNode getDependent(DEPNode pred, DEPNode node)
+	{
+		if (node.isDependentOf(pred))
+			return node;
+		else
+			return getDependent(pred, node.getHead());
 	}
 	
 	private Pattern getBaseLabels(String label)
