@@ -39,15 +39,15 @@ public class DemoNLPDecoder
 {
 	final String language = AbstractReader.LANG_EN;
 	
-	public DemoNLPDecoder(String dictFile, String modelFile, String inputFile, String outputFile) throws Exception
+	public DemoNLPDecoder(String dictFile, String posModelFile, String depModelFile, String predModelFile, String roleModelFile, String srlModelFile, String inputFile, String outputFile) throws Exception
 	{
 		AbstractTokenizer tokenizer  = EngineGetter.getTokenizer(language, new FileInputStream(dictFile));
-		AbstractComponent tagger     = EngineGetter.getComponent(new FileInputStream(modelFile) , language, NLPLib.MODE_POS);
+		AbstractComponent tagger     = EngineGetter.getComponent(new FileInputStream(posModelFile) , language, NLPLib.MODE_POS);
 		AbstractComponent analyzer   = EngineGetter.getComponent(new FileInputStream(dictFile)     , language, NLPLib.MODE_MORPH);
-		AbstractComponent parser     = EngineGetter.getComponent(new FileInputStream(modelFile) , language, NLPLib.MODE_DEP);
-		AbstractComponent identifier = EngineGetter.getComponent(new FileInputStream(modelFile), language, NLPLib.MODE_PRED);
-		AbstractComponent classifier = EngineGetter.getComponent(new FileInputStream(modelFile), language, NLPLib.MODE_ROLE);
-		AbstractComponent labeler    = EngineGetter.getComponent(new FileInputStream(modelFile) , language, NLPLib.MODE_SRL);
+		AbstractComponent parser     = EngineGetter.getComponent(new FileInputStream(depModelFile) , language, NLPLib.MODE_DEP);
+		AbstractComponent identifier = EngineGetter.getComponent(new FileInputStream(predModelFile), language, NLPLib.MODE_PRED);
+		AbstractComponent classifier = EngineGetter.getComponent(new FileInputStream(roleModelFile), language, NLPLib.MODE_ROLE);
+		AbstractComponent labeler    = EngineGetter.getComponent(new FileInputStream(srlModelFile) , language, NLPLib.MODE_SRL);
 		
 		AbstractComponent[] components = {tagger, analyzer, parser, identifier, classifier, labeler};
 		
@@ -88,14 +88,18 @@ public class DemoNLPDecoder
 
 	public static void main(String[] args)
 	{
-		String dictFile   = args[0];	// e.g., dictionary.zip
-		String modelFile  = args[1];	// e.g., ontonotes-en-version.tgz
-		String inputFile  = args[2];
-		String outputFile = args[3];
+		String dictFile      = args[0];	// e.g., dictionary.zip
+		String posModelFile  = args[1];	// e.g., ontonotes-en-pos.tgz
+		String depModelFile  = args[2];	// e.g., ontonotes-en-dep.tgz
+		String predModelFile = args[3];	// e.g., ontonotes-en-pred.tgz
+		String roleModelFile = args[4];	// e.g., ontonotes-en-role.tgz
+		String srlModelFile  = args[5];	// e.g., ontonotes-en-srl.tgz
+		String inputFile     = args[6];
+		String outputFile    = args[7];
 
 		try
 		{
-			new DemoNLPDecoder(dictFile, modelFile, inputFile, outputFile);
+			new DemoNLPDecoder(dictFile, posModelFile, depModelFile, predModelFile, roleModelFile, srlModelFile, inputFile, outputFile);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
