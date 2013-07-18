@@ -15,22 +15,27 @@
 */
 package com.googlecode.clearnlp.constant.english;
 
-import com.googlecode.clearnlp.constant.DefaultConstant;
 
 /**
  * @since 1.4.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class ENModal extends DefaultConstant
+public class ENPronoun
 {
-	static final public String CAN		= "can";
-	static final public String COULD	= "could";
-	static final public String MAY		= "may";
-	static final public String MIGHT	= "might";
-	static final public String MUST		= "must";
-	static final public String OUGHT	= "ought";
-	static final public String SHALL	= "shall";
-	static final public String SHOULD	= "should";
-	static final public String WILL		= "will";
-	static final public String WOULD	= "would";
+	static public final String YOU		= "you";
+	static public final String YOUR		= "your";
+	static public final String YOURS	= "yours";
+	static public final String YOURSELF	= "yourself";
+	
+	static public final String I		= "I";
+	static public final String ME		= "me";
+	static public final String MY		= "my";
+	static public final String MINE		= "mine";
+	static public final String MYSELF	= "myself";
+	
+	/** @param lemma a lower-case string. */
+	static public boolean is1stSingular(String lemma)
+	{
+		return I.equals(lemma) || ME.equals(lemma) || MY.equals(lemma) || MINE.equals(lemma) || MYSELF.equals(lemma);
+	}
 }

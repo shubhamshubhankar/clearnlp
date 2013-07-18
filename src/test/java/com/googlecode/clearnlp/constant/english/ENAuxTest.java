@@ -21,14 +21,14 @@ import org.junit.Test;
 
 
 /** @author Jinho D. Choi ({@code jdchoi77@gmail.com}) */
-public class ENModalTest
+public class ENAuxTest
 {
 	@Test
 	public void testContains() throws IllegalArgumentException, IllegalAccessException
 	{
-		ENModal mod = new ENModal();
+		ENAux mod = new ENAux();
 		
-		assertEquals(true , mod.contains(ENModal.CAN));
-		assertEquals(false, mod.contains(ENAux.BE));
+		assertEquals(true , mod.contains(ENAux.BE));
+		assertEquals(false, mod.contains(ENModal.CAN));
 	}
 }

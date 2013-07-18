@@ -72,7 +72,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntDeque;
 import com.googlecode.clearnlp.component.dep.CDEPParserSB;
 import com.googlecode.clearnlp.component.joint.CPDAligner;
-import com.googlecode.clearnlp.constant.english.STConstant;
+import com.googlecode.clearnlp.constant.english.ENPunct;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
@@ -97,6 +97,7 @@ import com.googlecode.clearnlp.util.UTArray;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
+import com.googlecode.clearnlp.util.UTRegex;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
 import com.googlecode.clearnlp.util.map.Prob2DMap;
 import com.googlecode.clearnlp.util.pair.IntIntPair;
@@ -110,15 +111,35 @@ public class Tmp
 
 	public Tmp(String[] args) throws Exception
 	{
-		String inputFile = "path to your input file";
-		String outputFile = "path to your output file";
+		SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 7);
+		reader.open(UTInput.createBufferedFileReader(args[0]));
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(args[1]);
+		Pattern p = UTRegex.getORPatternExact(DEPLibEn.DEP_COMPLM, DEPLibEn.DEP_MARK);
+		DEPNode root, head;
+		DEPTree tree;
 		
-		CTReader reader = new CTReader(UTInput.createBufferedFileReader(inputFile));
-		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
-		CTTree tree;
+		while ((tree = reader.next()) != null)
+		{
+			tree.setDependents();
+			root = tree.getFirstRoot();
+			head = root.getDependents().get(0).getNode();
+			
+			tree = new DEPTree();
+			head.removeDependentsByLabels(p);
+			
+			for (DEPNode node : head.getSubNodeSortedList())
+			{
+				tree.add(node);
+				if (node.isDependentOf(root))
+					node.setHead(tree.get(0), DEPLibEn.DEP_ROOT);
+			}
+			
+			tree.resetIDs();
+			fout.println(tree.toStringSRL()+"\n");
+		}
 		
-		while ((tree = reader.nextTree()) != null)
-			fout.println(tree.toStringLine());
+		fout.close();
+		reader.close();	
 	}
 	
 	void getVerbForms(String[] args)
@@ -164,10 +185,10 @@ public class Tmp
 		
 		for (String key : keys)
 		{
-			past = (mVBD.getTotal1D(key) > cutoff) ? mVBD.getBestProb1D(key).s : STConstant.UNDERSCORE;
-			part = (mVBN.getTotal1D(key) > cutoff) ? mVBN.getBestProb1D(key).s : STConstant.UNDERSCORE;
+			past = (mVBD.getTotal1D(key) > cutoff) ? mVBD.getBestProb1D(key).s : ENPunct.UNDERSCORE;
+			part = (mVBN.getTotal1D(key) > cutoff) ? mVBN.getBestProb1D(key).s : ENPunct.UNDERSCORE;
 			
-			if (!past.equals(STConstant.UNDERSCORE) || !part.equals(STConstant.UNDERSCORE))
+			if (!past.equals(ENPunct.UNDERSCORE) || !part.equals(ENPunct.UNDERSCORE))
 				fout.println(key+"\t"+past+"\t"+part);
 		}
 		

@@ -123,4 +123,9 @@ public class UTString
 	{
 		 return Character.toString(s.charAt(0)).toUpperCase() + s.substring(1);
 	}
+	
+	static public String convertFirstCharToLower(String s)
+	{
+		 return Character.toString(s.charAt(0)).toLowerCase() + s.substring(1);
+	}
 }

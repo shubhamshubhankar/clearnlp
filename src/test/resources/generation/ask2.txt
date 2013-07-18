@@ -166,4 +166,4 @@
 2	is	be	VBZ	pb=be.01	0	root	_
 3	your	your	PRP$	_	4	poss	_
 4	username	username	NN	_	2	nsubj	4:A1
-8	?	?	.	_	4	punct	_
+5	?	?	.	_	2	punct	_

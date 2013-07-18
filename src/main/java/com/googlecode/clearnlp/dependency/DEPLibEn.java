@@ -28,7 +28,6 @@ import java.util.Deque;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.googlecode.clearnlp.constant.english.STConstant;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.srl.SRLLib;
 import com.googlecode.clearnlp.morphology.MPLibEn;
@@ -469,13 +468,5 @@ public class DEPLibEn extends DEPLib
 	static public boolean isCommonRelativizer(DEPNode node)
 	{
 		return node.pos.startsWith("W") && MPLibEn.RE_WH_COMMON.matcher(node.lemma).find();
-	}
-	
-	static public void convertFirstFormToLowerCase(DEPTree tree)
-	{
-		DEPNode fst = tree.get(1);
-		
-		if (!fst.pos.startsWith(CTLibEn.POS_NNP) || fst.isLemma(STConstant.I))
-			fst.form = fst.form.toLowerCase();
 	}
 }

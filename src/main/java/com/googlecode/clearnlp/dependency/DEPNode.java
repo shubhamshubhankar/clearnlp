@@ -471,6 +471,16 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return l_dependents;
 	}
 	
+	public List<DEPNode> getDependentNodes()
+	{
+		List<DEPNode> list = new ArrayList<DEPNode>();
+		
+		for (DEPArc arc : l_dependents)
+			list.add(arc.getNode());
+		
+		return list;
+	}
+	
 	public DEPNode getFirstNode()
 	{
 		return getFirstNodeAux(this);

@@ -18,14 +18,17 @@ package com.googlecode.clearnlp.generation;
 
 import java.util.List;
 
+import com.googlecode.clearnlp.constant.english.ENAux;
 import com.googlecode.clearnlp.constant.english.ENModal;
-import com.googlecode.clearnlp.constant.english.STConstant;
+import com.googlecode.clearnlp.constant.english.ENPronoun;
+import com.googlecode.clearnlp.constant.universal.STConstant;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.morphology.MPLibEn;
+import com.googlecode.clearnlp.util.UTString;
 
 /**
  * @since 1.4.0
@@ -131,6 +134,28 @@ public class LGLibEn
 		return nounForm + suffix;
 	}
 	
+	static public String getForms(DEPTree tree, String delim)
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = tree.size();
+		DEPNode prev = null, curr;
+		String s;
+
+		for (i=1; i<size; i++)
+		{
+			curr = tree.get(i);
+			addForm(build, curr, prev, delim);
+			prev = curr;
+		}
+
+		s = build.toString();
+		
+		if (s.startsWith(delim))
+			s = s.substring(delim.length());
+		
+		return UTString.convertFirstCharToUpper(s);
+	}
+	
 	/** PRE: {@link DEPTree#setDependents()} is called. */
 	static public String getForms(DEPNode root, String delim)
 	{
@@ -206,7 +231,7 @@ public class LGLibEn
 			return true;
 		else if (lower.equals("not"))
 		{
-			if (prev.isLemma(ENModal.CAN))
+			if (prev != null && prev.isLemma(ENModal.CAN))
 			{
 				curr.form = "'t";
 				return true;
@@ -214,7 +239,7 @@ public class LGLibEn
 			
 			String pLower = prev.form.toLowerCase();
 			
-			if (pLower.equals(STConstant.DO) || pLower.equals(STConstant.DOES) || pLower.equals(STConstant.DID) || prev.isLemma(ENModal.COULD) || prev.isLemma(ENModal.SHOULD) || prev.isLemma(ENModal.WOULD))
+			if (pLower.equals(ENAux.DO) || pLower.equals(ENAux.DOES) || pLower.equals(ENAux.DID) || (prev != null && prev.isLemma(ENModal.COULD) || prev.isLemma(ENModal.SHOULD) || prev.isLemma(ENModal.WOULD)))
 			{
 				curr.form = "n't";
 				return true;
@@ -243,5 +268,13 @@ public class LGLibEn
 			return node.isPos(CTLibEn.POS_PRPS) ? getPossessiveForm(coref) : coref;
 		
 		return null;
+	}
+
+	static public void convertFirstFormToLowerCase(DEPTree tree)
+	{
+		DEPNode fst = tree.get(1);
+		
+		if (!fst.pos.startsWith(CTLibEn.POS_NNP) && !fst.isLemma(ENPronoun.I))
+			fst.form = fst.form.toLowerCase();
 	}
 }

@@ -47,11 +47,13 @@ public class SRLLib
 	static public final String ARGM_NEG = "AM-NEG";
 	static public final String ARGM_LOC = "AM-LOC";
 	static public final String ARGM_DIR = "AM-DIR";
+	static public final String ARGM_DIS = "AM-DIS";
 	static public final String ARGM_GOL = "AM-GOL";
 	static public final String ARGM_ADV = "AM-ADV";
 	static public final String ARGM_TMP = "AM-TMP";
 	static public final String ARGM_MNR = "AM-MNR";
 	static public final String ARGM_PRR	= "AM-PRR";
+	static public final String ARG0 	= "A0";
 	static public final String ARG1 	= "A1";
 	static public final String ARG2 	= "A2";
 	static public final String C_V	 	= "C-V";

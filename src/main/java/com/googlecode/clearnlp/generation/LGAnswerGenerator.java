@@ -21,7 +21,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import com.googlecode.clearnlp.constant.english.STConstant;
+import com.googlecode.clearnlp.constant.english.ENAux;
+import com.googlecode.clearnlp.constant.english.ENPunct;
+import com.googlecode.clearnlp.constant.universal.STConstant;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
@@ -105,7 +107,7 @@ public class LGAnswerGenerator
 		dTree = dTree.clone();
 		dTree.setDependents();
 		LGLibEn.convertUnI(dTree);
-		DEPLibEn.convertFirstFormToLowerCase(dTree);
+		LGLibEn.convertFirstFormToLowerCase(dTree);
 		
 		return new Pair<DEPTree,SRLTree>(dTree, dTree.getSRLTree(predID));
 	}
@@ -138,7 +140,7 @@ public class LGAnswerGenerator
 			
 			if (arc.isLabel(DEPLibEn.P_AUX))
 			{
-				if (dep.isPos(CTLibEn.POS_MD) || dep.isLemma(STConstant.DO) || dep.isLemma(STConstant.HAVE))
+				if (dep.isPos(CTLibEn.POS_MD) || dep.isLemma(ENAux.DO) || dep.isLemma(ENAux.HAVE))
 					hasModal = true;
 			}
 			else if (!keep.contains(dep) && !arc.isLabel(P_PRESERVE) && !arc.isLabel(DEPLibEn.P_SBJ))
@@ -152,25 +154,25 @@ public class LGAnswerGenerator
 		
 		verb.removeDependents(remove);
 		
-		if (trivialize && changeDo && !verb.isLemma(STConstant.BE))
+		if (trivialize && changeDo && !verb.isLemma(ENAux.BE))
 		{
 			if (hasModal)
 				verb.form = STConstant.EMPTY;
 			else
 			{
 				if (verb.isPos(CTLibEn.POS_VB) || verb.isPos(CTLibEn.POS_VBP))
-					verb.form = STConstant.DO;
+					verb.form = ENAux.DO;
 				else if (verb.isPos(CTLibEn.POS_VBZ))
-					verb.form = STConstant.DOES;
+					verb.form = ENAux.DOES;
 				else if (verb.isPos(CTLibEn.POS_VBD))
-					verb.form = STConstant.DID;
+					verb.form = ENAux.DID;
 				else if (verb.isPos(CTLibEn.POS_VBN))
-					verb.form = STConstant.DONE;
+					verb.form = ENAux.DONE;
 				else if (verb.isPos(CTLibEn.POS_VBG))
-					verb.form = STConstant.DOING;
+					verb.form = ENAux.DOING;
 			}
 			
-			verb.lemma = STConstant.DO;
+			verb.lemma = ENAux.DO;
 		}
 	}
 	
@@ -337,7 +339,7 @@ public class LGAnswerGenerator
 					build.append(conjunction);
 				}
 				else
-					build.append(STConstant.COMMA);
+					build.append(ENPunct.COMMA);
 			}
 			
 			if (!prep.equals(p.o2))

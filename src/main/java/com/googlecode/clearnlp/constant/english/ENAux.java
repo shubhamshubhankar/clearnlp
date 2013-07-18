@@ -15,44 +15,30 @@
 */
 package com.googlecode.clearnlp.constant.english;
 
+import com.googlecode.clearnlp.constant.DefaultConstant;
 
 /**
  * @since 1.4.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class STConstant
+public class ENAux extends DefaultConstant
 {
-	static public final String TAB			= "\t";
-	static public final String PIPE			= "|";
-	static public final String UNDERSCORE	= "_";
-	static public final String EMPTY		= "";
-	static public final String COMMA		= ",";
-	
 	static public final String BE		= "be";
-	static public final String HAVE		= "have";
-	static public final String GET		= "get";
-	static public final String YOU		= "you";
-	static public final String YOUR		= "your";
-	static public final String YOURS	= "yours";
-
-	static public final String I		= "I";
-	
-	static public final String NOT		= "not";
-	
-	
-//	==================== Conjunctions ====================
-	
-	static public final String AND	= "and";
-	static public final String BUT	= "but";
-	static public final String OR	= "or";
-	
-	
-	
-	
-	
+	static public final String BEEN		= "been";
+	static public final String BEING	= "being";
+	static public final String AM		= "am";
+	static public final String IS		= "is";
+	static public final String WAS		= "was";
+	static public final String ARE		= "are";
+	static public final String WERE		= "were";
+	static public final String APOSTROPHE_M		= "'m";
+	static public final String APOSTROPHE_S		= "'s";
+	static public final String APOSTROPHE_RE		= "'re";
 	static public final String DO		= "do";
 	static public final String DOES		= "does";
 	static public final String DID		= "did";
 	static public final String DONE		= "done";
 	static public final String DOING	= "doing";
+	static public final String HAVE		= "have";
+	static public final String GET		= "get";
 }

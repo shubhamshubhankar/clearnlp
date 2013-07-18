@@ -32,43 +32,19 @@ import com.googlecode.clearnlp.util.UTInput;
 public class LGAskTest
 {
 	@Test
-	public void testGenarateQuestionFromAsk()
+	public void testGenerateQuestionFromAsk()
 	{
 		SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 7);
 		reader.open(UTInput.createBufferedFileReader("src/test/resources/generation/ask.txt"));
+		LGAsk ask = new LGAsk();
 		DEPTree tree;
 		int i;
-		
-	/*	Ask whether the user wants to reset the user's password.
-		Ask whether I should place an order for the user.
-		Ask whether you want me to place an order for you.
-		Ask if the user's account is locked.
-		Ask if the user's account is being locked.
-		Ask if the user's account was locked yesterday.
-		Ask if the user is an existing customer.
-		Ask if the user has registered the user's account.
-		Ask where the user was yesterday.
-		Ask what the user does for a living.
-		Ask what the user wants to buy.
-		Ask how long the user has been waiting for.
-		Ask how soon the user wants the product to be shipped.
-		Ask what kind of books the user likes to buy.
-		Ask when the user's account got locked.
-		Ask what you can do for the user.
-		Ask who helped the user last time.
-		Ask which of the user's accounts is locked.
-		Ask when to reset the user's password.
-		Ask to enter the user's password.
-		Ask entering the user's password.
-		Ask to be patient.*/
 
 		String[] questions = {
 				"Do you want to reset your password?",
 				"Do you want to reset your password?",
 				"Do you want to reset your password?",
-				"Do you want to reset your password?",
-				"Do you want to reset your password?",
-				"Do you want to reset your password?",
+				"Do I want to reset my password?",
 				"Should I place an order for you?",
 				"Do you want me to place an order for you?",
 				"Is your account locked?",
@@ -92,16 +68,54 @@ public class LGAskTest
 				"Please be patient."};
 		
 		for (i=0; (tree = reader.next()) != null; i++)
-			assertEquals(questions[i], LGAsk.genarateQuestionFromAsk(tree, " "));
+			assertEquals(questions[i], LGLibEn.getForms(ask.generateQuestionFromAsk(tree)," "));
+	}
+	
+	@Test
+	public void testGenerateQuestionFromDeclarative()
+	{
+		SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 7);
+		reader.open(UTInput.createBufferedFileReader("src/test/resources/generation/ask3.txt"));
+		LGAsk ask = new LGAsk();
+		DEPTree tree;
+		int i;
+
+		String[] questions = {
+				"Is the cat's name Doug?",
+				"Are you a Ninja?",
+				"Do you want to reset your password?",
+				"Do you want to reset your password?",
+				"Do you want to reset your password?",
+				"Do I want to reset my password?",
+				"Should I place an order for you?",
+				"Did you want me to place an order for you?",
+				"Is your account locked?",
+				"Is your account being locked?",
+				"Was your account locked yesterday?",
+				"Are you an existing customer?",
+				"Have you registered your account?",
+				"Where were you yesterday?",
+				"What do you do for a living?",
+				"What do you want to buy?",
+				"How long have you been waiting for?",
+				"How soon do you want the product to be shipped?",
+				"What kind of books do you like to buy?",
+				"When did your account get locked?",
+				"What can I do for you?",
+				"Who helped you last time?",
+				"Which of your accounts is locked?"};
+		
+		for (i=0; (tree = reader.next()) != null; i++)
+			assertEquals(questions[i], LGLibEn.getForms(ask.generateQuestionFromDeclarative(tree, i==1), " "));
 	}
 
 	@Ignore
 	@Test
-	public void testGenarateAskFromQuestion() throws Exception
+	public void testGenerateAskFromQuestion() throws Exception
 	{
 		SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 7);
 		reader.open(UTInput.createBufferedFileReader("src/test/resources/generation/ask2.txt"));
-		LGAsk ask = new LGAsk(new ZipInputStream(new BufferedInputStream(new FileInputStream("/Users/jdchoi/Documents/Workspace/ClearNLP2/clearnlp-models/dictionary/dictionary-1.4.0.zip"))));
+		LGAsk ask = new LGAsk(new ZipInputStream(new BufferedInputStream(new FileInputStream("/Users/jdchoi/Documents/Workspace/ClearNLP2/clearnlp-models/1.4.0/dictionary-1.4.0.zip"))));
 		DEPTree tree;
 		int i;
 		
@@ -129,6 +143,6 @@ public class LGAskTest
 				"Ask what the user's username is."};
 		
 		for (i=0; (tree = reader.next()) != null; i++)
-			assertEquals(asks[i], ask.genarateAskFromQuestion(tree, " "));
+			assertEquals(asks[i], LGLibEn.getForms(ask.generateAskFromQuestion(tree), " "));
 	}
 }

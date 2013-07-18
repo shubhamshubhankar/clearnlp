@@ -28,7 +28,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.googlecode.clearnlp.component.morph.CEnglishMPAnalyzer;
-import com.googlecode.clearnlp.constant.english.STConstant;
+import com.googlecode.clearnlp.constant.english.ENPunct;
+import com.googlecode.clearnlp.constant.universal.STConstant;
 import com.googlecode.clearnlp.morphology.MPLibEn;
 
 /**
@@ -37,7 +38,7 @@ import com.googlecode.clearnlp.morphology.MPLibEn;
  */
 public class LGVerbEn
 {
-	final Pattern TENSE_MULTI   = Pattern.compile("\\"+STConstant.PIPE);
+	final Pattern TENSE_MULTI   = Pattern.compile("\\"+ENPunct.PIPE);
 	final Pattern TENSE_BETWEEN = Pattern.compile(STConstant.TAB);
 	final String  VERB_TENSE    = CEnglishMPAnalyzer.LANG_DIR+"verb.tense";
 	
