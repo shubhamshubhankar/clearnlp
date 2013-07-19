@@ -471,7 +471,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return l_dependents;
 	}
 	
-	public List<DEPNode> getDependentNodes()
+	public List<DEPNode> getDependentNodeList()
 	{
 		List<DEPNode> list = new ArrayList<DEPNode>();
 		

@@ -109,7 +109,7 @@ public class LGLibEnTest
 		head.addDependent(new DEPArc(node, "A"));
 		node.initDependents();
 		
-		assertEquals("``I'll didn't (A-H-B C's D) E'' F!", LGLibEn.getForms(head, " "));
+		assertEquals("``I'll didn't (A-H-B C's D) E'' F!", LGLibEn.getForms(head, true, " "));
 	}
 	
 	@Test

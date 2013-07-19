@@ -656,7 +656,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 		
 			head = head.getHead();
 		}
-		while (head != top);
+		while (head != top && head != null);
 		
 		if (type.equals(JointFtrXml.F_POS))
 		{

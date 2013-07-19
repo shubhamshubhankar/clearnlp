@@ -134,7 +134,7 @@ public class LGLibEn
 		return nounForm + suffix;
 	}
 	
-	static public String getForms(DEPTree tree, String delim)
+	static public String getForms(DEPTree tree, boolean useCoref, String delim)
 	{
 		StringBuilder build = new StringBuilder();
 		int i, size = tree.size();
@@ -144,7 +144,7 @@ public class LGLibEn
 		for (i=1; i<size; i++)
 		{
 			curr = tree.get(i);
-			addForm(build, curr, prev, delim);
+			addForm(build, curr, prev, useCoref, delim);
 			prev = curr;
 		}
 
@@ -157,12 +157,12 @@ public class LGLibEn
 	}
 	
 	/** PRE: {@link DEPTree#setDependents()} is called. */
-	static public String getForms(DEPNode root, String delim)
+	static public String getForms(DEPNode root, boolean useCoref, String delim)
 	{
 		StringBuilder build = new StringBuilder();
 		String s;
 		
-		getSubFormsAux(build, root, null, delim);
+		getSubFormsAux(build, root, null, useCoref, delim);
 		s = build.toString();
 		
 		if (s.startsWith(delim))
@@ -172,7 +172,7 @@ public class LGLibEn
 	}
 	
 	/** Called by {@link LGLibEn#getForms(DEPNode, String)}. */
-	static private void getSubFormsAux(StringBuilder build, DEPNode node, DEPNode prev, String delim)
+	static private void getSubFormsAux(StringBuilder build, DEPNode node, DEPNode prev, boolean useCoref, String delim)
 	{
 		List<DEPArc> deps = node.getDependents();
 		int i, size = deps.size();
@@ -185,27 +185,27 @@ public class LGLibEn
 			
 			if (notAdded && curr.id > node.id)
 			{
-				prev = addForm(build, node, prev, delim);
+				prev = addForm(build, node, prev, useCoref, delim);
 				notAdded = false;
 			}
 			
 			if (curr.getDependents().isEmpty())
-				prev = addForm(build, curr, prev, delim);
+				prev = addForm(build, curr, prev, useCoref, delim);
 			else
-				getSubFormsAux(build, curr, prev, delim);
+				getSubFormsAux(build, curr, prev, useCoref, delim);
 		}
 		
 		if (notAdded)
-			prev = addForm(build, node, prev, delim);
+			prev = addForm(build, node, prev, useCoref, delim);
 	}
 	
 	/** Called by {@link LGLibEn#getSubFormsAux(StringBuilder, DEPNode, String)}. */
-	static private DEPNode addForm(StringBuilder build, DEPNode curr, DEPNode prev, String delim)
+	static private DEPNode addForm(StringBuilder build, DEPNode curr, DEPNode prev, boolean useCoref, String delim)
 	{
 		if (!curr.isForm(STConstant.EMPTY))
 		{
 			if (!attachLeft(curr, prev)) build.append(delim);
-			String coref = getReferentValueOf3rdPronoun(curr);
+			String coref = useCoref ? getReferentValueOf3rdPronoun(curr) : null;
 			
 			if (coref != null)		build.append(coref);
 			else 					build.append(curr.form);			

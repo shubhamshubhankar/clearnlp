@@ -299,6 +299,21 @@ public class LGAsk
 		return generateQuestion(root);
 	}
 	
+	/** Generates a question from a declarative sentence. */
+	public DEPTree generateQuestionFromDeclarative(DEPNode root, boolean convertUnI)
+	{
+		DEPTree tree = new DEPTree();
+		
+		for (DEPNode node : root.getSubNodeSortedList())
+		{
+			tree.add(node);
+			if (node == root) node.setHead(tree.get(0), DEPLibEn.DEP_ROOT);
+		}
+		
+		tree.resetIDs();
+		return generateQuestionFromDeclarative(tree, convertUnI);
+	}
+	
 	/** Called by {@link LGAsk#generateQuestionFromAsk(DEPTree, String)}. */
 	public DEPTree generateQuestion(DEPNode verb)
 	{
@@ -371,7 +386,7 @@ public class LGAsk
 			if (arc.isLabel(DEPLibEn.P_AUX) && !dep.isPos(CTLibEn.POS_TO))
 			{
 				if (dep.isLemma(ENAux.GET))
-					return addDoAuxiliary(tree, dep);
+					return addDoAuxiliary(tree, dep, verb);
 				else
 				{
 					addSubtree(tree, dep, added);
@@ -405,20 +420,20 @@ public class LGAsk
 			return verb;
 		}
 		else
-			return addDoAuxiliary(tree, verb);
+			return addDoAuxiliary(tree, verb, verb);
 	}
 	
 	/** Called by {@link LGAsk#generateQuestionFromAsk(DEPTree, String)}. */
-	private DEPNode addDoAuxiliary(DEPTree tree, DEPNode verb)
+	private DEPNode addDoAuxiliary(DEPTree tree, DEPNode verb, DEPNode head)
 	{
 		DEPNode aux;
 		
 		if (verb.isPos(CTLibEn.POS_VBZ))
-			tree.add(aux = getNode(verb, ENAux.DOES, ENAux.DO, verb.pos, DEPLibEn.DEP_AUX, null));
+			tree.add(aux = getNode(head, ENAux.DOES, ENAux.DO, verb.pos, DEPLibEn.DEP_AUX, null));
 		else if (verb.isPos(CTLibEn.POS_VBD) || verb.isPos(CTLibEn.POS_VBN))
-			tree.add(aux = getNode(verb, ENAux.DID , ENAux.DO, CTLibEn.POS_VBD, DEPLibEn.DEP_AUX, null));
+			tree.add(aux = getNode(head, ENAux.DID , ENAux.DO, CTLibEn.POS_VBD, DEPLibEn.DEP_AUX, null));
 		else
-			tree.add(aux = getNode(verb, ENAux.DO  , ENAux.DO, verb.pos, DEPLibEn.DEP_AUX, null));
+			tree.add(aux = getNode(head, ENAux.DO  , ENAux.DO, verb.pos, DEPLibEn.DEP_AUX, null));
 		
 		toNonFinite(verb);
 		return aux;
@@ -563,7 +578,7 @@ public class LGAsk
 		{
 			node.form = node.lemma = ENPronoun.YOUR;
 			node.pos  = CTLibEn.POS_PRPS;
-			remove.addAll(node.getDependentNodes());
+			remove.addAll(node.getDependentNodeList());
 		}
 		else if (node.isPos(CTLibEn.POS_PRP) && !ENPronoun.is1stSingular(node.lemma))
 		{
@@ -578,7 +593,7 @@ public class LGAsk
 		{
 			node.form = node.lemma = ENPronoun.YOU;
 			node.pos  = CTLibEn.POS_PRP;
-			remove.addAll(node.getDependentNodes());
+			remove.addAll(node.getDependentNodeList());
 		}
 		else if (!deps.isEmpty())
 		{

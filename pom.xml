@@ -68,19 +68,14 @@
       <version>1.5</version>
     </dependency>
     <dependency>
-      <groupId>com.carrotsearch</groupId>
-      <artifactId>hppc</artifactId>
-      <version>0.4.3</version>
-    </dependency>
-    <dependency>
       <groupId>net.sourceforge.jregex</groupId>
       <artifactId>jregex</artifactId>
       <version>1.2_01</version>
     </dependency>
     <dependency>
-      <groupId>it.unimi.dsi</groupId>
-      <artifactId>fastutil</artifactId>
-      <version>6.5.5</version>
+      <groupId>com.carrotsearch</groupId>
+      <artifactId>hppc</artifactId>
+      <version>0.5.2</version>
     </dependency>
   </dependencies>
   

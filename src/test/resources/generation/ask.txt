@@ -67,6 +67,19 @@
 12	.	.	.	_	1	punct	_
 
 1	Ask	ask	VB	pb=ask.01	0	root	_
+2	whether	whether	IN	p2=CC	4	complm	_
+3	you	you	PRP	_	4	nsubj	4:A0
+4	wanted	want	VBD	p2=VB|pb=want.01	1	ccomp	1:A1
+5	me	me	PRP	_	7	nsubj	7:A0
+6	to	to	TO	_	7	aux	_
+7	place	place	VB	pb=place.01	4	ccomp	4:A1
+8	an	an	DT	_	9	det	_
+9	order	order	NN	_	7	dobj	7:A1
+10	for	for	IN	_	9	prep	_
+11	you	you	PRP	_	10	pobj	_
+12	.	.	.	_	1	punct	_
+
+1	Ask	ask	VB	pb=ask.01	0	root	_
 2	if	if	IN	_	8	mark	_
 3	the	the	DT	_	4	det	_
 4	user	user	NN	_	6	poss	_
@@ -97,6 +110,15 @@
 8	locked	lock	VBN	p2=JJ|pb=lock.01	1	ccomp	1:A1
 9	yesterday	yesterday	NN	_	8	npadvmod	8:AM-TMP
 10	.	.	.	_	1	punct	_
+
+1	Ask	ask	VB	pb=ask.01	0	root	_
+2	if	if	IN	_	6	mark	_
+3	the	the	DT	_	4	det	_
+4	user	user	NN	_	6	nsubj	6:A0
+5	was	be	VBD	_	6	aux	_
+6	playing	play	VBG	pb=play.01	1	ccomp	_
+7	basketball	basketball	NN	_	6	dobj	6:A1
+8	?	?	.	_	6	punct	_
 
 1	Ask	ask	VB	pb=ask.01	0	root	_
 2	if	if	IN	_	5	complm	_
@@ -149,7 +171,7 @@
 
 1	Ask	ask	VB	pb=ask.01	0	root	_
 2	how	how	WRB	_	3	advmod	_
-3	long	long	RB	p2=JJ	8	advmod	8:AM-TMP
+3	long	long	RB	p2=JJ	8	advmod	8:R-AM-TMP
 4	the	the	DT	_	5	det	_
 5	user	user	NN	_	8	nsubj	8:A1
 6	has	have	VBZ	_	8	aux	_
@@ -204,6 +226,16 @@
 9	.	.	.	_	1	punct	_
 
 1	Ask	ask	VB	pb=ask.01	0	root	_
+2	what	what	WP	_	5	dobj	5:R-A1
+3	you	you	PRP	_	5	nsubj	5:A0
+4	can	can	MD	_	5	aux	5:AM-MOD
+5	do	do	VB	pb=do.02	1	ccomp	1:A1
+6	for	for	IN	_	5	prep	5:A2
+7	the	the	DT	_	8	det	_
+8	user	user	NN	_	6	pobj	_
+9	.	.	.	_	1	punct	_
+
+1	Ask	ask	VB	pb=ask.01	0	root	_
 2	who	who	WP	_	3	nsubj	3:R-A0
 3	helped	help	VBD	pb=help.01	1	ccomp	1:A1
 4	the	the	DT	_	5	det	_
@@ -232,6 +264,13 @@
 7	's	's	POS	_	6	possessive	_
 8	password	password	NN	p2=NNP	4	dobj	4:A1
 9	.	.	.	_	1	punct	_
+
+1	Ask	ask	VB	pb=ask.02	0	root	_
+2	what	what	WP	_	3	attr	3:R-A2
+3	is	be	VBZ	pb=be.01	1	ccomp	_
+4	your	your	PRP$	_	5	poss	_
+5	username	username	NN	_	3	nsubj	3:A1
+6	?	?	.	_	3	punct	_
 
 1	Ask	ask	VB	pb=ask.02	0	root	_
 2	to	to	TO	_	3	aux	_

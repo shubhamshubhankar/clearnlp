@@ -45,6 +45,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class LGAnswerGenerator
 {
+	final boolean USE_COREF  = true;
 	final Pattern P_REMOVE   = UTRegex.getORPatternExact(DEPLibEn.DEP_CONJ, DEPLibEn.DEP_CC, DEPLibEn.DEP_CONJ);
 	final Pattern P_PRESERVE = UTRegex.getORPatternExact(DEPLibEn.DEP_AGENT, DEPLibEn.DEP_EXPL, DEPLibEn.DEP_HMOD, DEPLibEn.DEP_HYPH, DEPLibEn.DEP_NEG, DEPLibEn.DEP_PRT, DEPLibEn.DEP_PUNCT);
 	
@@ -279,7 +280,7 @@ public class LGAnswerGenerator
 	
 	private Pair<String,String> getAnswerString(DEPNode node, String delim)
 	{
-		return getAnswerStringPost(LGLibEn.getForms(node, delim), delim, node.getFirstNode());
+		return getAnswerStringPost(LGLibEn.getForms(node, USE_COREF, delim), delim, node.getFirstNode());
 	}
 	
 	private Pair<String,String> getAnswerString(List<DEPNode> nodes, String delim)
@@ -289,7 +290,7 @@ public class LGAnswerGenerator
 		for (DEPNode node : nodes)
 		{
 			build.append(delim);
-			build.append(LGLibEn.getForms(node, delim));
+			build.append(LGLibEn.getForms(node, USE_COREF, delim));
 		}
 		
 		return getAnswerStringPost(build.substring(delim.length()), delim, nodes.get(0).getFirstNode());
@@ -549,7 +550,7 @@ public class LGAnswerGenerator
 			else if (rHead == null || rHead.isLabel(SRLLib.ARGM_MOD) || rHead.isLabel(SRLLib.ARGM_NEG))
 			{
 				build.append(delim);
-				build.append(LGLibEn.getForms(rDep, delim));
+				build.append(LGLibEn.getForms(rDep, USE_COREF, delim));
 			}
 			else if (containsLabel(qsTree, qLabels, qPreps, SRLLib.getBaseLabel(rHead.getLabel()), rDep, bMod[0], bMod[1], bMod[2]))
 			{
@@ -560,7 +561,7 @@ public class LGAnswerGenerator
 				else
 				{
 					build.append(delim);
-					build.append(LGLibEn.getForms(rDep, delim));
+					build.append(LGLibEn.getForms(rDep, USE_COREF, delim));
 				}
 			}
 		}
@@ -688,7 +689,7 @@ public class LGAnswerGenerator
 		for (SRLArc arc : arcs)
 		{
 			build.append(delim);
-			build.append(LGLibEn.getForms(arc.getNode(), delim));
+			build.append(LGLibEn.getForms(arc.getNode(), USE_COREF, delim));
 		}
 		
 		String s = getAnswerPost(build, delim);
