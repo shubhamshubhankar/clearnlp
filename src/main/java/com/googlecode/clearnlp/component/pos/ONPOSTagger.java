@@ -32,7 +32,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class ONPOSTagger extends CPOSTagger
+public class ONPOSTagger extends EnglishPOSTagger
 {
 	ONStringModel o_model;
 	

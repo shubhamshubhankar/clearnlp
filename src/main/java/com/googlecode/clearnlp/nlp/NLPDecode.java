@@ -30,10 +30,6 @@ import org.w3c.dom.NodeList;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.component.AbstractComponent;
-import com.googlecode.clearnlp.component.dep.CDEPParserSB;
-import com.googlecode.clearnlp.component.morph.CDefaultMPAnalyzer;
-import com.googlecode.clearnlp.component.morph.CEnglishMPAnalyzer;
-import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
 import com.googlecode.clearnlp.component.srl.CSRLabeler;
@@ -144,7 +140,7 @@ public class NLPDecode extends AbstractNLP
 	{
 		String sentence;
 		DEPTree tree;
-		
+
 		while ((sentence = reader.next()) != null)
 		{
 			tree = toDEPTree(tokenizer.getTokens(sentence));
@@ -186,12 +182,12 @@ public class NLPDecode extends AbstractNLP
 	{
 		ZipInputStream zin = new ZipInputStream(stream);
 		
-		if      (mode.equals(NLPLib.MODE_POS))
-			return (s_posFile == null) ? new CPOSTagger(zin) : new CPOSTagger(zin, UTInput.createBufferedFileReader(s_posFile));
+		if (mode.equals(NLPLib.MODE_POS))
+			return EngineGetter.getPOSTagger(zin, language);
 		else if (mode.equals(NLPLib.MODE_MORPH))
-			return getMPAnalyzer(zin, language);
+			return EngineGetter.getMPAnalyzer(zin, language);
 		else if (mode.startsWith(NLPLib.MODE_DEP))
-			return new CDEPParserSB(zin);
+			return EngineGetter.getDEPParser(zin, language);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(zin);
 		else if (mode.equals(NLPLib.MODE_ROLE))
@@ -202,14 +198,6 @@ public class NLPDecode extends AbstractNLP
 			return new CSRLabeler(zin);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
-	}
-	
-	private AbstractComponent getMPAnalyzer(ZipInputStream zin, String language) throws IOException
-	{
-		if (language.equals(AbstractReader.LANG_EN))
-			return new CEnglishMPAnalyzer(zin);
-		
-		return new CDefaultMPAnalyzer();
 	}
 	
 	public List<String> getModes(String readerType, String mode)

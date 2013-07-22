@@ -28,8 +28,8 @@ import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
 import com.googlecode.clearnlp.component.dep.CDEPParser;
-import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
+import com.googlecode.clearnlp.component.pos.DefaultPOSTagger;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
 import com.googlecode.clearnlp.component.srl.CSRLabeler;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
@@ -75,7 +75,7 @@ public class NLPDevelop extends NLPTrain
 		JointReader  reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		
 		if      (mode.equals(NLPLib.MODE_POS))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new DefaultPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
 		else if (mode.equals(NLPLib.MODE_DEP))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParser(xmls), mode, -1);
 		else if (mode.equals(NLPLib.MODE_PRED))

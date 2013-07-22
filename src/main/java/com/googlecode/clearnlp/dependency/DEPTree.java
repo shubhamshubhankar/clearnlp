@@ -985,8 +985,9 @@ public class DEPTree extends ArrayList<DEPNode>
 	
 	public DEPTree clone()
 	{
+		IntObjectOpenHashMap<DEPNode> map = new IntObjectOpenHashMap<DEPNode>();
+		DEPNode oNode, nNode, oHead, nHead;
 		DEPTree tree = new DEPTree();
-		DEPNode oNode, nNode, oHead;
 		int i, size = size();
 		
 		for (i=1; i<size; i++)
@@ -994,6 +995,8 @@ public class DEPTree extends ArrayList<DEPNode>
 			oNode = get(i);
 			nNode = new DEPNode(oNode);
 			tree.add(nNode);
+			nNode.id = i;
+			map.put(oNode.id, nNode);
 			
 			if (oNode.x_heads != null)
 				nNode.initXHeads();
@@ -1007,15 +1010,16 @@ public class DEPTree extends ArrayList<DEPNode>
 			oNode = get(i);
 			nNode = tree.get(i);
 			oHead = oNode.getHead();
-			
-			nNode.setHead(tree.get(oHead.id), oNode.getLabel());
+			nHead = map.get(oHead.id);
+			if (nHead == null) nHead = tree.get(0);
+			nNode.setHead(nHead, oNode.getLabel());
 			
 			if (oNode.x_heads != null)
 			{
 				for (DEPArc xHead : oNode.x_heads)
 				{
 					oHead = xHead.getNode();
-					nNode.addXHead(tree.get(oHead.id), xHead.getLabel());
+					nNode.addXHead(map.get(oHead.id), xHead.getLabel());
 				}				
 			}
 			
@@ -1024,7 +1028,7 @@ public class DEPTree extends ArrayList<DEPNode>
 				for (DEPArc sHead : oNode.s_heads)
 				{
 					oHead = sHead.getNode();
-					nNode.addSHead(tree.get(oHead.id), sHead.getLabel());
+					nNode.addSHead(map.get(oHead.id), sHead.getLabel());
 				}				
 			}
 			

@@ -42,7 +42,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CEnglishMPAnalyzer extends AbstractComponent
+public class EnglishMPAnalyzer extends AbstractComponent
 {
 	static final public String LANG_DIR = AbstractReader.LANG_EN + "/";
 	final public String FIELD_DELIM = "_";
@@ -103,7 +103,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 	 * @param inputStream the input stream containing dictionary files.
 	 * @throws IOException
 	 */
-	public CEnglishMPAnalyzer(ZipInputStream inputStream) throws IOException
+	public EnglishMPAnalyzer(ZipInputStream inputStream) throws IOException
 	{
 		try
 		{
@@ -145,7 +145,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 	}
 	
 	/**
-	 * Called by {@link CEnglishMPAnalyzer#init(ZipInputStream)}. 
+	 * Called by {@link EnglishMPAnalyzer#init(ZipInputStream)}. 
 	 * @return HashMap taking exceptions as keys and their base-forms as values.
 	 */
 	private HashMap<String,String> getExcecptionMap(ZipInputStream zin) throws IOException
@@ -173,7 +173,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 	}
 	
 	/**
-	 * Called by {@link CEnglishMPAnalyzer#init(ZipInputStream)}.
+	 * Called by {@link EnglishMPAnalyzer#init(ZipInputStream)}.
 	 * @return HashSet containing base-forms.
 	 */
 	private HashSet<String> getBaseSet(ZipInputStream zin) throws IOException
@@ -189,7 +189,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 	}
 	
 	/**
-	 * Called by {@link CEnglishMPAnalyzer#init(ZipInputStream)}.
+	 * Called by {@link EnglishMPAnalyzer#init(ZipInputStream)}.
 	 * @return List containing rules.
 	 */
 	private ArrayList<Pair<String,String>> getRuleList(ZipInputStream zin) throws IOException
@@ -213,7 +213,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 	}
 	
 	/**
-	 * Called by {@link CEnglishMPAnalyzer#init(ZipInputStream)}.
+	 * Called by {@link EnglishMPAnalyzer#init(ZipInputStream)}.
 	 * @return HashMap taking (abbreviation and pos-tag) as the key and its base-form as the value.
 	 */
 	private HashMap<String,String> getAbbreviationMap(ZipInputStream zin) throws IOException
@@ -257,7 +257,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 		return getLemmaAux(form.toLowerCase(), pos);
 	}
 	
-	/** Called by {@link CEnglishMPAnalyzer#getLemma(String, String)}. */
+	/** Called by {@link EnglishMPAnalyzer#getLemma(String, String)}. */
 	private String getLemmaAux(String form, String pos)
 	{
 		// abbreviations
@@ -279,7 +279,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 		return form;
 	}
 	
-	/** Called by {@link CEnglishMPAnalyzer#getLemma(String, String)}. */
+	/** Called by {@link EnglishMPAnalyzer#getLemma(String, String)}. */
 	private String getNumber(String form, String pos)
 	{
 		if (pos.equals(CTLibEn.POS_CD))
@@ -294,7 +294,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 		return null;
 	}
 	
-	/** Called by {@link CEnglishMPAnalyzer#getLemma(String, String)}. */
+	/** Called by {@link EnglishMPAnalyzer#getLemma(String, String)}. */
 	private String getException(String form, String pos)
 	{
 		if (MPLibEn.isNoun     (pos))	return m_noun_exc.get(form);
@@ -305,7 +305,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 		return null;
 	}
 	
-	/** Called by {@link CEnglishMPAnalyzer#getLemma(String, String)}. */
+	/** Called by {@link EnglishMPAnalyzer#getLemma(String, String)}. */
 	private String getBase(String form, String pos)
 	{
 		if (MPLibEn.isNoun(pos))		return getBaseAux(form, s_noun_base, a_noun_rule);
@@ -315,7 +315,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 		return null;
 	}
 	
-	/** Called by {@link CEnglishMPAnalyzer#getBase(String, String)}. */
+	/** Called by {@link EnglishMPAnalyzer#getBase(String, String)}. */
 	private String getBaseAux(String form, Set<String> set, List<Pair<String,String>> rule)
 	{
 		if (set.contains(form))	return form;
@@ -335,7 +335,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 		return null;
 	}
 	
-	/** Called by {@link CEnglishMPAnalyzer#getLemma(String, String)}. */
+	/** Called by {@link EnglishMPAnalyzer#getLemma(String, String)}. */
 	private String getAbbreviation(String form, String pos)
 	{
 		String key = form + FIELD_DELIM + pos;

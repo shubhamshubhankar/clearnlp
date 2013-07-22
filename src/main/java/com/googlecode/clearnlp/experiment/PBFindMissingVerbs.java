@@ -33,7 +33,7 @@ import org.kohsuke.args4j.Option;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.googlecode.clearnlp.component.morph.CEnglishMPAnalyzer;
+import com.googlecode.clearnlp.component.morph.EnglishMPAnalyzer;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTTree;
@@ -63,7 +63,7 @@ public class PBFindMissingVerbs extends AbstractRun
 		initArgs(args);
 		
 		Map<String,List<PBInstance>> map = PBLib.getPBInstanceMap(s_propFile, s_treeDir, false);
-		CEnglishMPAnalyzer morph = new CEnglishMPAnalyzer(UTInput.createZipFileInputStream(s_dictFile));
+		EnglishMPAnalyzer morph = new EnglishMPAnalyzer(UTInput.createZipFileInputStream(s_dictFile));
 		List<List<PBInstance>> lists = new ArrayList<List<PBInstance>>();
 		IntOpenHashSet[] sets = new IntOpenHashSet[4];
 		int i, size = sets.length;
@@ -201,7 +201,7 @@ public class PBFindMissingVerbs extends AbstractRun
 		}
 	}
 	
-	private void addMissingPredicates(CTTree tree, CEnglishMPAnalyzer morph, PBInstance fst, IntOpenHashSet set, List<PBInstance> list)
+	private void addMissingPredicates(CTTree tree, EnglishMPAnalyzer morph, PBInstance fst, IntOpenHashSet set, List<PBInstance> list)
 	{
 		PBInstance inst;
 		String lemma;

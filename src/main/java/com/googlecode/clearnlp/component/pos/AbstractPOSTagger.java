@@ -53,7 +53,7 @@ import com.googlecode.clearnlp.util.pair.StringDoublePair;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CPOSTagger extends AbstractStatisticalComponent
+abstract public class AbstractPOSTagger extends AbstractStatisticalComponent
 {
 	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_POS + NLPLib.ENTRY_CONFIGURATION;
 	protected final String ENTRY_FEATURE	   = NLPLib.MODE_POS + NLPLib.ENTRY_FEATURE;
@@ -70,14 +70,12 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	protected String[]          	g_tags;		// gold-standard part-of-speech tags
 	protected int 					i_input;
 	
-	private List<Map<String,String[]>> m_ngrams;
-	
 //	====================================== CONSTRUCTORS ======================================
 
-	public CPOSTagger() {}
+	public AbstractPOSTagger() {}
 	
 	/** Constructs a part-of-speech tagger for collecting lexica. */
-	public CPOSTagger(JointFtrXml[] xmls, Set<String> sLsfs)
+	public AbstractPOSTagger(JointFtrXml[] xmls, Set<String> sLsfs)
 	{
 		super(xmls);
 
@@ -86,34 +84,27 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	}
 	
 	/** Constructs a part-of-speech tagger for training. */
-	public CPOSTagger(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
+	public AbstractPOSTagger(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
 	{
 		super(xmls, spaces, lexica);
 	}
 	
 	/** Constructs a part-of-speech tagger for developing. */
-	public CPOSTagger(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
+	public AbstractPOSTagger(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
 	{
 		super(xmls, models, lexica);
 	}
 	
 	/** Constructs a part-of-speech tagger for bootsrapping. */
-	public CPOSTagger(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
+	public AbstractPOSTagger(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
 	{
 		super(xmls, spaces, models, lexica);
 	}
 	
 	/** Constructs a part-of-speech tagger for decoding. */
-	public CPOSTagger(ZipInputStream in)
+	public AbstractPOSTagger(ZipInputStream in)
 	{
 		super(in);
-	}
-	
-	/** Constructs a part-of-speech tagger for decoding with predefined tags. */
-	public CPOSTagger(ZipInputStream in, BufferedReader frule)
-	{
-		super(in);
-		setRules(frule);
 	}
 	
 	@Override @SuppressWarnings("unchecked")
@@ -122,6 +113,10 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		s_lsfs = (Set<String>)lexica[LEXICA_LOWER_SIMPLIFIED_FORMS];
 		m_ambi = (Map<String,String>)lexica[LEXICA_AMBIGUITY_CLASSES];
 	}
+	
+//	====================================== ABSTRACT METHODS ======================================
+	
+	abstract protected boolean applyRules();
 	
 //	====================================== LOAD/SAVE MODELS ======================================
 	
@@ -190,11 +185,6 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		zout.closeEntry();
 	}
 	
-	public void setRules(BufferedReader frule)
-	{
-		m_ngrams = getRules(frule);
-	}
-	
 //	====================================== GETTERS AND SETTERS ======================================
 
 	@Override
@@ -220,7 +210,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		s_lsfs.clear();
 	}
 	
-	/** Called by {@link CPOSTagger#getLexica()}. */
+	/** Called by {@link AbstractPOSTagger#getLexica()}. */
 	private Map<String,String> getAmbiguityClasses()
 	{
 		double threshold = f_xmls[0].getAmbiguityClassThreshold();
@@ -273,7 +263,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		processAux();
 	}
 	
-	/** Called by {@link CPOSTagger#process(DEPTree)}. */
+	/** Called by {@link AbstractPOSTagger#process(DEPTree)}. */
 	protected void init(DEPTree tree)
 	{
 	 	d_tree = tree;
@@ -288,7 +278,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	 	EngineProcess.normalizeForms(tree);
 	}
 	
-	/** Called by {@link CPOSTagger#process(DEPTree)}. */
+	/** Called by {@link AbstractPOSTagger#process(DEPTree)}. */
 	protected void processAux()
 	{
 		if (i_flag == FLAG_LEXICA)
@@ -305,7 +295,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		}
 	}
 	
-	/** Called by {@link CPOSTagger#processAux()}. */
+	/** Called by {@link AbstractPOSTagger#processAux()}. */
 	protected void addLexica()
 	{
 		DEPNode node;
@@ -320,7 +310,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		}
 	}
 	
-	/** Called by {@link CPOSTagger#processAux()}. */
+	/** Called by {@link AbstractPOSTagger#processAux()}. */
 	protected List<Pair<String,StringFeatureVector>> tag()
 	{
 		List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>();
@@ -338,24 +328,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		return insts;
 	}
 	
-	private boolean applyRules()
-	{
-		if (m_ngrams == null)	return false;
-		String[] rules = getRules(m_ngrams, i_input);
-		
-		if (rules != null)
-		{
-			for (String pos : rules)
-				d_tree.get(i_input++).pos = pos;
-			
-			i_input--;
-			return true;
-		}
-		
-		return false;
-	}
-	
-	/** Called by {@link CPOSTagger#tag()}. */
+	/** Called by {@link AbstractPOSTagger#tag()}. */
 	private String getLabel(List<Pair<String,StringFeatureVector>> insts)
 	{
 		StringFeatureVector vector = getFeatureVector(f_xmls[0]);
@@ -379,13 +352,13 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		return label;
 	}
 	
-	/** Called by {@link CPOSTagger#getLabel()}. */
+	/** Called by {@link AbstractPOSTagger#getLabel()}. */
 	private String getGoldLabel()
 	{
 		return g_tags[i_input];
 	}
 	
-	/** Called by {@link CPOSTagger#getLabel()}. */
+	/** Called by {@link AbstractPOSTagger#getLabel()}. */
 	private String getAutoLabel(StringFeatureVector vector)
 	{
 		Pair<StringPrediction,StringPrediction> ps = s_models[0].predictTwo(vector);

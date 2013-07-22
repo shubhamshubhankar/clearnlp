@@ -305,12 +305,8 @@ public class LGAsk
 		DEPTree tree = new DEPTree();
 		
 		for (DEPNode node : root.getSubNodeSortedList())
-		{
 			tree.add(node);
-			if (node == root) node.setHead(tree.get(0), DEPLibEn.DEP_ROOT);
-		}
 		
-		tree.resetIDs();
 		return generateQuestionFromDeclarative(tree, convertUnI);
 	}
 	

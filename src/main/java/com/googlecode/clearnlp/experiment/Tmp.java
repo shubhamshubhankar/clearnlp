@@ -44,7 +44,7 @@ import jregex.TextBuffer;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntDeque;
-import com.googlecode.clearnlp.component.dep.CDEPParserSB;
+import com.googlecode.clearnlp.component.dep.EnglishDEPParser;
 import com.googlecode.clearnlp.constant.english.ENPunct;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
@@ -84,6 +84,19 @@ public class Tmp
 
 	public Tmp(String[] args) throws Exception
 	{
+		SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 7);
+		reader.open(UTInput.createBufferedFileReader(args[0]));
+		DEPTree tree = reader.next();
+		tree.setDependents();
+		
+		DEPNode root = tree.getFirstRoot(), dep;
+		System.out.println(" Root: "+root.id+" "+root.form);
+		
+		for (DEPArc arc : root.getDependents())
+		{
+			dep = arc.getNode();
+			System.out.println("- dep: "+dep.id+" "+dep.form);
+		}
 	}
 	
 	void toQuestion(String[] args)
@@ -429,7 +442,7 @@ public class Tmp
 	
 	void parseBeam(String[] args)
 	{
-		CDEPParserSB parser = new CDEPParserSB(UTInput.createZipFileInputStream(args[0]));
+		EnglishDEPParser parser = new EnglishDEPParser(UTInput.createZipFileInputStream(args[0]));
 		DEPReader reader = new DEPReader(0, 1, 2, 3, 4, -1, -1);
 		int[] beams = {1,2,4,8,16,32,64};
 		PrintStream fout;

@@ -21,10 +21,12 @@ import java.io.InputStream;
 import java.util.zip.ZipInputStream;
 
 import com.googlecode.clearnlp.component.AbstractComponent;
-import com.googlecode.clearnlp.component.dep.CDEPParserSB;
-import com.googlecode.clearnlp.component.morph.CDefaultMPAnalyzer;
-import com.googlecode.clearnlp.component.morph.CEnglishMPAnalyzer;
-import com.googlecode.clearnlp.component.pos.CPOSTagger;
+import com.googlecode.clearnlp.component.dep.DefaultDEPParser;
+import com.googlecode.clearnlp.component.dep.EnglishDEPParser;
+import com.googlecode.clearnlp.component.morph.DefaultMPAnalyzer;
+import com.googlecode.clearnlp.component.morph.EnglishMPAnalyzer;
+import com.googlecode.clearnlp.component.pos.DefaultPOSTagger;
+import com.googlecode.clearnlp.component.pos.EnglishPOSTagger;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
 import com.googlecode.clearnlp.component.srl.CSRLabeler;
@@ -98,11 +100,11 @@ public class EngineGetter implements EngineLib
 		ZipInputStream zin = new ZipInputStream(stream);
 		
 		if      (mode.equals(NLPLib.MODE_POS))
-			return new CPOSTagger(zin);
+			return getPOSTagger(zin, language);
 		else if (mode.equals(NLPLib.MODE_MORPH))
-			return getCMPAnalyzer(zin, language);
+			return getMPAnalyzer(zin, language);
 		else if (mode.equals(NLPLib.MODE_DEP))
-			return new CDEPParserSB(zin);
+			return getDEPParser(zin, language);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(zin);
 		else if (mode.equals(NLPLib.MODE_ROLE))
@@ -115,11 +117,27 @@ public class EngineGetter implements EngineLib
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
 	
-	static private AbstractComponent getCMPAnalyzer(ZipInputStream zin, String language) throws IOException
+	static public AbstractComponent getPOSTagger(ZipInputStream zin, String language) throws IOException
 	{
 		if (language.equals(AbstractReader.LANG_EN))
-			return new CEnglishMPAnalyzer(zin);
+			return new EnglishPOSTagger(zin);
 		
-		return new CDefaultMPAnalyzer();
+		return new DefaultPOSTagger(zin);
+	}
+	
+	static public AbstractComponent getDEPParser(ZipInputStream zin, String language) throws IOException
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new EnglishDEPParser(zin);
+		
+		return new DefaultDEPParser(zin);
+	}
+	
+	static public AbstractComponent getMPAnalyzer(ZipInputStream zin, String language) throws IOException
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new EnglishMPAnalyzer(zin);
+		
+		return new DefaultMPAnalyzer();
 	}
 }

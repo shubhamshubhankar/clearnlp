@@ -22,7 +22,7 @@ import org.w3c.dom.Element;
 
 import com.googlecode.clearnlp.classification.feature.JointFtrXml;
 import com.googlecode.clearnlp.component.dep.CDEPParser;
-import com.googlecode.clearnlp.component.pos.CPOSTagger;
+import com.googlecode.clearnlp.component.pos.DefaultPOSTagger;
 import com.googlecode.clearnlp.reader.JointReader;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTXml;
@@ -66,7 +66,7 @@ public class NLPGenerate extends NLPDevelop
 			devFiles = new String[]{trainFiles[i]};
 
 			if      (mode.equals(NLPLib.MODE_POS))
-				developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, i)), mode, i);
+				developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new DefaultPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, i)), mode, i);
 			else if (mode.equals(NLPLib.MODE_DEP))
 				developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParser(xmls), mode, i);
 			else if (mode.equals(NLPLib.MODE_DEP_SB))

@@ -23,7 +23,7 @@ import org.w3c.dom.Element;
 
 import com.googlecode.clearnlp.classification.feature.JointFtrXml;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.component.pos.CPOSTagger;
+import com.googlecode.clearnlp.component.pos.EnglishPOSTagger;
 import com.googlecode.clearnlp.component.pos.ONPOSTagger;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.nlp.NLPDevelop;
@@ -55,7 +55,7 @@ public class ONPOSTrain extends NLPDevelop
 		String[]   devFiles = UTFile.getSortedFileListBySize(devDir, ".*", true);
 		JointReader  reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		
-		AbstractStatisticalComponent component = new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1));
+		AbstractStatisticalComponent component = new EnglishPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1));
 		Object[] lexica = (component != null) ? getLexica(component, reader, xmls, trainFiles, -1) : null;
 		
 		ONPOSTagger tagger = new ONPOSTagger(xmls, lexica, 0.01, 0.1);

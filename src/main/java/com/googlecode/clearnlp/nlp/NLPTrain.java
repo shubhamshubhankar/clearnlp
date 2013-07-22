@@ -36,9 +36,9 @@ import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
 import com.googlecode.clearnlp.component.dep.CDEPParser;
-import com.googlecode.clearnlp.component.dep.CDEPParserSB;
-import com.googlecode.clearnlp.component.pos.CPOSTagger;
+import com.googlecode.clearnlp.component.dep.DefaultDEPParser;
 import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
+import com.googlecode.clearnlp.component.pos.DefaultPOSTagger;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
 import com.googlecode.clearnlp.component.srl.CSRLabeler;
@@ -104,7 +104,7 @@ public class NLPTrain extends AbstractNLP
 	protected AbstractStatisticalComponent getComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId, String mode)
 	{
 		if      (mode.equals(NLPLib.MODE_POS))
-			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new DefaultPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
 		else if (mode.equals(NLPLib.MODE_DEP))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPParser(xmls), mode, devId);
 		else if (mode.equals(NLPLib.MODE_PRED))
@@ -127,7 +127,7 @@ public class NLPTrain extends AbstractNLP
 	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String mode)
 	{
 		if      (mode.equals(NLPLib.MODE_POS))
-			return new CPOSTagger(xmls, models, lexica);
+			return new DefaultPOSTagger(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_DEP))
 			return new CDEPParser(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_PRED))
@@ -141,7 +141,7 @@ public class NLPTrain extends AbstractNLP
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return new CPOSTaggerSB(xmls, models, lexica, d_margin, n_beams);
 		else if (mode.equals(NLPLib.MODE_DEP_SB))
-			return new CDEPParserSB(xmls, models, lexica, d_margin, n_beams);
+			return new DefaultDEPParser(xmls, models, lexica, d_margin, n_beams);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
@@ -313,7 +313,7 @@ public class NLPTrain extends AbstractNLP
 	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String mode)
 	{
 		if      (mode.equals(NLPLib.MODE_POS))
-			return (models == null) ? new CPOSTagger(xmls, spaces, lexica) : new CPOSTagger(xmls, spaces, models, lexica);
+			return (models == null) ? new DefaultPOSTagger(xmls, spaces, lexica) : new DefaultPOSTagger(xmls, spaces, models, lexica);
 		else if (mode.equals(NLPLib.MODE_DEP))
 			return (models == null) ? new CDEPParser(xmls, spaces, lexica) : new CDEPParser(xmls, spaces, models, lexica);
 		else if (mode.equals(NLPLib.MODE_PRED))
@@ -327,7 +327,7 @@ public class NLPTrain extends AbstractNLP
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return (models == null) ? new CPOSTaggerSB(xmls, spaces, lexica, d_margin, n_beams) : new CPOSTaggerSB(xmls, spaces, models, lexica, d_margin, n_beams);
 		else if (mode.equals(NLPLib.MODE_DEP_SB))
-			return (models == null) ? new CDEPParserSB(xmls, spaces, lexica, d_margin, n_beams) : new CDEPParserSB(xmls, spaces, models, lexica, d_margin, n_beams);
+			return (models == null) ? new DefaultDEPParser(xmls, spaces, lexica, d_margin, n_beams) : new DefaultDEPParser(xmls, spaces, models, lexica, d_margin, n_beams);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
