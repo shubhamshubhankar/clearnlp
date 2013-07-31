@@ -31,7 +31,7 @@ import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
 import com.googlecode.clearnlp.component.pos.DefaultPOSTagger;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
-import com.googlecode.clearnlp.component.srl.CSRLabeler;
+import com.googlecode.clearnlp.component.srl.EnglishSRLabeler;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLEval;
@@ -85,7 +85,7 @@ public class NLPDevelop extends NLPTrain
 		else if (mode.startsWith(NLPLib.MODE_SENSE))
 			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf("_")+1)), mode, -1), devFiles, mode, mode);
 		else if (mode.equals(NLPLib.MODE_SRL))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CSRLabeler(xmls), mode, -1);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new EnglishSRLabeler(xmls), mode, -1);
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTaggerSB(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
 		else if (mode.equals(NLPLib.MODE_DEP_SB))

@@ -1,3 +1,33 @@
+1	Ask	ask	VB	p2=VBP|pb=ask.01	0	root	_
+2	the	the	DT	_	3	det	_
+3	user	user	NN	_	1	dobj	1:A2
+4	when	when	WRB	_	5	advmod	5:R-A2
+5	was	be	VBD	pb=be.01	1	ccomp	1:A1
+6	the	the	DT	_	8	det	_
+7	last	last	JJ	_	8	amod	_
+8	time	time	NN	_	5	nsubj	5:A1;12:AM-TMP
+9	that	that	IN	p2=WDT	12	complm	_
+10	the	the	DT	_	11	det	_
+11	user	user	NN	_	12	nsubj	12:A1;15:A0
+12	was	be	VBD	pb=be.01	8	rcmod	_
+13	able	able	JJ	_	12	acomp	12:A2
+14	to	to	TO	_	15	aux	_
+15	log	log	VB	pb=log.01	13	xcomp	_
+16	into	into	IN	_	15	prep	15:A1
+17	Remedy	remedy	NNP	p2=JJ	16	pobj	_
+
+1	Ask	ask	VB	p2=VBP|pb=ask.01	0	root	_
+2	the	the	DT	_	3	det	_
+3	user	user	NN	_	1	dobj	1:A2
+4	how	how	WRB	_	5	advmod	_
+5	many	many	JJ	_	6	amod	_
+6	users	user	NNS	_	8	nsubj	8:A0
+7	are	be	VBP	_	8	aux	_
+8	getting	get	VBG	pb=get.01	1	ccomp	1:A1
+9	this	this	DT	_	11	det	_
+10	error	error	NN	_	11	nn	_
+11	message	message	NN	_	8	dobj	8:A1
+
 1	Ask	ask	VB	pb=ask.01	0	root	_
 2	whether	whether	IN	_	5	complm	_
 3	the	the	DT	_	4	det	_
@@ -294,4 +324,3 @@
 3	be	be	VB	pb=be.01	1	xcomp	1:A1
 4	patient	patient	JJ	_	3	acomp	3:A2
 5	.	.	.	_	1	punct	_
-

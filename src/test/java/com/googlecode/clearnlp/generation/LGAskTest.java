@@ -43,6 +43,8 @@ public class LGAskTest
 		int i;
 
 		String[] questions = {
+				"When was the last time that you were able to log into Remedy?",
+				"How many users are getting this error message?",
 				"Do you want to reset your password?",
 				"Do you want to reset your password?",
 				"Do you want to reset your password?",
@@ -74,6 +76,8 @@ public class LGAskTest
 				"Please be patient."};
 		
 		String[] asks = {
+				"Ask when the last time that the user were able to log into Remedy was.",
+				"Ask how many users are getting this error message.",
 				"Ask whether the user wants to reset the user's password.",
 				"Ask whether the user wants to reset the user's password.",
 				"Ask whether the user wants to reset the user's password.",

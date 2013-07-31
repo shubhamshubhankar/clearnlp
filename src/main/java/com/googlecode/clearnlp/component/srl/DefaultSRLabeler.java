@@ -21,41 +21,51 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package com.googlecode.clearnlp.util.pair;
+package com.googlecode.clearnlp.component.srl;
 
-import com.googlecode.clearnlp.constant.universal.STPunct;
+import java.util.zip.ZipInputStream;
+
+import com.googlecode.clearnlp.classification.feature.JointFtrXml;
+import com.googlecode.clearnlp.classification.model.StringModel;
+import com.googlecode.clearnlp.classification.train.StringTrainSpace;
+import com.googlecode.clearnlp.dependency.DEPNode;
 
 /**
- * Genetic object and object pair.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class Pair<T1, T2>
+public class DefaultSRLabeler extends AbstractSRLabeler
 {
-	public T1 o1;
-	public T2 o2;
-	
-	public Pair(T1 o1, T2 o2)
+	/** Constructs a semantic role labeler for collecting lexica. */
+	public DefaultSRLabeler(JointFtrXml[] xmls)
 	{
-		set(o1, o2);
+		super(xmls);
 	}
 	
-	public void set(T1 o1, T2 o2)
+	/** Constructs a semantic role labeler for training. */
+	public DefaultSRLabeler(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
 	{
-		this.o1 = o1;
-		this.o2 = o2;
+		super(xmls, spaces, lexica);
 	}
 	
-	public String toString()
+	/** Constructs a semantic role labeler for developing. */
+	public DefaultSRLabeler(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
 	{
-		StringBuilder build = new StringBuilder();
-		
-		build.append(STPunct.LEFT_ROUND_BRACKET);
-		build.append(o1.toString());
-		build.append(STPunct.COMMA);
-		build.append(o2.toString());
-		build.append(STPunct.RIGHT_ROUND_BRACKET);
-	
-		return build.toString();
+		super(xmls, models, lexica);
 	}
+	
+	/** Constructs a semantic role labeler for decoding. */
+	public DefaultSRLabeler(ZipInputStream in)
+	{
+		super(in);
+	}
+	
+	/** Constructs a semantic role labeler for bootstrapping. */
+	public DefaultSRLabeler(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
+	{
+		super(xmls, spaces, models, lexica);
+	}
+
+	@Override
+	protected String getHardLabel(DEPNode node) {return null;}
 }

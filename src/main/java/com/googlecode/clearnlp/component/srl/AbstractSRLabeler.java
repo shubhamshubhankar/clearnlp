@@ -44,7 +44,6 @@ import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
@@ -61,7 +60,7 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
  * @since 1.0.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CSRLabeler extends AbstractStatisticalComponent
+abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 {
 	private final String ENTRY_CONFIGURATION = NLPLib.MODE_SRL + NLPLib.ENTRY_CONFIGURATION;
 	private final String ENTRY_FEATURE		 = NLPLib.MODE_SRL + NLPLib.ENTRY_FEATURE;
@@ -87,13 +86,13 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	protected int				i_pred, i_arg;
 	protected Map<String,ObjectDoublePair<DEPNode>> m_argns;
 	
-	protected Prob1DMap			m_down, m_up;	// only for collecting
-	protected Set<String>		s_down, s_up;
+	protected Prob1DMap		m_down, m_up;	// only for collecting
+	protected Set<String>	s_down, s_up;
 	
 //	====================================== CONSTRUCTORS ======================================
 	
 	/** Constructs a semantic role labeler for collecting lexica. */
-	public CSRLabeler(JointFtrXml[] xmls)
+	public AbstractSRLabeler(JointFtrXml[] xmls)
 	{
 		super(xmls);
 		m_down = new Prob1DMap();
@@ -101,25 +100,25 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	}
 	
 	/** Constructs a semantic role labeler for training. */
-	public CSRLabeler(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
+	public AbstractSRLabeler(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
 	{
 		super(xmls, spaces, lexica);
 	}
 	
 	/** Constructs a semantic role labeler for developing. */
-	public CSRLabeler(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
+	public AbstractSRLabeler(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
 	{
 		super(xmls, models, lexica);
 	}
 	
 	/** Constructs a semantic role labeler for decoding. */
-	public CSRLabeler(ZipInputStream in)
+	public AbstractSRLabeler(ZipInputStream in)
 	{
 		super(in);
 	}
 	
 	/** Constructs a semantic role labeler for bootstrapping. */
-	public CSRLabeler(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
+	public AbstractSRLabeler(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
 	{
 		super(xmls, spaces, models, lexica);
 	}
@@ -130,6 +129,8 @@ public class CSRLabeler extends AbstractStatisticalComponent
 		s_down = (Set<String>)lexica[LEXICA_PATH_DOWN];
 		s_up   = (Set<String>)lexica[LEXICA_PATH_UP];
 	}
+	
+	abstract protected String getHardLabel(DEPNode node);
 	
 //	====================================== LOAD/SAVE MODELS ======================================
 	
@@ -239,7 +240,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	
 //	====================================== INITIALIZATION ======================================
 	
-	/** Called by {@link CSRLabeler#process(DEPTree)}. */
+	/** Called by {@link AbstractSRLabeler#process(DEPTree)}. */
 	protected void init(DEPTree tree)
 	{
 	 	d_tree  = tree;
@@ -384,7 +385,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 		}
 	}
 	
-	/** Called by {@link CSRLabeler#label(DEPTree)}. */
+	/** Called by {@link AbstractSRLabeler#label(DEPTree)}. */
 	private void labelAux(DEPNode pred, DEPNode head)
 	{
 		if (!s_skip.contains(head.id))
@@ -396,7 +397,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 		labelDown(pred, head.getDependents());
 	}
 	
-	/** Called by {@link CSRLabeler#labelAux(DEPNode, IntOpenHashSet)}. */
+	/** Called by {@link AbstractSRLabeler#labelAux(DEPNode, IntOpenHashSet)}. */
 	private void labelDown(DEPNode pred, List<DEPArc> arcs)
 	{
 		DEPNode arg;
@@ -444,7 +445,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 		return p;
 	}
 	
-	/** Called by {@link CSRLabeler#getGoldLabel(byte)}. */
+	/** Called by {@link AbstractSRLabeler#getGoldLabel(byte)}. */
 	private String getGoldLabel()
 	{
 		for (StringIntPair head : g_heads[i_arg])
@@ -456,7 +457,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 		return LB_NO_ARG;
 	}
 
-	/** Called by {@link CSRLabeler#getLabel(byte)}. */
+	/** Called by {@link AbstractSRLabeler#getLabel(byte)}. */
 	private StringPrediction getAutoLabel(int idx, StringFeatureVector vector)
 	{
 		StringPrediction p = s_models[idx].predictBest(vector);
@@ -742,18 +743,5 @@ public class CSRLabeler extends AbstractStatisticalComponent
 		}
 		
 		return node;
-	}
-	
-	private String getHardLabel(DEPNode node)
-	{
-		DEPNode dep;
-		
-		if (node.isLemma("at"))
-		{
-			if ((dep = rm_deps[node.id]) != null && dep.isPos(CTLibEn.POS_NN) && (dep.isLemma("am") || dep.isLemma("pm")))
-				return SRLLib.ARGM_TMP;
-		}
-		
-		return null;
 	}
 }

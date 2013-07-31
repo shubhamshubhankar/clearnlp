@@ -59,6 +59,7 @@ public class PBLib
 	static final public String PB_LINK_PRO	= "LINK-PRO";
 	static final public String PB_LINK_PSV	= "LINK-PSV";
 	static final public String PB_C_V 		= "C-V";
+	static final public String LIGHT_VERB	= "LV";
 	
 	/** The delimiter between terminal ID and height ({@code ":"}). */
 	static final public String DELIM_LOC  = ":";
@@ -70,6 +71,7 @@ public class PBLib
 	static final public String LOC_TYPES  = "*&,;";
 	/** The pattern of illegal rolesets. */
 	static final public Pattern ILLEGAL_ROLESET = Pattern.compile(".*\\.(ER|NN|IE|YY)");
+	static final public Pattern P_ARGN = Pattern.compile("^(A|C-A|R-A)(RG)?(\\d)");
 	
 	/**
 	 * Returns the sorted list of PropBank instances from the specific file. 

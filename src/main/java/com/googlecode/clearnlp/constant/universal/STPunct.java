@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.constant.english;
+package com.googlecode.clearnlp.constant.universal;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -25,15 +25,19 @@ import java.util.Set;
  * @since 1.4.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class ENPunct
+public class STPunct
 {
 	static final private Set<String> VALUE_SET = new HashSet<String>(getValueList());
 
-	static public final String PIPE				= "|";
-	static public final String UNDERSCORE		= "_";
-	static public final String COMMA			= ",";
-	static public final String QUESTION_MARK	= "?";
-	static public final String PERIOD			= ".";
+	static public final String PIPE					= "|";
+	static public final String FORWARD_SLASH		= "/";
+	static public final String UNDERSCORE			= "_";
+	static public final String HYPHEN				= "-";
+	static public final String COMMA				= ",";
+	static public final String QUESTION_MARK		= "?";
+	static public final String PERIOD				= ".";
+	static public final String LEFT_ROUND_BRACKET	= "(";
+	static public final String RIGHT_ROUND_BRACKET	= ")";
 	
 	/**
 	 * @param lemma a lower-case string.
@@ -48,7 +52,7 @@ public class ENPunct
 	static public List<String> getValueList()
 	{
 		List<String> list = new ArrayList<String>();
-		Class<ENPunct> cs = ENPunct.class;
+		Class<STPunct> cs = STPunct.class;
 		
 		try
 		{

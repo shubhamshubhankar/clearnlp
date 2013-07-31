@@ -41,7 +41,7 @@ import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
 import com.googlecode.clearnlp.component.pos.DefaultPOSTagger;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
-import com.googlecode.clearnlp.component.srl.CSRLabeler;
+import com.googlecode.clearnlp.component.srl.EnglishSRLabeler;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
@@ -74,6 +74,8 @@ public class NLPTrain extends AbstractNLP
 	protected double d_margin = 0.5;
 	@Option(name="-beam", usage="the size of beam (default: 1)", required=false, metaVar="<double>")
 	protected int n_beams = 1;
+	@Option(name="-frames", usage="directory containing frameset files", required=false, metaVar="<directory>")
+	protected String s_framesDir;
 	
 	public NLPTrain() {}
 	
@@ -114,7 +116,7 @@ public class NLPTrain extends AbstractNLP
 		else if (mode.startsWith(NLPLib.MODE_SENSE))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf("_")+1)), mode, devId);
 		else if (mode.equals(NLPLib.MODE_SRL))
-			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSRLabeler(xmls), mode, devId);
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new EnglishSRLabeler(xmls), mode, devId);
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTaggerSB(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
 		else if (mode.equals(NLPLib.MODE_DEP_SB))
@@ -137,7 +139,7 @@ public class NLPTrain extends AbstractNLP
 		else if (mode.startsWith(NLPLib.MODE_SENSE))
 			return new CSenseClassifier(xmls, models, lexica, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
-			return new CSRLabeler(xmls, models, lexica);
+			return new EnglishSRLabeler(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return new CPOSTaggerSB(xmls, models, lexica, d_margin, n_beams);
 		else if (mode.equals(NLPLib.MODE_DEP_SB))
@@ -323,7 +325,7 @@ public class NLPTrain extends AbstractNLP
 		else if (mode.startsWith(NLPLib.MODE_SENSE))
 			return new CSenseClassifier(xmls, spaces, lexica, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
-			return (models == null) ? new CSRLabeler(xmls, spaces, lexica) : new CSRLabeler(xmls, spaces, models, lexica);
+			return (models == null) ? new EnglishSRLabeler(xmls, spaces, lexica) : new EnglishSRLabeler(xmls, spaces, models, lexica);
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return (models == null) ? new CPOSTaggerSB(xmls, spaces, lexica, d_margin, n_beams) : new CPOSTaggerSB(xmls, spaces, models, lexica, d_margin, n_beams);
 		else if (mode.equals(NLPLib.MODE_DEP_SB))

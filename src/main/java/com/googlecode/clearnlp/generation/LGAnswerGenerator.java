@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.googlecode.clearnlp.constant.english.ENAux;
-import com.googlecode.clearnlp.constant.english.ENPunct;
+import com.googlecode.clearnlp.constant.universal.STPunct;
 import com.googlecode.clearnlp.constant.universal.STConstant;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPArc;
@@ -340,7 +340,7 @@ public class LGAnswerGenerator
 					build.append(conjunction);
 				}
 				else
-					build.append(ENPunct.COMMA);
+					build.append(STPunct.COMMA);
 			}
 			
 			if (!prep.equals(p.o2))

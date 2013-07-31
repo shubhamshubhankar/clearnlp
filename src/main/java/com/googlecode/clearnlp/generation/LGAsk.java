@@ -24,7 +24,7 @@ import java.util.zip.ZipInputStream;
 import com.googlecode.clearnlp.constant.english.ENAux;
 import com.googlecode.clearnlp.constant.english.ENModal;
 import com.googlecode.clearnlp.constant.english.ENPronoun;
-import com.googlecode.clearnlp.constant.english.ENPunct;
+import com.googlecode.clearnlp.constant.universal.STPunct;
 import com.googlecode.clearnlp.constant.universal.STConstant;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPArc;
@@ -77,7 +77,7 @@ public class LGAsk
 			relocateAuxiliary(tree, verb);
 
 		addPrefix(tree, verb, ref);
-		convertYou(tree, verb);
+		convertYouToUser(tree, verb);
 		addPeriod(tree, verb);
 		
 		tree.resetIDs();
@@ -205,7 +205,7 @@ public class LGAsk
 		verb.setHead(ask);
 		tree.add(1, ask);
 		
-		if (ref == null && !hasRelativizer(tree))
+		if (ref == null && !hasRelativizer(tree) && !DEPLibEn.containsRelativizer(verb))
 		{
 			DEPNode complm = getNode(verb, "whether", "whether", CTLibEn.POS_IN, DEPLibEn.DEP_COMPLM, null);
 			tree.add(2, complm);			
@@ -213,12 +213,13 @@ public class LGAsk
 	}
 	
 	/** {@link LGAsk#generateAskFromQuestion(DEPTree, String)}. */
-	private void convertYou(DEPTree tree, DEPNode head)
+	private void convertYouToUser(DEPTree tree, DEPNode head)
 	{
 		if (head.isLemma(ENPronoun.YOU) || head.isLemma(ENPronoun.YOURSELF))
 		{
 			head.form = head.lemma = USER;
 			head.pos  = CTLibEn.POS_NN;
+			matchUserVerb(head);
 			tree.add(tree.indexOf(head), getNode(head, STConstant.THE, STConstant.THE, CTLibEn.POS_DT, DEPLibEn.DEP_DET, null));
 		}
 		else if (head.isLemma(ENPronoun.YOUR) || head.isLemma(ENPronoun.YOURS))
@@ -233,7 +234,32 @@ public class LGAsk
 		}
 		
 		for (DEPArc arc : head.getDependents())
-			convertYou(tree, arc.getNode());
+			convertYouToUser(tree, arc.getNode());
+	}
+	
+	private void matchUserVerb(DEPNode node)
+	{
+		if (node.isLabel(DEPLibEn.P_SBJ))
+		{
+			DEPNode verb = node.getHead();
+			
+			if (verb != null && MPLibEn.isVerb(verb.pos))
+			{
+				DEPNode aux = verb.getFirstDependentByLabel(DEPLibEn.P_AUX);
+				
+				if (aux != null)	to3rdNumber(aux);
+				else				to3rdNumber(verb);
+			}
+		}
+	}
+	
+	private void to3rdNumber(DEPNode verb)
+	{
+		if (verb.isPosAny(CTLibEn.POS_VB, CTLibEn.POS_VBP, CTLibEn.POS_VBZ))
+		{
+			verb.form = LGVerbEn.get3rdSingularForm(verb.lemma);
+			verb.pos  = CTLibEn.POS_VBZ;
+		}
 	}
 	
 	private void addPeriod(DEPTree tree, DEPNode root)
@@ -241,9 +267,9 @@ public class LGAsk
 		DEPNode last = tree.get(tree.size()-1);
 		
 		if (last.isPos(CTLibEn.POS_PERIOD))
-			last.form = last.lemma = ENPunct.PERIOD;
+			last.form = last.lemma = STPunct.PERIOD;
 		else
-			tree.add(getNode(root, ENPunct.PERIOD, ENPunct.PERIOD, CTLibEn.POS_PERIOD, DEPLibEn.DEP_PUNCT, null));
+			tree.add(getNode(root, STPunct.PERIOD, STPunct.PERIOD, CTLibEn.POS_PERIOD, DEPLibEn.DEP_PUNCT, null));
 	}
 	
 	/** {@link LGAsk#generateAskFromQuestion(DEPTree, String)}. */
@@ -453,7 +479,7 @@ public class LGAsk
 	private void resetDEPTree(DEPTree tree, DEPNode root)
 	{
 		List<DEPNode> remove = new ArrayList<DEPNode>();
-		convertYou(root, remove);
+		convertUserToYou(root, remove);
 		tree.removeAll(remove);
 		
 		resetDEPTreePost(tree, root);
@@ -465,13 +491,13 @@ public class LGAsk
 	private void resetDEPTreePost(DEPTree tree, DEPNode root)
 	{
 		root.setHead(tree.get(0), DEPLibEn.DEP_ROOT);
-		String end = ENPunct.QUESTION_MARK;
+		String end = STPunct.QUESTION_MARK;
 		String vtype;
 		
 		if ((vtype = root.getFeat(DEPLib.FEAT_VERB_TYPE)) != null && vtype.equals(NON_FINITE))
 		{
 			tree.add(1, getNode(root, PLEASE, PLEASE, CTLibEn.POS_UH, DEPLibEn.DEP_INTJ, SRLLib.ARGM_DIS));
-			end = ENPunct.PERIOD;
+			end = STPunct.PERIOD;
 		}
 		
 		DEPNode last = root.getLastNode();
@@ -562,7 +588,7 @@ public class LGAsk
 	}
 	
 	/** Called by {@link LGAsk#generateQuestionFromAsk(DEPTree, String)}. */
-	private void convertYou(DEPNode node, List<DEPNode> remove)
+	private void convertUserToYou(DEPNode node, List<DEPNode> remove)
 	{
 		List<DEPArc> deps = node.getDependents();
 		
@@ -570,10 +596,10 @@ public class LGAsk
 		{
 			node.form = node.lemma = ENPronoun.YOUR;
 		}
-		else if (node.isLabel(DEPLibEn.DEP_POSS) && node.isLemma(USER))
+		else if (node.isLabel(DEPLibEn.DEP_POSS) && isUser(node))
 		{
 			node.form = node.lemma = ENPronoun.YOUR;
-			node.pos  = CTLibEn.POS_PRPS;
+			node.pos = CTLibEn.POS_PRPS;
 			remove.addAll(node.getDependentNodeList());
 		}
 		else if (node.isPos(CTLibEn.POS_PRP) && !ENPronoun.is1stSingular(node.lemma))
@@ -583,18 +609,22 @@ public class LGAsk
 			else if (node.lemma.endsWith("s"))
 				node.form = node.lemma = ENPronoun.YOURS;
 			else
+			{
 				node.form = node.lemma = ENPronoun.YOU;
+				matchYouVerb(node);
+			}
 		}
-		else if (node.isLemma(USER))
+		else if (isUser(node))
 		{
 			node.form = node.lemma = ENPronoun.YOU;
-			node.pos  = CTLibEn.POS_PRP;
+			node.pos = CTLibEn.POS_PRP;
+			matchYouVerb(node);
 			remove.addAll(node.getDependentNodeList());
 		}
 		else if (!deps.isEmpty())
 		{
 			DEPNode poss = node.getFirstDependentByLabel(DEPLibEn.DEP_POSS);
-			boolean hasPoss = (poss != null) && poss.isLemma(USER);
+			boolean hasPoss = (poss != null) && isUser(poss);
 			DEPNode dep;
 			
 			for (DEPArc arc : deps)
@@ -604,10 +634,53 @@ public class LGAsk
 				if (hasPoss && arc.isLabel(DEPLibEn.DEP_DET))
 					remove.add(dep);
 				else
-					convertYou(dep, remove);
+					convertUserToYou(dep, remove);
 			}
 			
 			deps.removeAll(remove);
 		}
+	}
+	
+	private void matchYouVerb(DEPNode node)
+	{
+		if (node.isLabel(DEPLibEn.P_SBJ))
+		{
+			DEPNode verb = node.getHead();
+			
+			if (verb != null && MPLibEn.isVerb(verb.pos))
+			{
+				DEPNode aux = verb.getFirstDependentByLabel(DEPLibEn.P_AUX);
+				
+				if (aux != null)	to2ndNumber(aux);
+				else				to2ndNumber(verb);
+			}
+		}
+	}
+	
+	private void to2ndNumber(DEPNode verb)
+	{
+		if (verb.isPosAny(CTLibEn.POS_VB, CTLibEn.POS_VBP, CTLibEn.POS_VBZ))
+		{
+			verb.form = verb.isLemma(ENAux.BE) ? ENAux.ARE : verb.lemma;
+			verb.pos  = CTLibEn.POS_VBP;
+		}
+		else if (verb.isPosAny(CTLibEn.POS_VBD))
+		{
+			if (verb.isLemma(ENAux.BE)) verb.form = ENAux.WERE;
+		}
+	}
+	
+	private boolean isUser(DEPNode node)
+	{
+		if (!USER.equalsIgnoreCase(node.form))
+			return false;
+		
+		for (DEPArc arc : node.getDependents())
+		{
+			if (!arc.isLabel(DEPLibEn.DEP_DET) && !arc.isLabel(DEPLibEn.DEP_POSSESSIVE))
+				return false;
+		}
+		
+		return true;
 	}
 }

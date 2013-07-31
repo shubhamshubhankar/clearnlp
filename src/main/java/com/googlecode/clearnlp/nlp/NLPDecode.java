@@ -32,7 +32,7 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.component.AbstractComponent;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
-import com.googlecode.clearnlp.component.srl.CSRLabeler;
+import com.googlecode.clearnlp.component.srl.EnglishSRLabeler;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
@@ -195,7 +195,7 @@ public class NLPDecode extends AbstractNLP
 		else if (mode.startsWith(NLPLib.MODE_SENSE))
 			return new CSenseClassifier(zin, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
-			return new CSRLabeler(zin);
+			return new EnglishSRLabeler(zin);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}

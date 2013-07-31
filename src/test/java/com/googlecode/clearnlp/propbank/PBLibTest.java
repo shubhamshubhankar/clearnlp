@@ -21,41 +21,42 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package com.googlecode.clearnlp.util.pair;
+package com.googlecode.clearnlp.propbank;
 
-import com.googlecode.clearnlp.constant.universal.STPunct;
+import static org.junit.Assert.assertEquals;
 
-/**
- * Genetic object and object pair.
- * @since v0.1
- * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
- */
-public class Pair<T1, T2>
+import java.util.regex.Matcher;
+
+import org.junit.Test;
+
+
+/** @author Jinho D. Choi ({@code jdchoi77@gmail.com}) */
+public class PBLibTest
 {
-	public T1 o1;
-	public T2 o2;
-	
-	public Pair(T1 o1, T2 o2)
+	@Test
+	public void testPatterns()
 	{
-		set(o1, o2);
-	}
-	
-	public void set(T1 o1, T2 o2)
-	{
-		this.o1 = o1;
-		this.o2 = o2;
-	}
-	
-	public String toString()
-	{
-		StringBuilder build = new StringBuilder();
+		assertEquals(true, PBLib.P_ARGN.matcher("A0").find());
+		assertEquals(true, PBLib.P_ARGN.matcher("A1-DSP").find());
+		assertEquals(true, PBLib.P_ARGN.matcher("C-A0").find());
+		assertEquals(true, PBLib.P_ARGN.matcher("R-A0").find());
+		assertEquals(true, PBLib.P_ARGN.matcher("ARG0").find());
+		assertEquals(true, PBLib.P_ARGN.matcher("ARG1-DSP").find());
 		
-		build.append(STPunct.LEFT_ROUND_BRACKET);
-		build.append(o1.toString());
-		build.append(STPunct.COMMA);
-		build.append(o2.toString());
-		build.append(STPunct.RIGHT_ROUND_BRACKET);
-	
-		return build.toString();
+		assertEquals(false, PBLib.P_ARGN.matcher("AM-TMP").find());
+		assertEquals(false, PBLib.P_ARGN.matcher("ARGM-TMP").find());
+		assertEquals(false, PBLib.P_ARGN.matcher("LINK-SLC").find());
+		
+		Matcher m = PBLib.P_ARGN.matcher("A0");
+		if (m.find()) assertEquals("0", m.group(3));
+		
+		m = PBLib.P_ARGN.matcher("C-A0");
+		if (m.find()) assertEquals("0", m.group(3));
+		
+		m = PBLib.P_ARGN.matcher("R-A0");
+		if (m.find()) assertEquals("0", m.group(3));
+		
+		m = PBLib.P_ARGN.matcher("A1-DSP");
+		if (m.find()) assertEquals("1", m.group(3));
 	}
 }

@@ -360,6 +360,21 @@ public class DEPLibEn extends DEPLib
 		return arg.getFirstDependentByLabel(DEP_POBJ) != null || arg.isLemma("that") || arg.isLemma("which");
 	}
 	
+	static public boolean containsRelativizer(DEPNode arg)
+	{
+		DEPNode dep;
+		
+		for (DEPArc arc : arg.getDependents())
+		{
+			dep = arc.getNode();
+			
+			if (dep.pos.startsWith("W") || (!MPLibEn.isVerb(dep.pos) && containsRelativizer(dep)))
+				return true;
+		}
+		
+		return false;
+	}
+	
 	/** Called by {@link DEPLibEn#postLabel(DEPTree)}. */
 	static private boolean relinkReferent(DEPNode verb)
 	{

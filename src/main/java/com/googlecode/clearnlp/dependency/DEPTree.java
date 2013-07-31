@@ -1011,27 +1011,33 @@ public class DEPTree extends ArrayList<DEPNode>
 			nNode = tree.get(i);
 			oHead = oNode.getHead();
 			nHead = map.get(oHead.id);
-			if (nHead == null) nHead = tree.get(0);
+			
+			if (nHead == null)
+			{
+				nHead = tree.get(0);
+			}
+			else
+			{
+				if (oNode.x_heads != null)
+				{
+					for (DEPArc xHead : oNode.x_heads)
+					{
+						oHead = xHead.getNode();
+						nNode.addXHead(map.get(oHead.id), xHead.getLabel());
+					}				
+				}
+				
+				if (oNode.s_heads != null)
+				{
+					for (DEPArc sHead : oNode.s_heads)
+					{
+						oHead = sHead.getNode();
+						nNode.addSHead(map.get(oHead.id), sHead.getLabel());
+					}				
+				}
+			}
+			
 			nNode.setHead(nHead, oNode.getLabel());
-			
-			if (oNode.x_heads != null)
-			{
-				for (DEPArc xHead : oNode.x_heads)
-				{
-					oHead = xHead.getNode();
-					nNode.addXHead(map.get(oHead.id), xHead.getLabel());
-				}				
-			}
-			
-			if (oNode.s_heads != null)
-			{
-				for (DEPArc sHead : oNode.s_heads)
-				{
-					oHead = sHead.getNode();
-					nNode.addSHead(map.get(oHead.id), sHead.getLabel());
-				}				
-			}
-			
 			nNode.nament = oNode.nament;
 		}
 		

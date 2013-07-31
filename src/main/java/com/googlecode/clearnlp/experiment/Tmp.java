@@ -45,7 +45,7 @@ import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntDeque;
 import com.googlecode.clearnlp.component.dep.EnglishDEPParser;
-import com.googlecode.clearnlp.constant.english.ENPunct;
+import com.googlecode.clearnlp.constant.universal.STPunct;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
@@ -63,6 +63,12 @@ import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.MPLib;
 import com.googlecode.clearnlp.morphology.MPLibEn;
+import com.googlecode.clearnlp.propbank.PBArg;
+import com.googlecode.clearnlp.propbank.PBInstance;
+import com.googlecode.clearnlp.propbank.PBReader;
+import com.googlecode.clearnlp.propbank.frameset.MultiFrames;
+import com.googlecode.clearnlp.propbank.frameset.PBRoleset;
+import com.googlecode.clearnlp.propbank.frameset.PBType;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.reader.SRLReader;
 import com.googlecode.clearnlp.reader.TOKReader;
@@ -84,19 +90,38 @@ public class Tmp
 
 	public Tmp(String[] args) throws Exception
 	{
-		SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 7);
-		reader.open(UTInput.createBufferedFileReader(args[0]));
-		DEPTree tree = reader.next();
-		tree.setDependents();
+		MultiFrames frames = new MultiFrames(args[0]);
+		PBReader reader = new PBReader(UTInput.createBufferedFileReader(args[1]));
+		int invalid = 0, total = 0;
+		PBInstance instance;
+		PBRoleset  roleset;
+		String type;
 		
-		DEPNode root = tree.getFirstRoot(), dep;
-		System.out.println(" Root: "+root.id+" "+root.form);
-		
-		for (DEPArc arc : root.getDependents())
+		while ((instance = reader.nextInstance()) != null)
 		{
-			dep = arc.getNode();
-			System.out.println("- dep: "+dep.id+" "+dep.form);
+			type = instance.type;
+			
+			if (type.endsWith(PBType.VERB.getValue()))
+			{
+				roleset = frames.getRoleset(PBType.VERB, type.substring(0,type.length()-2), instance.roleset);
+				total++;
+				
+				if (roleset != null)
+				{
+					for (PBArg arg : instance.getArgs())
+					{
+						if (!roleset.isValidArgument(arg.label))
+						{
+							System.out.println(instance.toString());
+							invalid++;
+							break;
+						}
+					}
+				}
+			}
 		}
+		
+		System.out.printf("%5.2f (%d/%d)\n", (double)invalid/total, invalid, total);
 	}
 	
 	void toQuestion(String[] args)
@@ -175,10 +200,10 @@ public class Tmp
 		
 		for (String key : keys)
 		{
-			past = (mVBD.getTotal1D(key) > cutoff) ? mVBD.getBestProb1D(key).s : ENPunct.UNDERSCORE;
-			part = (mVBN.getTotal1D(key) > cutoff) ? mVBN.getBestProb1D(key).s : ENPunct.UNDERSCORE;
+			past = (mVBD.getTotal1D(key) > cutoff) ? mVBD.getBestProb1D(key).s : STPunct.UNDERSCORE;
+			part = (mVBN.getTotal1D(key) > cutoff) ? mVBN.getBestProb1D(key).s : STPunct.UNDERSCORE;
 			
-			if (!past.equals(ENPunct.UNDERSCORE) || !part.equals(ENPunct.UNDERSCORE))
+			if (!past.equals(STPunct.UNDERSCORE) || !part.equals(STPunct.UNDERSCORE))
 				fout.println(key+"\t"+past+"\t"+part);
 		}
 		

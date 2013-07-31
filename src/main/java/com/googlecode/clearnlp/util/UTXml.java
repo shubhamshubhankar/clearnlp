@@ -34,6 +34,12 @@ import org.w3c.dom.NodeList;
 
 public class UTXml
 {
+	static public Element getFirstElementByTagName(Document document, String name)
+	{
+		NodeList list = document.getElementsByTagName(name);
+		return list.getLength() > 0 ? (Element)list.item(0) : null;		
+	}
+	
 	static public Element getFirstElementByTagName(Element element, String name)
 	{
 		NodeList list = element.getElementsByTagName(name);

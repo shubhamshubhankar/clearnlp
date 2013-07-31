@@ -34,6 +34,7 @@ import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.generation.LGLibEn;
+import com.googlecode.clearnlp.propbank.PBLib;
 
 public class SRLLib
 {
@@ -62,7 +63,6 @@ public class SRLLib
 	static public final Pattern P_ARG_REF = Pattern.compile("^"+PREFIX_REFERENT+".+$");
 	static public final Pattern P_ARGN_CORE = Pattern.compile("^A\\d");
 	
-	static public final Pattern P_ARGN = Pattern.compile("^(A|C-A|R-A)\\d");
 	static public final Pattern P_ARGM = Pattern.compile("^AM");
 	
 	
@@ -78,7 +78,7 @@ public class SRLLib
 	
 	static public boolean isNumberedArgument(String label)
 	{
-		return P_ARGN.matcher(label).find();
+		return PBLib.P_ARGN.matcher(label).find();
 	}
 	
 	static public boolean isCoreNumberedArgument(String label)
@@ -200,7 +200,7 @@ public class SRLLib
 						arg.setHead(pred, tmp.getLabel());
 						arg.id = pred.id + 1;
 						
-						if (sArc.isLabel(P_ARGN))
+						if (sArc.isLabel(PBLib.P_ARGN))
 							pred.addDependentRightNextToSelf(tmp);
 						else
 							pred.addDependent(tmp);

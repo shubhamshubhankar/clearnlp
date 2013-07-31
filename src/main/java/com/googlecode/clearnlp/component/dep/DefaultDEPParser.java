@@ -65,14 +65,8 @@ public class DefaultDEPParser extends AbstractDEPParser
 	protected void postParse() {}
 	
 	@Override
-	protected boolean isNotHead(DEPNode node)
-	{
-		return false;
-	}
+	protected boolean isNotHead(DEPNode node) {return false;}
 
 	@Override
-	protected boolean resetPre(DEPNode lambda, DEPNode beta)
-	{
-		return false;
-	}
+	protected boolean resetPre(DEPNode lambda, DEPNode beta) {return false;}
 }

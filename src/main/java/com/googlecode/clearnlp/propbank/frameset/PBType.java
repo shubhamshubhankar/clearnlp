@@ -13,28 +13,32 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.constant.universal;
-
+package com.googlecode.clearnlp.propbank.frameset;
 
 /**
- * @since 1.4.0
+ * @since 1.4.2
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class STConstant
+public enum PBType
 {
-	static public final String NEW_LINE	= "\n";
-	static public final String TAB		= "\t";
-	static public final String EMPTY	= "";
-	static public final String SPACE	= " ";
-	static public final String NOT		= "not";
+	VERB("v"),
+	NOUN("n"),
+	ADJECTIVE("j");
+
+	private final String value;
 	
-	static public final String THE		= "the";
-	static public final String APOSTROPHE_S	= "'s";
+	PBType(String value)
+	{
+		this.value = value;
+	}
 	
+	public boolean isValue(String value)
+	{
+		return this.value.equals(value);
+	}
 	
-//	==================== Conjunctions ====================
-	
-	static public final String AND	= "and";
-	static public final String BUT	= "but";
-	static public final String OR	= "or";
+	public String getValue()
+	{
+		return value;
+	}
 }

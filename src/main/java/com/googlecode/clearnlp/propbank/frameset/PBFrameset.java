@@ -15,130 +15,112 @@
 */
 package com.googlecode.clearnlp.propbank.frameset;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import com.googlecode.clearnlp.io.FileExtFilter;
-import com.googlecode.clearnlp.util.UTXml;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.googlecode.clearnlp.constant.universal.STConstant;
 
 /**
- * @since 1.4.0
+ * @since 1.4.2
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class PBFrameset implements Serializable
 {
-	private static final long serialVersionUID = 2617344226897601182L;
-	private final Pattern P_VERB_PRT = Pattern.compile("_");
-	
-	private Map<String,Set<String>> m_verb_lemma;
-	
-	/**
-	 * @param framesetDir a directory containing PropBank frameset files.
-	 * @param ext the extension of frameset files (e.g., {@code "-v.xml"}).
-	 */
-	public PBFrameset(String framesetDir, String ext)
-	{
-		String[] filelist = new File(framesetDir).list(new FileExtFilter(ext));
-		
-		try
-		{
-			init();
-			
-			for (String framesetFile : filelist)
-				addFrameset(new BufferedInputStream(new FileInputStream(framesetDir+"/"+framesetFile)));
-		}
-		catch (Exception e) {e.printStackTrace();}
-	}
-	
-	/** @param in an input-stream from a PropBank frameset file. */
-	public PBFrameset(InputStream in)
-	{
-		try
-		{
-			init();
-			addFrameset(in);
-		}
-		catch (Exception e) {e.printStackTrace();}
-	}
-	
-	private void init() throws ParserConfigurationException
-	{
-		m_verb_lemma = new HashMap<String,Set<String>>();
-	}
+	private static final long serialVersionUID = 3023563544488823541L;
+	private Map<String,PBPredicate> m_predicates;
+	private String s_lemma;
 
-	/** @param in an input-stream from a PropBank frameset file. */
-	public void addFrameset(InputStream in) throws Exception
+	/** @param lemma the base lemma (e.g., "run", but not "run_out"). */
+	public PBFrameset(Element eFrameset, String lemma)
 	{
-		DocumentBuilderFactory dFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder dBuilder = dFactory.newDocumentBuilder();
+		init();
 		
-		NodeList list = dBuilder.parse(in).getElementsByTagName(PBFLib.E_PREDICATE);
+		setLemma(lemma);
+		addPredicates(eFrameset.getElementsByTagName(PBFLib.E_PREDICATE));
+	}
+	
+	public void init()
+	{
+		m_predicates = Maps.newHashMap();
+	}
+	
+	public void addPredicates(NodeList list)
+	{
 		int i, size = list.getLength();
-		Element ePredicate;
-		String lemma;
 		
 		for (i=0; i<size; i++)
-		{
-			ePredicate = (Element)list.item(i);
-			lemma = UTXml.getTrimmedAttribute(ePredicate, PBFLib.A_LEMMA).toLowerCase();
-			
-			addLemma(lemma);
-		}
+			addPredicate((Element)list.item(i));
 	}
 	
-	/**
-	 * Called by {@link PBFrameset#addFrameset(InputStream)}.
-	 * @param lemma "run" or "run_out".
-	 */
-	private void addLemma(String lemma)
+	public void addPredicate(Element element)
 	{
-		String[] t = P_VERB_PRT.split(lemma);
-		Set<String> set;
-		String vb;
+		addPredicate(new PBPredicate(element));
+	}
+	
+	public void addPredicate(PBPredicate predicate)
+	{
+		if (m_predicates.put(predicate.getLemma(), predicate) != null)
+			System.err.printf("Duplicated predicate: %s\n", predicate.getLemma());
+	}
+	
+	/** @param lemma the specific lemma of the predicate (e.g., "run_out"). */
+	public PBPredicate getPredicate(String lemma)
+	{
+		return m_predicates.get(lemma);
+	}
+	
+	public PBRoleset getRoleset(String rolesetID)
+	{
+		PBRoleset roleset;
 		
-		if (t.length > 2)
-			System.err.println("Too many particles: "+lemma);
-		else
+		for (PBPredicate predicate : m_predicates.values())
 		{
-			vb  = t[0];
-			set = m_verb_lemma.get(vb);
+			roleset = predicate.getRoleset(rolesetID);
 			
-			if (set == null)
-			{
-				set = new HashSet<String>();
-				m_verb_lemma.put(vb, set);
-			}
-
-			if (t.length > 1)
-				set.add(t[1]);	// t[1] is a particle
+			if (roleset != null)
+				return roleset;
 		}
+		
+		return null;
 	}
 	
-	/** @param assumed to be in its base-form. */
-	public boolean isVerb(String verb)
+	public List<PBPredicate> getPredicateSortedList()
 	{
-		return m_verb_lemma.containsKey(verb);
+		List<PBPredicate> list = Lists.newArrayList(m_predicates.values());
+		
+		Collections.sort(list);
+		return list;
 	}
 	
-	/** Parameters are assumed to be in its base-form. */
-	public boolean isVerbParticleConstruction(String verb, String particle)
+	/** @return the base lemma (e.g., "run", but not "run_out"). */
+	public String getLemma()
 	{
-		Set<String> set = m_verb_lemma.get(verb);
-		return (set != null) ? set.contains(particle) : false;
+		return s_lemma;
+	}
+	
+	/** @param lemma the base lemma (e.g., "run", but not "run_out"). */
+	public void setLemma(String lemma)
+	{
+		s_lemma = lemma;
+	}
+	
+	public String toString()
+	{
+		StringBuilder build = new StringBuilder();
+		
+		for (PBPredicate predicate : getPredicateSortedList())
+		{
+			build.append(STConstant.NEW_LINE);
+			build.append(predicate.toString());
+		}
+		
+		return build.toString().trim();
 	}
 }

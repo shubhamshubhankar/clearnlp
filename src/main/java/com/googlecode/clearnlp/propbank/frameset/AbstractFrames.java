@@ -13,28 +13,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.constant.universal;
+package com.googlecode.clearnlp.propbank.frameset;
 
+import java.io.Serializable;
 
 /**
- * @since 1.4.0
+ * @since 1.4.2
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class STConstant
+public abstract class AbstractFrames implements Serializable
 {
-	static public final String NEW_LINE	= "\n";
-	static public final String TAB		= "\t";
-	static public final String EMPTY	= "";
-	static public final String SPACE	= " ";
-	static public final String NOT		= "not";
-	
-	static public final String THE		= "the";
-	static public final String APOSTROPHE_S	= "'s";
-	
-	
-//	==================== Conjunctions ====================
-	
-	static public final String AND	= "and";
-	static public final String BUT	= "but";
-	static public final String OR	= "or";
+	private static final long serialVersionUID = 4302497504783538862L;
+
+	abstract public PBRoleset getRoleset(PBType type, String lemma, String rolesetID);
 }

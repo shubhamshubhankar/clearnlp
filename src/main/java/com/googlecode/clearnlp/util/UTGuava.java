@@ -13,28 +13,30 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.constant.universal;
+package com.googlecode.clearnlp.util;
 
+import java.util.Collection;
+import java.util.List;
+
+import com.google.common.base.Supplier;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimaps;
 
 /**
- * @since 1.4.0
+ * @since 1.4.2
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class STConstant
+public class UTGuava
 {
-	static public final String NEW_LINE	= "\n";
-	static public final String TAB		= "\t";
-	static public final String EMPTY	= "";
-	static public final String SPACE	= " ";
-	static public final String NOT		= "not";
-	
-	static public final String THE		= "the";
-	static public final String APOSTROPHE_S	= "'s";
-	
-	
-//	==================== Conjunctions ====================
-	
-	static public final String AND	= "and";
-	static public final String BUT	= "but";
-	static public final String OR	= "or";
+	static public <K,V>ListMultimap<K,V> getArrayListMultiHashMap()
+	{
+		ListMultimap<K,V> map = Multimaps.newListMultimap(Maps.<K,Collection<V>>newHashMap(), new Supplier<List<V>>()
+		{
+			public List<V> get() {return Lists.newArrayList();}
+		});
+		
+		return map;
+	}
 }
