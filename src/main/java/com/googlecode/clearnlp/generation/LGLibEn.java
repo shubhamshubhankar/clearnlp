@@ -269,6 +269,12 @@ public class LGLibEn
 		
 		return null;
 	}
+	
+	static public void convertFirstFormToUpperCase(DEPTree tree)
+	{
+		DEPNode fst = tree.get(1);
+		fst.form = UTString.convertFirstCharToUpper(fst.form);
+	}
 
 	static public void convertFirstFormToLowerCase(DEPTree tree)
 	{

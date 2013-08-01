@@ -35,16 +35,25 @@ import com.googlecode.clearnlp.classification.feature.JointFtrXml;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
+import com.googlecode.clearnlp.component.dep.AbstractDEPParser;
 import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.component.dep.DefaultDEPParser;
+import com.googlecode.clearnlp.component.dep.EnglishDEPParser;
+import com.googlecode.clearnlp.component.pos.AbstractPOSTagger;
 import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
 import com.googlecode.clearnlp.component.pos.DefaultPOSTagger;
+import com.googlecode.clearnlp.component.pos.EnglishPOSTagger;
+import com.googlecode.clearnlp.component.srl.AbstractSRLabeler;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
-import com.googlecode.clearnlp.component.srl.EnglishSRLabeler;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
+import com.googlecode.clearnlp.component.srl.DefaultSRLabeler;
+import com.googlecode.clearnlp.component.srl.EnglishSRLabeler;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
+import com.googlecode.clearnlp.propbank.frameset.AbstractFrames;
+import com.googlecode.clearnlp.propbank.frameset.MultiFrames;
+import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.reader.JointReader;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
@@ -105,47 +114,94 @@ public class NLPTrain extends AbstractNLP
 
 	protected AbstractStatisticalComponent getComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId, String mode)
 	{
+		String language = getLanguage(eConfig);
+		
 		if      (mode.equals(NLPLib.MODE_POS))
-			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new DefaultPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
-		else if (mode.equals(NLPLib.MODE_DEP))
-			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPParser(xmls), mode, devId);
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, getPOSTaggerForCollect(reader, xmls, trainFiles, devId, language), mode, devId);
+		else if (mode.equals(NLPLib.MODE_DEP_SB))
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, null, mode, devId);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, devId);
 		else if (mode.equals(NLPLib.MODE_ROLE))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CRolesetClassifier(xmls), mode, devId);
+		else if (mode.equals(NLPLib.MODE_SRL))
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, getSRLabelerForCollect(xmls, language), mode, devId);
 		else if (mode.startsWith(NLPLib.MODE_SENSE))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf("_")+1)), mode, devId);
-		else if (mode.equals(NLPLib.MODE_SRL))
-			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new EnglishSRLabeler(xmls), mode, devId);
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTaggerSB(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
-		else if (mode.equals(NLPLib.MODE_DEP_SB))
-			return getTrainedComponent(eConfig, reader, xmls, trainFiles, null, mode, devId);
+		else if (mode.equals(NLPLib.MODE_DEP))
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPParser(xmls), mode, devId);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
 	
+	protected AbstractPOSTagger getPOSTaggerForCollect(JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId, String language)
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new EnglishPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId));
+		else
+			return new DefaultPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId));
+	}
+	
+	protected AbstractSRLabeler getSRLabelerForCollect(JointFtrXml[] xmls, String language)
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new EnglishSRLabeler(xmls, getFrames());
+		else
+			return new DefaultSRLabeler(xmls, getFrames());
+	}
+	
+	protected AbstractFrames getFrames()
+	{
+		return (s_framesDir != null) ? new MultiFrames(s_framesDir) : null;
+	}
+	
 	/** @return a component for developing. */
-	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String mode)
+	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String mode, String language)
 	{
 		if      (mode.equals(NLPLib.MODE_POS))
-			return new DefaultPOSTagger(xmls, models, lexica);
-		else if (mode.equals(NLPLib.MODE_DEP))
-			return new CDEPParser(xmls, models, lexica);
+			return getPOSTaggerForDevelop(xmls, models, lexica, language);
+		else if (mode.equals(NLPLib.MODE_DEP_SB))
+			return getDEPParserForDevelop(xmls, models, lexica, language);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_ROLE))
 			return new CRolesetClassifier(xmls, models, lexica);
-		else if (mode.startsWith(NLPLib.MODE_SENSE))
-			return new CSenseClassifier(xmls, models, lexica, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
-			return new EnglishSRLabeler(xmls, models, lexica);
+			return getSRLabelerForDevelop(xmls, models, lexica, language);
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return new CPOSTaggerSB(xmls, models, lexica, d_margin, n_beams);
-		else if (mode.equals(NLPLib.MODE_DEP_SB))
-			return new DefaultDEPParser(xmls, models, lexica, d_margin, n_beams);
+		else if (mode.equals(NLPLib.MODE_DEP))
+			return new CDEPParser(xmls, models, lexica);
+		else if (mode.startsWith(NLPLib.MODE_SENSE))
+			return new CSenseClassifier(xmls, models, lexica, mode.substring(mode.lastIndexOf("_")+1));
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
+	}
+	
+	protected AbstractPOSTagger getPOSTaggerForDevelop(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String language)
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new EnglishPOSTagger(xmls, models, lexica);
+		else
+			return new DefaultPOSTagger(xmls, models, lexica);
+	}
+	
+	protected AbstractDEPParser getDEPParserForDevelop(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String language)
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new EnglishDEPParser(xmls, models, lexica, d_margin, n_beams);
+		else
+			return new DefaultDEPParser(xmls, models, lexica, d_margin, n_beams);
+	}
+	
+	protected AbstractSRLabeler getSRLabelerForDevelop(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String language)
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new EnglishSRLabeler(xmls, models, lexica);
+		else
+			return new DefaultSRLabeler(xmls, models, lexica);
 	}
 	
 	protected AbstractStatisticalComponent getTrainedComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, AbstractStatisticalComponent component, String mode, int devId) 
@@ -240,6 +296,7 @@ public class NLPTrain extends AbstractNLP
 	{
 		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, models, lexica, mode, boot, devId);
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
+		String language = getLanguage(eConfig);
 		
 		int i, mSize = spaces.length;
 		models = new StringModel[mSize];
@@ -254,7 +311,7 @@ public class NLPTrain extends AbstractNLP
 			spaces[i].clear();
 		}
 		
-		return getComponent(xmls, models, lexica, mode);
+		return getComponent(xmls, models, lexica, mode, language);
 	}
 	
 	protected StringTrainSpace[] getStringTrainSpaces(Element eConfig, JointFtrXml[] xmls, String[] trainFiles, StringModel[] models, Object[] lexica, String mode, int boot, int devId)
@@ -262,6 +319,7 @@ public class NLPTrain extends AbstractNLP
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
 		int i, j, mSize = 1, size = trainFiles.length;
 		int numThreads = getNumOfThreads(eTrain);
+		String language = getLanguage(eConfig);
 		
 		List<StringTrainSpace[]> lSpaces = new ArrayList<StringTrainSpace[]>();
 		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
@@ -274,7 +332,7 @@ public class NLPTrain extends AbstractNLP
 			if (devId != i)
 			{
 				lSpaces.add(spaces = getStringTrainSpaces(xmls, lexica, mode, boot));
-				executor.execute(new TrainTask(eConfig, trainFiles[i], getComponent(xmls, spaces, models, lexica, mode)));
+				executor.execute(new TrainTask(eConfig, trainFiles[i], getComponent(xmls, spaces, models, lexica, mode, language)));
 			}
 		}
 		
@@ -312,26 +370,50 @@ public class NLPTrain extends AbstractNLP
 		return spaces;
 	}
 	
-	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String mode)
+	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String mode, String language)
 	{
 		if      (mode.equals(NLPLib.MODE_POS))
-			return (models == null) ? new DefaultPOSTagger(xmls, spaces, lexica) : new DefaultPOSTagger(xmls, spaces, models, lexica);
-		else if (mode.equals(NLPLib.MODE_DEP))
-			return (models == null) ? new CDEPParser(xmls, spaces, lexica) : new CDEPParser(xmls, spaces, models, lexica);
+			return getPOSTaggerForTrain(xmls, spaces, models, lexica, language);
+		else if (mode.equals(NLPLib.MODE_DEP_SB))
+			return getDEPParserForTrain(xmls, spaces, models, lexica, language);
+		else if (mode.equals(NLPLib.MODE_SRL))
+			return getSRLabelerForTrain(xmls, spaces, models, lexica, language);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(xmls, spaces, lexica);	
 		else if (mode.equals(NLPLib.MODE_ROLE))
 			return new CRolesetClassifier(xmls, spaces, lexica);
 		else if (mode.startsWith(NLPLib.MODE_SENSE))
 			return new CSenseClassifier(xmls, spaces, lexica, mode.substring(mode.lastIndexOf("_")+1));
-		else if (mode.equals(NLPLib.MODE_SRL))
-			return (models == null) ? new EnglishSRLabeler(xmls, spaces, lexica) : new EnglishSRLabeler(xmls, spaces, models, lexica);
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return (models == null) ? new CPOSTaggerSB(xmls, spaces, lexica, d_margin, n_beams) : new CPOSTaggerSB(xmls, spaces, models, lexica, d_margin, n_beams);
-		else if (mode.equals(NLPLib.MODE_DEP_SB))
-			return (models == null) ? new DefaultDEPParser(xmls, spaces, lexica, d_margin, n_beams) : new DefaultDEPParser(xmls, spaces, models, lexica, d_margin, n_beams);
+			else if (mode.equals(NLPLib.MODE_DEP))
+				return (models == null) ? new CDEPParser(xmls, spaces, lexica) : new CDEPParser(xmls, spaces, models, lexica);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
+	}
+	
+	protected AbstractPOSTagger getPOSTaggerForTrain(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String language)
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return (models == null) ? new EnglishPOSTagger(xmls, spaces, lexica) : new EnglishPOSTagger(xmls, spaces, models, lexica);
+		else
+			return (models == null) ? new DefaultPOSTagger(xmls, spaces, lexica) : new DefaultPOSTagger(xmls, spaces, models, lexica);
+	}
+	
+	protected AbstractDEPParser getDEPParserForTrain(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String language)
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return (models == null) ? new EnglishDEPParser(xmls, spaces, lexica, d_margin, n_beams) : new EnglishDEPParser(xmls, spaces, models, lexica, d_margin, n_beams);
+		else
+			return (models == null) ? new DefaultDEPParser(xmls, spaces, lexica, d_margin, n_beams) : new DefaultDEPParser(xmls, spaces, models, lexica, d_margin, n_beams);
+	}
+	
+	protected AbstractSRLabeler getSRLabelerForTrain(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String language)
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return (models == null) ? new EnglishSRLabeler(xmls, spaces, lexica) : new EnglishSRLabeler(xmls, spaces, models, lexica);
+		else
+			return (models == null) ? new DefaultSRLabeler(xmls, spaces, lexica) : new DefaultSRLabeler(xmls, spaces, models, lexica);
 	}
 	
 	@SuppressWarnings("unchecked")

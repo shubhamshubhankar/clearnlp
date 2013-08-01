@@ -28,7 +28,6 @@ import java.util.StringTokenizer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import com.googlecode.clearnlp.component.AbstractComponent;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
@@ -42,7 +41,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class EnglishMPAnalyzer extends AbstractComponent
+public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 {
 	static final public String LANG_DIR = AbstractReader.LANG_EN + "/";
 	final public String FIELD_DELIM = "_";

@@ -15,27 +15,16 @@
 */
 package com.googlecode.clearnlp.component.morph;
 
-import com.googlecode.clearnlp.dependency.DEPNode;
+import com.googlecode.clearnlp.component.AbstractComponent;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.morphology.MPLib;
 
 /**
  * Default morphological analyzer.
- * @since 1.3.0
+ * @since 1.4.2
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class DefaultMPAnalyzer extends AbstractMPAnalyzer
+abstract public class AbstractMPAnalyzer extends AbstractComponent
 {
 	@Override
-	public void process(DEPTree tree)
-	{
-		int i, size = tree.size();
-		DEPNode node;
-		
-		for (i=1; i<size; i++)
-		{
-			node = tree.get(i);
-			node.lemma = MPLib.normalizeBasic(node.form).toLowerCase();
-		}
-	}
+	abstract public void process(DEPTree tree);
 }

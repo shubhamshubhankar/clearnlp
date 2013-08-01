@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
 
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
@@ -164,12 +163,12 @@ public class PBRoleset implements Serializable, Comparable<PBRoleset>
 	
 	public boolean isValidArgument(String label)
 	{
-		Matcher m = PBLib.P_ARGN.matcher(label);
-		
-		if (m.find())
-			return m_roles.containsKey(m.group(3));
-		
-		return true;
+		// TODO: to be removed
+		if (s_id.endsWith(PBLib.LIGHT_VERB))
+			return true;	
+
+		String n = PBLib.getNumber(label);
+		return (n != null) ? m_roles.containsKey(n) : true;
 	}
 	
 	@Override

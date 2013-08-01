@@ -61,8 +61,6 @@ public class SRLLib
 	
 	static public final Pattern P_ARG_CONCATENATION = Pattern.compile("^"+PREFIX_CONCATENATION+".+$");
 	static public final Pattern P_ARG_REF = Pattern.compile("^"+PREFIX_REFERENT+".+$");
-	static public final Pattern P_ARGN_CORE = Pattern.compile("^A\\d");
-	
 	static public final Pattern P_ARGM = Pattern.compile("^AM");
 	
 	
@@ -74,16 +72,6 @@ public class SRLLib
 			return label.substring(SRLLib.PREFIX_REFERENT.length());
 		else
 			return label;
-	}
-	
-	static public boolean isNumberedArgument(String label)
-	{
-		return PBLib.P_ARGN.matcher(label).find();
-	}
-	
-	static public boolean isCoreNumberedArgument(String label)
-	{
-		return P_ARGN_CORE.matcher(label).find();
 	}
 	
 	static public boolean isModifier(String label)

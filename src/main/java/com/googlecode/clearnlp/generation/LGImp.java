@@ -31,6 +31,9 @@ public class LGImp
 	{
 		tree = tree.clone();
 		tree.setDependents();
+		if (switchUnI) LGLibEn.convertUnI(tree);
+		if (prefix.isEmpty())	LGLibEn.convertFirstFormToUpperCase(tree);
+		else					LGLibEn.convertFirstFormToLowerCase(tree);
 		
 		StringBuilder build = new StringBuilder();
 		
@@ -39,7 +42,8 @@ public class LGImp
 		build.append(LGLibEn.getForms(tree, false, STConstant.SPACE));
 		
 		DEPNode last = tree.get(tree.size()-1);
-		if (last.isPos(CTLibEn.POS_PERIOD))
+		
+		if (!last.isPos(CTLibEn.POS_PERIOD))
 			build.append(STPunct.PERIOD);
 		
 		return build.toString();

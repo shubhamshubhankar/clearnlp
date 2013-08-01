@@ -29,10 +29,9 @@ import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
 import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
-import com.googlecode.clearnlp.component.pos.DefaultPOSTagger;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
-import com.googlecode.clearnlp.component.srl.EnglishSRLabeler;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
+import com.googlecode.clearnlp.constant.universal.STPunct;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLEval;
 import com.googlecode.clearnlp.reader.JointReader;
@@ -73,9 +72,10 @@ public class NLPDevelop extends NLPTrain
 		String[] trainFiles = UTFile.getSortedFileListBySize(trainDir, ".*", true);
 		String[]   devFiles = UTFile.getSortedFileListBySize(devDir, ".*", true);
 		JointReader  reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		String     language = getLanguage(eConfig);
 		
 		if      (mode.equals(NLPLib.MODE_POS))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new DefaultPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, getPOSTaggerForCollect(reader, xmls, trainFiles, -1, language), mode, -1);
 		else if (mode.equals(NLPLib.MODE_DEP))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParser(xmls), mode, -1);
 		else if (mode.equals(NLPLib.MODE_PRED))
@@ -83,9 +83,9 @@ public class NLPDevelop extends NLPTrain
 		else if (mode.equals(NLPLib.MODE_ROLE))
 			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CRolesetClassifier(xmls), mode, -1), devFiles, mode, mode);
 		else if (mode.startsWith(NLPLib.MODE_SENSE))
-			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf("_")+1)), mode, -1), devFiles, mode, mode);
+			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf(STPunct.UNDERSCORE)+1)), mode, -1), devFiles, mode, mode);
 		else if (mode.equals(NLPLib.MODE_SRL))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new EnglishSRLabeler(xmls), mode, -1);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, getSRLabelerForCollect(xmls, language), mode, -1);
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTaggerSB(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
 		else if (mode.equals(NLPLib.MODE_DEP_SB))
@@ -98,6 +98,7 @@ public class NLPDevelop extends NLPTrain
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
 		int i, mSize = spaces.length, nUpdate = 1;
 		AbstractStatisticalComponent processor;
+		String language = getLanguage(eConfig);
 		
 		StringModel[] models = new StringModel[mSize];
 		double prevScore = -1, currScore = 0;
@@ -114,7 +115,7 @@ public class NLPDevelop extends NLPTrain
 				models[i] = (StringModel)spaces[i].getModel();
 			}
 
-			processor = getComponent(xmls, models, lexica, mode);
+			processor = getComponent(xmls, models, lexica, mode, language);
 			currScore = decode(reader, processor, devFiles, mode, Integer.toString(iter));
 			iter++;
 		}
@@ -154,6 +155,7 @@ public class NLPDevelop extends NLPTrain
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
 		int i, mSize = spaces.length, nUpdate = 1;
 		AbstractStatisticalComponent component;
+		String language = getLanguage(eConfig);
 		
 		double prevScore = -1, currScore = 0;
 		Random[] rands = new Random[mSize];
@@ -181,7 +183,7 @@ public class NLPDevelop extends NLPTrain
 				models[i] = (StringModel)spaces[i].getModel();
 			}
 			
-			component = getComponent(xmls, models, lexica, mode);
+			component = getComponent(xmls, models, lexica, mode, language);
 			currScore = decode(reader, component, devFiles, mode, boot+"."+nUpdate);
 			nUpdate++;
 		}

@@ -32,7 +32,6 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.component.AbstractComponent;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
-import com.googlecode.clearnlp.component.srl.EnglishSRLabeler;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
@@ -165,7 +164,7 @@ public class NLPDecode extends AbstractNLP
 		}
 	}
 	
-	public DEPTree toDEPTree(List<String> tokens)
+	static public DEPTree toDEPTree(List<String> tokens)
 	{
 		DEPTree tree = new DEPTree();
 		int i, size = tokens.size();
@@ -195,7 +194,7 @@ public class NLPDecode extends AbstractNLP
 		else if (mode.startsWith(NLPLib.MODE_SENSE))
 			return new CSenseClassifier(zin, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
-			return new EnglishSRLabeler(zin);
+			return EngineGetter.getSRLabeler(zin, language);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}

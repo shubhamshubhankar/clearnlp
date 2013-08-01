@@ -29,6 +29,8 @@ import com.googlecode.clearnlp.classification.feature.JointFtrXml;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.dependency.DEPNode;
+import com.googlecode.clearnlp.propbank.frameset.AbstractFrames;
+import com.googlecode.clearnlp.propbank.frameset.PBType;
 
 /**
  * @since 1.0.0
@@ -37,9 +39,9 @@ import com.googlecode.clearnlp.dependency.DEPNode;
 public class DefaultSRLabeler extends AbstractSRLabeler
 {
 	/** Constructs a semantic role labeler for collecting lexica. */
-	public DefaultSRLabeler(JointFtrXml[] xmls)
+	public DefaultSRLabeler(JointFtrXml[] xmls, AbstractFrames frames)
 	{
-		super(xmls);
+		super(xmls, frames);
 	}
 	
 	/** Constructs a semantic role labeler for training. */
@@ -68,4 +70,7 @@ public class DefaultSRLabeler extends AbstractSRLabeler
 
 	@Override
 	protected String getHardLabel(DEPNode node) {return null;}
+	
+	@Override
+	protected PBType getPBType(DEPNode pred) {return null;}
 }

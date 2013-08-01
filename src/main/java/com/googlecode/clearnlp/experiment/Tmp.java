@@ -90,6 +90,10 @@ public class Tmp
 
 	public Tmp(String[] args) throws Exception
 	{
+	}
+	
+	void checkMisalignedArgs(String[] args)
+	{
 		MultiFrames frames = new MultiFrames(args[0]);
 		PBReader reader = new PBReader(UTInput.createBufferedFileReader(args[1]));
 		int invalid = 0, total = 0;

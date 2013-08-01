@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.googlecode.clearnlp.constituent.CTLib;
@@ -71,7 +72,9 @@ public class PBLib
 	static final public String LOC_TYPES  = "*&,;";
 	/** The pattern of illegal rolesets. */
 	static final public Pattern ILLEGAL_ROLESET = Pattern.compile(".*\\.(ER|NN|IE|YY)");
-	static final public Pattern P_ARGN = Pattern.compile("^(A|C-A|R-A)(RG)?(\\d)");
+	
+	static final public Pattern P_ARGN      = Pattern.compile("^(A|C-A|R-A)(RG)?(\\d|A)");
+	static final public Pattern P_ARGN_CORE = Pattern.compile("^A(RG)?(\\d|A)");
 	
 	/**
 	 * Returns the sorted list of PropBank instances from the specific file. 
@@ -196,5 +199,25 @@ public class PBLib
 	static public boolean isNumberedArgument(PBArg arg)
 	{
 		return arg.label.length() >= 4 && Character.isDigit(arg.label.charAt(3));
+	}
+
+	static public boolean isNumberedArgument(String label)
+	{
+		return P_ARGN.matcher(label).find();
+	}
+
+	static public boolean isCoreNumberedArgument(String label)
+	{
+		return P_ARGN_CORE.matcher(label).find();
+	}
+
+	/**
+	 * @return the number of an numbered argument (e.g., "0", "A").
+	 * If the label is not a numbered argument, returns {@code null}. 
+	 */
+	static public String getNumber(String label)
+	{
+		Matcher m = P_ARGN.matcher(label);
+		return m.find() ? m.group(3) : null;
 	}
 }

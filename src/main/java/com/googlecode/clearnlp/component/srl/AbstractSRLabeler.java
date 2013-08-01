@@ -23,10 +23,15 @@
 */
 package com.googlecode.clearnlp.component.srl;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,10 +51,15 @@ import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
+import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLLib;
 import com.googlecode.clearnlp.nlp.NLPLib;
+import com.googlecode.clearnlp.propbank.PBLib;
+import com.googlecode.clearnlp.propbank.frameset.AbstractFrames;
+import com.googlecode.clearnlp.propbank.frameset.PBRoleset;
+import com.googlecode.clearnlp.propbank.frameset.PBType;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
@@ -67,9 +77,12 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 	private final String ENTRY_LEXICA		 = NLPLib.MODE_SRL + NLPLib.ENTRY_LEXICA;
 	private final String ENTRY_MODEL		 = NLPLib.MODE_SRL + NLPLib.ENTRY_MODEL;
 	private final String ENTRY_WEIGHTS	     = NLPLib.MODE_SRL + NLPLib.ENTRY_WEIGHTS;
+	private final String ENTRY_FRAMES		 = NLPLib.MODE_SRL + "_FRAMES";
 	
 	protected final int LEXICA_PATH_UP	 = 0;
 	protected final int LEXICA_PATH_DOWN = 1;
+	protected final int LEXICA_FRAMES	 = 2;
+	
 	protected final int PATH_ALL		 = 0;
 	protected final int PATH_UP			 = 1;
 	protected final int PATH_DOWN		 = 2;
@@ -86,17 +99,19 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 	protected int				i_pred, i_arg;
 	protected Map<String,ObjectDoublePair<DEPNode>> m_argns;
 	
-	protected Prob1DMap		m_down, m_up;	// only for collecting
-	protected Set<String>	s_down, s_up;
+	protected Prob1DMap			m_down, m_up;	// only for collecting
+	protected Set<String>		s_down, s_up;
+	protected AbstractFrames	m_frames;
 	
 //	====================================== CONSTRUCTORS ======================================
 	
 	/** Constructs a semantic role labeler for collecting lexica. */
-	public AbstractSRLabeler(JointFtrXml[] xmls)
+	public AbstractSRLabeler(JointFtrXml[] xmls, AbstractFrames frames)
 	{
 		super(xmls);
-		m_down = new Prob1DMap();
-		m_up   = new Prob1DMap();
+		m_down   = new Prob1DMap();
+		m_up     = new Prob1DMap();
+		m_frames = frames;
 	}
 	
 	/** Constructs a semantic role labeler for training. */
@@ -126,11 +141,13 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 	@Override @SuppressWarnings("unchecked")
 	protected void initLexia(Object[] lexica)
 	{
-		s_down = (Set<String>)lexica[LEXICA_PATH_DOWN];
-		s_up   = (Set<String>)lexica[LEXICA_PATH_UP];
+		s_down   = (Set<String>)   lexica[LEXICA_PATH_DOWN];
+		s_up     = (Set<String>)   lexica[LEXICA_PATH_UP];
+		m_frames = (AbstractFrames)lexica[LEXICA_FRAMES];
 	}
 	
 	abstract protected String getHardLabel(DEPNode node);
+	abstract protected PBType getPBType(DEPNode pred);
 	
 //	====================================== LOAD/SAVE MODELS ======================================
 	
@@ -152,6 +169,8 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 					loadDefaultConfiguration(zin);
 				else if (entry.startsWith(ENTRY_FEATURE))
 					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(ENTRY_FEATURE.length())));
+				else if (entry.startsWith(ENTRY_FRAMES))
+					loadFrames(zin);
 				else if (entry.equals(ENTRY_LEXICA))
 					loadLexica(zin);
 				else if (entry.startsWith(ENTRY_MODEL))
@@ -161,6 +180,12 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 			}		
 		}
 		catch (Exception e) {e.printStackTrace();}
+	}
+	
+	private void loadFrames(ZipInputStream zin) throws Exception
+	{
+		ObjectInputStream oin = new ObjectInputStream(new BufferedInputStream(zin));
+		m_frames = (AbstractFrames)oin.readObject();
 	}
 	
 	private void loadLexica(ZipInputStream zin) throws Exception
@@ -179,12 +204,22 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 		{
 			saveDefaultConfiguration(zout, ENTRY_CONFIGURATION);
 			saveFeatureTemplates    (zout, ENTRY_FEATURE);
+			saveFrames              (zout);
 			saveLexica              (zout);
 			saveStatisticalModels   (zout, ENTRY_MODEL);
 			saveWeightVector        (zout, ENTRY_WEIGHTS);
 			zout.close();
 		}
 		catch (Exception e) {e.printStackTrace();}
+	}
+	
+	private void saveFrames(ZipOutputStream zout) throws Exception
+	{
+		zout.putNextEntry(new ZipEntry(ENTRY_FRAMES));
+		ObjectOutputStream oout = new ObjectOutputStream(new BufferedOutputStream(zout));
+		oout.writeObject(m_frames);
+		oout.flush();
+		zout.closeEntry();			
 	}
 	
 	private void saveLexica(ZipOutputStream zout) throws Exception
@@ -204,10 +239,11 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 	@Override
 	public Object[] getLexica()
 	{
-		Object[] lexica = new Object[2];
+		Object[] lexica = new Object[3];
 		
 		lexica[LEXICA_PATH_DOWN] = (i_flag == FLAG_LEXICA) ? m_down.toSet(f_xmls[0].getPathDownCutoff()) : s_down; 
 		lexica[LEXICA_PATH_UP]   = (i_flag == FLAG_LEXICA) ? m_up  .toSet(f_xmls[0].getPathUpCutoff())   : s_up;
+		lexica[LEXICA_FRAMES]    = m_frames;
 		
 		return lexica;
 	}
@@ -460,9 +496,9 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 	/** Called by {@link AbstractSRLabeler#getLabel(byte)}. */
 	private StringPrediction getAutoLabel(int idx, StringFeatureVector vector)
 	{
-		StringPrediction p = s_models[idx].predictBest(vector);
+		StringPrediction p = getBestPrediction(s_models[idx], vector);
 		
-		if (!p.label.equals(LB_NO_ARG))
+		if (i_flag == FLAG_DECODE && !p.label.equals(LB_NO_ARG))
 		{
 			String label = getHardLabel(d_tree.get(i_arg));
 			if (label != null)	p.label = label;
@@ -480,7 +516,7 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 			DEPNode pred = d_tree.get(i_pred);
 			DEPNode arg  = d_tree.get(i_arg);
 			
-			if (SRLLib.isCoreNumberedArgument(p.label))
+			if (PBLib.isCoreNumberedArgument(p.label))
 			{
 				ObjectDoublePair<DEPNode> prev = m_argns.get(p.label);
 				
@@ -496,7 +532,7 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 			
 			arg.addSHead(pred, p.label);
 			
-			if (SRLLib.isNumberedArgument(p.label))
+			if (PBLib.isNumberedArgument(p.label))
 				l_argns.add(p.label);
 		}
 	}
@@ -743,5 +779,39 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 		}
 		
 		return node;
+	}
+
+//	================================ RERANK ================================
+	
+	private StringPrediction getBestPrediction(StringModel model, StringFeatureVector vector)
+	{
+		List<StringPrediction> ps = model.predictAll(vector);
+		rerankPredictions(ps);
+		Collections.sort(ps);
+
+		return ps.get(0);
+	}
+	
+	protected void rerankPredictions(List<StringPrediction> ps)
+	{
+		if (m_frames != null)
+		{
+			DEPNode pred = d_tree.get(i_pred);
+			PBType  type = getPBType(pred);
+			
+			if (type != null)
+			{
+				PBRoleset roleset = m_frames.getRoleset(type, pred.lemma, pred.getFeat(DEPLibEn.FEAT_PB));
+				
+				if (roleset != null)
+				{
+					for (StringPrediction p : ps)
+					{
+						if (!roleset.isValidArgument(p.label))
+							p.score = -1;
+					}				
+				}
+			}
+		}
 	}
 }

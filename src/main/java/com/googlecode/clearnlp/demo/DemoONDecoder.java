@@ -89,8 +89,7 @@ public class DemoONDecoder
 	
 	public DEPTree process(AbstractTokenizer tokenizer, AbstractComponent[] components, String sentence)
 	{
-		NLPDecode nlp = new NLPDecode();
-		DEPTree tree = nlp.toDEPTree(tokenizer.getTokens(sentence));
+		DEPTree tree = NLPDecode.toDEPTree(tokenizer.getTokens(sentence));
 		
 		for (AbstractComponent component : components)
 			component.process(tree);

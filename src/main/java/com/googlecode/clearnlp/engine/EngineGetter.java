@@ -21,16 +21,21 @@ import java.io.InputStream;
 import java.util.zip.ZipInputStream;
 
 import com.googlecode.clearnlp.component.AbstractComponent;
+import com.googlecode.clearnlp.component.dep.AbstractDEPParser;
 import com.googlecode.clearnlp.component.dep.DefaultDEPParser;
 import com.googlecode.clearnlp.component.dep.EnglishDEPParser;
+import com.googlecode.clearnlp.component.morph.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.component.morph.DefaultMPAnalyzer;
 import com.googlecode.clearnlp.component.morph.EnglishMPAnalyzer;
+import com.googlecode.clearnlp.component.pos.AbstractPOSTagger;
 import com.googlecode.clearnlp.component.pos.DefaultPOSTagger;
 import com.googlecode.clearnlp.component.pos.EnglishPOSTagger;
+import com.googlecode.clearnlp.component.srl.AbstractSRLabeler;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
-import com.googlecode.clearnlp.component.srl.EnglishSRLabeler;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
+import com.googlecode.clearnlp.component.srl.DefaultSRLabeler;
+import com.googlecode.clearnlp.component.srl.EnglishSRLabeler;
 import com.googlecode.clearnlp.conversion.AbstractC2DConverter;
 import com.googlecode.clearnlp.conversion.EnglishC2DConverter;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
@@ -112,12 +117,12 @@ public class EngineGetter implements EngineLib
 		else if (mode.startsWith(NLPLib.MODE_SENSE))
 			return new CSenseClassifier(zin, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
-			return new EnglishSRLabeler(zin);
+			return getSRLabeler(zin, language);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
 	
-	static public AbstractComponent getPOSTagger(ZipInputStream zin, String language) throws IOException
+	static public AbstractPOSTagger getPOSTagger(ZipInputStream zin, String language) throws IOException
 	{
 		if (language.equals(AbstractReader.LANG_EN))
 			return new EnglishPOSTagger(zin);
@@ -125,7 +130,7 @@ public class EngineGetter implements EngineLib
 		return new DefaultPOSTagger(zin);
 	}
 	
-	static public AbstractComponent getDEPParser(ZipInputStream zin, String language) throws IOException
+	static public AbstractDEPParser getDEPParser(ZipInputStream zin, String language) throws IOException
 	{
 		if (language.equals(AbstractReader.LANG_EN))
 			return new EnglishDEPParser(zin);
@@ -133,11 +138,19 @@ public class EngineGetter implements EngineLib
 		return new DefaultDEPParser(zin);
 	}
 	
-	static public AbstractComponent getMPAnalyzer(ZipInputStream zin, String language) throws IOException
+	static public AbstractMPAnalyzer getMPAnalyzer(ZipInputStream zin, String language) throws IOException
 	{
 		if (language.equals(AbstractReader.LANG_EN))
 			return new EnglishMPAnalyzer(zin);
 		
 		return new DefaultMPAnalyzer();
+	}
+	
+	static public AbstractSRLabeler getSRLabeler(ZipInputStream zin, String language) throws IOException
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new EnglishSRLabeler(zin);
+		
+		return new DefaultSRLabeler(zin);
 	}
 }

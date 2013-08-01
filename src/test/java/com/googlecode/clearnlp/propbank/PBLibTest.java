@@ -25,8 +25,6 @@ package com.googlecode.clearnlp.propbank;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.regex.Matcher;
-
 import org.junit.Test;
 
 
@@ -34,29 +32,90 @@ import org.junit.Test;
 public class PBLibTest
 {
 	@Test
-	public void testPatterns()
+	public void testMatcher()
 	{
-		assertEquals(true, PBLib.P_ARGN.matcher("A0").find());
-		assertEquals(true, PBLib.P_ARGN.matcher("A1-DSP").find());
-		assertEquals(true, PBLib.P_ARGN.matcher("C-A0").find());
-		assertEquals(true, PBLib.P_ARGN.matcher("R-A0").find());
-		assertEquals(true, PBLib.P_ARGN.matcher("ARG0").find());
-		assertEquals(true, PBLib.P_ARGN.matcher("ARG1-DSP").find());
+		assertEquals("0", PBLib.getNumber("A0"));
+		assertEquals("A", PBLib.getNumber("AA"));
+		assertEquals("0", PBLib.getNumber("C-A0"));
+		assertEquals("0", PBLib.getNumber("R-A0"));
+		assertEquals("1", PBLib.getNumber("A1-DSP"));
 		
-		assertEquals(false, PBLib.P_ARGN.matcher("AM-TMP").find());
-		assertEquals(false, PBLib.P_ARGN.matcher("ARGM-TMP").find());
-		assertEquals(false, PBLib.P_ARGN.matcher("LINK-SLC").find());
+		assertEquals("0", PBLib.getNumber("ARG0"));
+		assertEquals("A", PBLib.getNumber("ARGA"));
+		assertEquals("1", PBLib.getNumber("ARG1-DSP"));
+	}
+	
+	@Test
+	public void testIsNumberedArgument()
+	{
+		String label = "ARG0";
+		assertEquals(true, PBLib.isNumberedArgument(label));
 		
-		Matcher m = PBLib.P_ARGN.matcher("A0");
-		if (m.find()) assertEquals("0", m.group(3));
+		label = "ARGA";
+		assertEquals(true, PBLib.isNumberedArgument(label));
+
+		label = "ARG1-DSP";
+		assertEquals(true, PBLib.isNumberedArgument(label));
 		
-		m = PBLib.P_ARGN.matcher("C-A0");
-		if (m.find()) assertEquals("0", m.group(3));
+		label = "ARG";
+		assertEquals(false, PBLib.isNumberedArgument(label));
 		
-		m = PBLib.P_ARGN.matcher("R-A0");
-		if (m.find()) assertEquals("0", m.group(3));
+		label = "ARGM-LOC";
+		assertEquals(false, PBLib.isNumberedArgument(label));
+
+		label = "A0";
+		assertEquals(true, PBLib.isNumberedArgument(label));
 		
-		m = PBLib.P_ARGN.matcher("A1-DSP");
-		if (m.find()) assertEquals("1", m.group(3));
+		label = "C-A0";
+		assertEquals(true, PBLib.isNumberedArgument(label));
+		
+		label = "R-A0";
+		assertEquals(true, PBLib.isNumberedArgument(label));
+		
+		label = "AA";
+		assertEquals(true, PBLib.isNumberedArgument(label));
+
+		label = "A1-DSP";
+		assertEquals(true, PBLib.isNumberedArgument(label));
+		
+		label = "AM-LOC";
+		assertEquals(false, PBLib.isNumberedArgument(label));
+	}
+	
+	@Test
+	public void testIsCoreNumberedArgument()
+	{
+		String label = "ARG0";
+		assertEquals(true, PBLib.isCoreNumberedArgument(label));
+		
+		label = "ARGA";
+		assertEquals(true, PBLib.isCoreNumberedArgument(label));
+
+		label = "ARG1-DSP";
+		assertEquals(true, PBLib.isCoreNumberedArgument(label));
+		
+		label = "ARG";
+		assertEquals(false, PBLib.isCoreNumberedArgument(label));
+		
+		label = "ARGM-LOC";
+		assertEquals(false, PBLib.isCoreNumberedArgument(label));
+
+		label = "A0";
+		assertEquals(true, PBLib.isCoreNumberedArgument(label));
+		
+		label = "AA";
+		assertEquals(true, PBLib.isCoreNumberedArgument(label));
+
+		label = "A1-DSP";
+		assertEquals(true, PBLib.isCoreNumberedArgument(label));
+		
+		label = "C-A0";
+		assertEquals(false, PBLib.isCoreNumberedArgument(label));
+		
+		label = "R-A0";
+		assertEquals(false, PBLib.isCoreNumberedArgument(label));
+		
+		label = "AM-LOC";
+		assertEquals(false, PBLib.isCoreNumberedArgument(label));
 	}
 }

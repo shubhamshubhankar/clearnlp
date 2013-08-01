@@ -21,10 +21,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Map;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.w3c.dom.Element;
 
 import com.google.common.collect.Maps;
@@ -41,7 +37,6 @@ public class MultiFrames extends AbstractFrames
 	static private final long serialVersionUID = 63545998371283421L;
 	private Map<String,PBFrameset> m_verbs;
 	private Map<String,PBFrameset> m_nouns;
-	private DocumentBuilder d_builder;
 	
 	/** @param framesDir the directory containing PropBank frame files. */
 	public MultiFrames(String framesDir)
@@ -54,13 +49,6 @@ public class MultiFrames extends AbstractFrames
 	{
 		m_verbs = Maps.newHashMap();
 		m_nouns = Maps.newHashMap();
-		
-		try
-		{
-			d_builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-			System.out.println(d_builder.getClass());
-		}
-		catch (ParserConfigurationException e) {e.printStackTrace();}
 	}
 	
 	/** @param framesDir the directory containing PropBank frame files. */
@@ -106,7 +94,7 @@ public class MultiFrames extends AbstractFrames
 	{
 		try
 		{
-			Element eFrameset = UTXml.getFirstElementByTagName(d_builder.parse(in), PBFLib.E_FRAMESET);
+			Element eFrameset = UTXml.getDocumentElement(in);
 			addFrameset(eFrameset, lemma, type);
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -131,6 +119,14 @@ public class MultiFrames extends AbstractFrames
 	{
 		if (type == PBType.VERB)	return m_verbs.get(lemma);
 		if (type == PBType.NOUN)	return m_nouns.get(lemma);
+		
+		return null;
+	}
+	
+	public Map<String,PBFrameset> getFramesetMap(PBType type)
+	{
+		if (type == PBType.VERB)	return m_verbs;
+		if (type == PBType.NOUN)	return m_nouns;
 		
 		return null;
 	}

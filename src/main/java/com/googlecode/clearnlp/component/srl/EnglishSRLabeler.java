@@ -33,6 +33,9 @@ import com.googlecode.clearnlp.constant.english.ENTime;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.srl.SRLLib;
+import com.googlecode.clearnlp.morphology.MPLibEn;
+import com.googlecode.clearnlp.propbank.frameset.AbstractFrames;
+import com.googlecode.clearnlp.propbank.frameset.PBType;
 
 /**
  * @since 1.0.0
@@ -41,9 +44,9 @@ import com.googlecode.clearnlp.dependency.srl.SRLLib;
 public class EnglishSRLabeler extends AbstractSRLabeler
 {
 	/** Constructs a semantic role labeler for collecting lexica. */
-	public EnglishSRLabeler(JointFtrXml[] xmls)
+	public EnglishSRLabeler(JointFtrXml[] xmls, AbstractFrames frames)
 	{
-		super(xmls);
+		super(xmls, frames);
 	}
 	
 	/** Constructs a semantic role labeler for training. */
@@ -80,6 +83,15 @@ public class EnglishSRLabeler extends AbstractSRLabeler
 			if ((dep = rm_deps[node.id]) != null && dep.isPos(CTLibEn.POS_NN) && (ENTime.isTemporalSuffix(dep.lemma)))
 				return SRLLib.ARGM_TMP;
 		}
+		
+		return null;
+	}
+	
+	@Override
+	protected PBType getPBType(DEPNode pred)
+	{
+		if (MPLibEn.isVerb(pred.pos))	return PBType.VERB;
+		if (MPLibEn.isNoun(pred.pos))	return PBType.NOUN;
 		
 		return null;
 	}

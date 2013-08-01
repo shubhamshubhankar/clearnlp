@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import com.googlecode.clearnlp.propbank.PBLib;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 
@@ -91,7 +92,7 @@ public class SRLEval
 		
 		for (StringIntPair gHead : gold)
 		{
-			isArgn = SRLLib.isNumberedArgument(gHead.s);
+			isArgn = PBLib.isNumberedArgument(gHead.s);
 			if (isArgn)	argn[IDX_GOLD]++;
 			else		argm[IDX_GOLD]++;
 			
@@ -118,7 +119,7 @@ public class SRLEval
 		
 		for (StringIntPair aHead : auto)
 		{
-			isArgn = SRLLib.isNumberedArgument(aHead.s);
+			isArgn = PBLib.isNumberedArgument(aHead.s);
 			if (isArgn)	argn[IDX_AUTO]++;
 			else		argm[IDX_AUTO]++;
 			

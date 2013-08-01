@@ -23,12 +23,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.feature.FtrToken;
 import com.googlecode.clearnlp.classification.feature.JointFtrXml;
@@ -76,6 +79,7 @@ abstract public class AbstractDEPParser extends AbstractStatisticalComponentSB
 	protected StringIntPair[]	g_heads;
 	protected int				i_lambda, i_beta;
 
+	List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> l_branches;
 	protected Map<String,Pair<DEPLabel,DEPLabel>> m_labels;
 	protected List<List<DEPHead>> l_2ndDep;
 	protected double[] n_2ndPos;
@@ -230,6 +234,46 @@ abstract public class AbstractDEPParser extends AbstractStatisticalComponentSB
 	{
 		init(tree);
 		processAux();
+	}
+	
+	/**
+	 * {@link AbstractDEPParser#process(DEPTree)} must be called before this method.
+	 * @param uniqueOnly if {@code true}, include only unique trees.
+	 * @return a list of pairs containing parsed trees and their scores, sorted by scores in descending order.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<ObjectDoublePair<DEPTree>> getParsedTrees(boolean uniqueOnly)
+	{
+		ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>> p;
+		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> t;
+		List<ObjectDoublePair<DEPTree>> trees = Lists.newArrayList();
+		Set<String> set = Sets.newHashSet();
+		int i, size = l_branches.size();
+		String s;
+		
+		Collections.sort(l_branches);
+		DEPTree tree;
+		
+		for (i=0; i<size; i++)
+		{
+			p = l_branches.get(i);
+			t = (Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>)p.o;
+			tree = d_tree.clone();
+			tree.resetHeads(t.o1);
+			
+			d_tree = tree;
+			postProcess();
+			postParse();
+			s = tree.toStringDEP();
+			
+			if (!uniqueOnly || !set.contains(s))
+			{
+				set.add(s);
+				trees.add(new ObjectDoublePair<DEPTree>(tree, p.d));
+			}
+		}
+		
+		return trees;
 	}
 	
 	/** Called by {@link AbstractDEPParser#process(DEPTree)}. */
@@ -619,11 +663,11 @@ abstract public class AbstractDEPParser extends AbstractStatisticalComponentSB
 	{
 		Triple<DEPNode,String,Double> max = new Triple<DEPNode,String,Double>(null, null, -1d);
 		DEPNode root = d_tree.get(DEPLib.ROOT_ID);
-		int i, size = d_tree.size();
 		List<DEPHead> list;
 		DEPNode node, head;
+		int i;
 		
-		for (i=1; i<size; i++)
+		for (i=1; i<t_size; i++)
 		{
 			node = d_tree.get(i);
 			
@@ -658,15 +702,15 @@ abstract public class AbstractDEPParser extends AbstractStatisticalComponentSB
 	
 	protected void postProcessAux(DEPNode node, int dir, Triple<DEPNode,String,Double> max)
 	{
-		int i, size = d_tree.size();
 		List<StringPrediction> ps;
 		DEPLabel label;
 		DEPNode  head;
+		int i;
 		
 		if (dir < 0)	i_beta   = node.id;
 		else			i_lambda = node.id;
 		
-		for (i=node.id+dir; 0<=i && i<size; i+=dir)
+		for (i=node.id+dir; 0<=i && i<t_size; i+=dir)
 		{
 			head = d_tree.get(i);			
 			if (head.isDescendentOf(node))	continue;
@@ -837,17 +881,17 @@ abstract public class AbstractDEPParser extends AbstractStatisticalComponentSB
 	@SuppressWarnings("unchecked")
 	public List<Pair<String,StringFeatureVector>> parseBranches()
 	{
-		List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list;
 		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> t0 = parseMain();
-		if ((i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP) && t0.o3.isEmpty())	return null;
-		
-		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> tm;
 		double s0 = d_score / n_trans; 
+
+		l_branches = Lists.newArrayList();
+		l_branches.add(new ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>(t0, s0));
+		
+		if ((i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP) && t0.o3.isEmpty()) return null;
+		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> tm;
 		b_first = false;
 		
-		list = new ArrayList<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>>();
-		list.add(new ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>(t0, s0));
-		branch(list, t0.o3);
+		branch(l_branches, t0.o3);
 		
 		if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
@@ -858,16 +902,16 @@ abstract public class AbstractDEPParser extends AbstractStatisticalComponentSB
 //				System.out.println(pp.d+"\n"+d_tree.toStringDEP()+"\n");
 //			}
 			
-			tm = (Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>)getMax(list).o;
+			tm = (Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>)getMax(l_branches).o;
 			d_tree.resetHeads(tm.o1);
 			return null;
 		}
 		else
 		{
 			List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>(t0.o2);
-			setGoldScores(list);
+			setGoldScores(l_branches);
 			
-			tm = (Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>)getMax(list).o;
+			tm = (Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>)getMax(l_branches).o;
 			insts.addAll(tm.o2);
 			
 			return insts;
