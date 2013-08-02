@@ -27,7 +27,6 @@ import com.googlecode.clearnlp.classification.feature.JointFtrXml;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
 import com.googlecode.clearnlp.component.srl.CSenseClassifier;
@@ -77,19 +76,17 @@ public class NLPDevelop extends NLPTrain
 		if      (mode.equals(NLPLib.MODE_POS))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, getPOSTaggerForCollect(reader, xmls, trainFiles, -1, language), mode, -1);
 		else if (mode.equals(NLPLib.MODE_DEP))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParser(xmls), mode, -1);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, null, mode, -1);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			decode(reader, getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, -1), devFiles, mode, mode);
 		else if (mode.equals(NLPLib.MODE_ROLE))
 			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CRolesetClassifier(xmls), mode, -1), devFiles, mode, mode);
-		else if (mode.startsWith(NLPLib.MODE_SENSE))
-			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf(STPunct.UNDERSCORE)+1)), mode, -1), devFiles, mode, mode);
 		else if (mode.equals(NLPLib.MODE_SRL))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, getSRLabelerForCollect(xmls, language), mode, -1);
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTaggerSB(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
-		else if (mode.equals(NLPLib.MODE_DEP_SB))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, null, mode, -1);
+		else if (mode.startsWith(NLPLib.MODE_SENSE))
+			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf(STPunct.UNDERSCORE)+1)), mode, -1), devFiles, mode, mode);
 	}
 	
 	protected double developComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, Object[] lexica, String mode, int devId) throws Exception
@@ -224,7 +221,7 @@ public class NLPDevelop extends NLPTrain
 	{
 		if      (mode.startsWith(NLPLib.MODE_POS) || mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
 			return new int[2];
-		else if (mode.startsWith(NLPLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 			return new int[4];
 		else if (mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_SRL))
 			return new int[3];
@@ -241,7 +238,7 @@ public class NLPDevelop extends NLPTrain
 			score = 100d * counts[1] / counts[0];
 			LOG.info(String.format("- ACC: %5.2f (%d/%d)\n", score, counts[1], counts[0]));
 		}
-		else if (mode.startsWith(NLPLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 		{
 			String[] labels = {"T","LAS","UAS","LS"};
 			printScores(labels, counts);

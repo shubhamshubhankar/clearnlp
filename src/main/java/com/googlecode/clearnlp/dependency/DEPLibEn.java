@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import com.googlecode.clearnlp.constituent.CTLibEn;
+import com.googlecode.clearnlp.dependency.srl.SRLArc;
 import com.googlecode.clearnlp.dependency.srl.SRLLib;
 import com.googlecode.clearnlp.morphology.MPLibEn;
 import com.googlecode.clearnlp.util.pair.Pair;
@@ -300,7 +301,7 @@ public class DEPLibEn extends DEPLib
 		if (MPLibEn.isNoun(head.pos) || head.isPos(CTLibEn.POS_IN) || head.isPos(CTLibEn.POS_RP))
 		{
 			DEPNode gHead = head.getHead();
-			DEPArc  sp, sh;
+			SRLArc  sp, sh;
 			
 			if (gHead != null && (sp = prep.getSHead(gHead)) != null)
 			{
@@ -378,9 +379,9 @@ public class DEPLibEn extends DEPLib
 	/** Called by {@link DEPLibEn#postLabel(DEPTree)}. */
 	static private boolean relinkReferent(DEPNode verb)
 	{
-		Pair<DEPNode,DEPArc> c = getFirstRelativizer(verb);
+		Pair<DEPNode,SRLArc> c = getFirstRelativizer(verb);
 		if (c == null)	return false;
-		Pair<DEPNode,DEPArc> p = getLastPrepositionWithoutDependent(verb);
+		Pair<DEPNode,SRLArc> p = getLastPrepositionWithoutDependent(verb);
 		if (p == null)	return false;
 		
 		DEPNode comp = c.o1;
@@ -393,9 +394,9 @@ public class DEPLibEn extends DEPLib
 	}
 	
 	/** Called by {@link DEPLibEn#relinkReferent(DEPNode)}. */
-	static private Pair<DEPNode,DEPArc> getFirstRelativizer(DEPNode verb)
+	static private Pair<DEPNode,SRLArc> getFirstRelativizer(DEPNode verb)
 	{
-		DEPArc  sHead;
+		SRLArc  sHead;
 		DEPNode dep;
 		
 		for (DEPArc arc : verb.getDependents())
@@ -406,17 +407,18 @@ public class DEPLibEn extends DEPLib
 				return null;
 			
 			if ((sHead = dep.getSHead(verb, SRLLib.P_ARG_REF)) != null)
-				return (dep.isPos(CTLibEn.POS_IN)) ? null : new Pair<DEPNode,DEPArc>(dep, sHead);
+				return (dep.isPos(CTLibEn.POS_IN)) ? null : new Pair<DEPNode,SRLArc>(dep, sHead);
 		}
 		
 		return null;
 	}
 	
 	/** Called by {@link DEPLibEn#relinkReferent(DEPNode)}. */
-	static private Pair<DEPNode,DEPArc> getLastPrepositionWithoutDependent(DEPNode verb)
+	static private Pair<DEPNode,SRLArc> getLastPrepositionWithoutDependent(DEPNode verb)
 	{
 		List<DEPArc> arcs = verb.getDependents();
-		DEPArc arc, sHead;
+		DEPArc arc;
+		SRLArc sHead;
 		DEPNode dep;
 		int i;
 		
@@ -429,7 +431,7 @@ public class DEPLibEn extends DEPLib
 				return null;
 			
 			if (dep.isPos(CTLibEn.POS_IN) && (sHead = dep.getSHead(verb)) != null)
-				return dep.getDependents().isEmpty() ? new Pair<DEPNode,DEPArc>(dep, sHead) : null;
+				return dep.getDependents().isEmpty() ? new Pair<DEPNode,SRLArc>(dep, sHead) : null;
 		}
 		
 		return null;
@@ -439,7 +441,7 @@ public class DEPLibEn extends DEPLib
 	static private void relabelPrepositionWithReferent(DEPNode verb)
 	{
 		DEPNode dep, pobj;
-		DEPArc sHead;
+		SRLArc sHead;
 		
 		for (DEPArc arc : verb.getDependents())
 		{

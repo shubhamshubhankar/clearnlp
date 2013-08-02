@@ -29,12 +29,14 @@ import java.util.List;
 import java.util.Map;
 
 import com.carrotsearch.hppc.IntStack;
+import com.google.common.collect.Lists;
 import com.googlecode.clearnlp.coreference.Mention;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.srl.SRLArc;
 
 
 /**
@@ -161,7 +163,7 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 				node.setHead(tree.get(Integer.parseInt(tmp[i_headId])), tmp[i_deprel]);
 			
 			if (i_xheads >= 0)
-				node.setXHeads(getSHeads(tree, tmp[i_xheads]));
+				node.setXHeads(getXHeads(tree, tmp[i_xheads]));
 			
 			if (i_sheads >= 0)
 				node.setSHeads(getSHeads(tree, tmp[i_sheads]));
@@ -174,9 +176,9 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 		return tree;
 	}
 	
-	private List<DEPArc> getSHeads(DEPTree tree, String heads)
+	private List<DEPArc> getXHeads(DEPTree tree, String heads)
 	{
-		List<DEPArc> sHeads = new ArrayList<DEPArc>();
+		List<DEPArc> sHeads = Lists.newArrayList();
 		
 		if (heads.equals(AbstractColumnReader.BLANK_COLUMN))
 			return sHeads;
@@ -191,6 +193,28 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 			label  = head.substring(idx+1);
 			
 			sHeads.add(new DEPArc(tree.get(headId), label));
+		}
+		
+		return sHeads;
+	}
+	
+	private List<SRLArc> getSHeads(DEPTree tree, String heads)
+	{
+		List<SRLArc> sHeads = Lists.newArrayList();
+		
+		if (heads.equals(AbstractColumnReader.BLANK_COLUMN))
+			return sHeads;
+		
+		int headId, idx;
+		String label;
+		
+		for (String head : heads.split(DEPLib.DELIM_HEADS))
+		{
+			idx    = head.indexOf(DEPLib.DELIM_HEADS_KEY);
+			headId = Integer.parseInt(head.substring(0, idx));
+			label  = head.substring(idx+1);
+			
+			sHeads.add(new SRLArc(tree.get(headId), label));
 		}
 		
 		return sHeads;

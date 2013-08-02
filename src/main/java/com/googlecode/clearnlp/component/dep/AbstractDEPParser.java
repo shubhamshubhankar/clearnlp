@@ -62,11 +62,11 @@ import com.googlecode.clearnlp.util.triple.Triple;
  */
 abstract public class AbstractDEPParser extends AbstractStatisticalComponentSB
 {
-	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_CONFIGURATION;
-	protected final String ENTRY_FEATURE	   = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_FEATURE;
-	protected final String ENTRY_LEXICA		   = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_LEXICA;
-	protected final String ENTRY_MODEL		   = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_MODEL;
-	protected final String ENTRY_WEIGHTS	   = NLPLib.MODE_DEP_SB + NLPLib.ENTRY_WEIGHTS;
+	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP+"_sb" + NLPLib.ENTRY_CONFIGURATION;
+	protected final String ENTRY_FEATURE	   = NLPLib.MODE_DEP+"_sb" + NLPLib.ENTRY_FEATURE;
+	protected final String ENTRY_LEXICA		   = NLPLib.MODE_DEP+"_sb" + NLPLib.ENTRY_LEXICA;
+	protected final String ENTRY_MODEL		   = NLPLib.MODE_DEP+"_sb" + NLPLib.ENTRY_MODEL;
+	protected final String ENTRY_WEIGHTS	   = NLPLib.MODE_DEP+"_sb" + NLPLib.ENTRY_WEIGHTS;
 	
 	protected final String LB_LEFT		= "L";
 	protected final String LB_RIGHT		= "R";

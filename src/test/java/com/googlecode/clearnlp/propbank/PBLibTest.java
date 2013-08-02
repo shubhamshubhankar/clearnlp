@@ -118,4 +118,20 @@ public class PBLibTest
 		label = "AM-LOC";
 		assertEquals(false, PBLib.isCoreNumberedArgument(label));
 	}
+	
+	@Test
+	public void testIsModifier()
+	{
+		String label = "ARG0";
+		assertEquals(false, PBLib.isModifier(label));
+		
+		label = "ARGA";
+		assertEquals(false, PBLib.isModifier(label));
+
+		label = "ARG1-DSP";
+		assertEquals(false, PBLib.isModifier(label));
+		
+		label = "ARGM-LOC";
+		assertEquals(true, PBLib.isModifier(label));
+	}
 }

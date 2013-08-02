@@ -36,7 +36,6 @@ import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
 import com.googlecode.clearnlp.component.dep.AbstractDEPParser;
-import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.component.dep.DefaultDEPParser;
 import com.googlecode.clearnlp.component.dep.EnglishDEPParser;
 import com.googlecode.clearnlp.component.pos.AbstractPOSTagger;
@@ -118,7 +117,7 @@ public class NLPTrain extends AbstractNLP
 		
 		if      (mode.equals(NLPLib.MODE_POS))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, getPOSTaggerForCollect(reader, xmls, trainFiles, devId, language), mode, devId);
-		else if (mode.equals(NLPLib.MODE_DEP_SB))
+		else if (mode.equals(NLPLib.MODE_DEP))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, null, mode, devId);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, devId);
@@ -130,8 +129,6 @@ public class NLPTrain extends AbstractNLP
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf("_")+1)), mode, devId);
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTaggerSB(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
-		else if (mode.equals(NLPLib.MODE_DEP))
-			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPParser(xmls), mode, devId);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
@@ -162,7 +159,7 @@ public class NLPTrain extends AbstractNLP
 	{
 		if      (mode.equals(NLPLib.MODE_POS))
 			return getPOSTaggerForDevelop(xmls, models, lexica, language);
-		else if (mode.equals(NLPLib.MODE_DEP_SB))
+		else if (mode.equals(NLPLib.MODE_DEP))
 			return getDEPParserForDevelop(xmls, models, lexica, language);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(xmls, models, lexica);
@@ -172,8 +169,6 @@ public class NLPTrain extends AbstractNLP
 			return getSRLabelerForDevelop(xmls, models, lexica, language);
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return new CPOSTaggerSB(xmls, models, lexica, d_margin, n_beams);
-		else if (mode.equals(NLPLib.MODE_DEP))
-			return new CDEPParser(xmls, models, lexica);
 		else if (mode.startsWith(NLPLib.MODE_SENSE))
 			return new CSenseClassifier(xmls, models, lexica, mode.substring(mode.lastIndexOf("_")+1));
 		
@@ -374,7 +369,7 @@ public class NLPTrain extends AbstractNLP
 	{
 		if      (mode.equals(NLPLib.MODE_POS))
 			return getPOSTaggerForTrain(xmls, spaces, models, lexica, language);
-		else if (mode.equals(NLPLib.MODE_DEP_SB))
+		else if (mode.equals(NLPLib.MODE_DEP))
 			return getDEPParserForTrain(xmls, spaces, models, lexica, language);
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return getSRLabelerForTrain(xmls, spaces, models, lexica, language);
@@ -386,8 +381,6 @@ public class NLPTrain extends AbstractNLP
 			return new CSenseClassifier(xmls, spaces, lexica, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_POS_SB))
 			return (models == null) ? new CPOSTaggerSB(xmls, spaces, lexica, d_margin, n_beams) : new CPOSTaggerSB(xmls, spaces, models, lexica, d_margin, n_beams);
-			else if (mode.equals(NLPLib.MODE_DEP))
-				return (models == null) ? new CDEPParser(xmls, spaces, lexica) : new CDEPParser(xmls, spaces, models, lexica);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
@@ -422,7 +415,7 @@ public class NLPTrain extends AbstractNLP
 	{
 		if      (mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
 			return getStringTrainSpaces(xmls[0], ((ObjectIntOpenHashMap<String>)lexica[1]).size());
-		else if (boot > 0 && mode.equals(NLPLib.MODE_DEP_SB))
+		else if (boot > 0 && mode.equals(NLPLib.MODE_DEP))
 			return getStringTrainSpaces(xmls, 1);
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return getStringTrainSpaces(xmls[0], 2);

@@ -74,6 +74,7 @@ public class PBLib
 	static final public Pattern ILLEGAL_ROLESET = Pattern.compile(".*\\.(ER|NN|IE|YY)");
 	
 	static final public Pattern P_ARGN      = Pattern.compile("^(A|C-A|R-A)(RG)?(\\d|A)");
+	static public final Pattern P_ARGM      = Pattern.compile("^A(RG)?M");
 	static final public Pattern P_ARGN_CORE = Pattern.compile("^A(RG)?(\\d|A)");
 	
 	/**
@@ -209,6 +210,11 @@ public class PBLib
 	static public boolean isCoreNumberedArgument(String label)
 	{
 		return P_ARGN_CORE.matcher(label).find();
+	}
+	
+	static public boolean isModifier(String label)
+	{
+		return P_ARGM.matcher(label).find();
 	}
 
 	/**

@@ -36,6 +36,7 @@ import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.googlecode.clearnlp.coreference.Mention;
+import com.googlecode.clearnlp.dependency.srl.SRLArc;
 import com.googlecode.clearnlp.dependency.srl.SRLTree;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.util.pair.IntIntPair;
@@ -760,46 +761,37 @@ public class DEPTree extends ArrayList<DEPNode>
 		return rolesets;
 	}
 	
-	public StringIntPair[][] getXHeads()
-	{
-		return getHeadsAux(true);
-	}
-	
 	public StringIntPair[][] getSHeads()
 	{
-		return getHeadsAux(false);
+		return getSHeadsAux();
 	}
 	
-	private StringIntPair[][] getHeadsAux(boolean isXhead)
+	private StringIntPair[][] getSHeadsAux()
 	{
 		int i, j, len, size = size();
 		StringIntPair[] heads;
-		List<DEPArc> arcs;
-		DEPArc arc;
+		List<SRLArc> arcs;
+		SRLArc arc;
 		
-		StringIntPair[][] xHeads = new StringIntPair[size][];
-		xHeads[0] = new StringIntPair[0];
+		StringIntPair[][] sHeads = new StringIntPair[size][];
+		sHeads[0] = new StringIntPair[0];
 		
 		for (i=1; i<size; i++)
 		{
-			arcs  = isXhead ? get(i).getXHeads() : get(i).getSHeads();
+			arcs  = get(i).getSHeads();
 			len   = arcs.size();
 			heads = new StringIntPair[len];
 			
 			for (j=0; j<len; j++)
 			{
 				arc = arcs.get(j);
-				if (arc.getNode() == null)
-				{
-					System.err.println(i+"\n"+toStringDEP());
-				}
 				heads[j] = new StringIntPair(arc.label, arc.getNode().id);
 			}
 			
-			xHeads[i] = heads;
+			sHeads[i] = heads;
 		}
 		
-		return xHeads;
+		return sHeads;
 	}
 	
 	// --------------------------------- semantic heads ---------------------------------
@@ -836,6 +828,24 @@ public class DEPTree extends ArrayList<DEPNode>
 		}
 		
 		return tree;
+	}
+	
+	/** For each semantic argument, merge function tags into numbered argument labels if exist. */
+	public void mergeFunctionTagsForNumberedArguments()
+	{
+		int i, size = size();
+		DEPNode node;
+		
+		for (i=1; i<size; i++)
+		{
+			node = get(i);
+			
+			if (node.s_heads != null)
+			{
+				for (SRLArc arc : node.s_heads)
+					arc.mergeFunctionTag();
+			}
+		}
 	}
 	
 	// --------------------------------- toString ---------------------------------

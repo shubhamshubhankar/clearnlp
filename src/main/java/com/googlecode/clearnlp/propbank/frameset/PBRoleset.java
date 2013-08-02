@@ -116,8 +116,8 @@ public class PBRoleset implements Serializable, Comparable<PBRoleset>
 		if (n.length() != 1) return false;
 		
 		if (MPLib.containsOnlyDigits(n))	return true;
-		if (n.equals("A"))					return true;
-		if (n.equals("M") && !role.getFunctionTag().equals(STConstant.EMPTY))	return true;
+		if (role.isArgNumber("A"))			return true;
+		if (role.isArgNumber("M") && !role.isFunctionTag(STConstant.EMPTY))	return true;
 		
 		return false;
 	}
@@ -139,6 +139,12 @@ public class PBRoleset implements Serializable, Comparable<PBRoleset>
 	public PBRole getRole(String argNumber)
 	{
 		return m_roles.get(argNumber);
+	}
+	
+	public String getFunctionTag(String argNumber)
+	{
+		PBRole role = getRole(argNumber);
+		return (role != null) ? role.getFunctionTag() : STConstant.EMPTY;
 	}
 
 	public String getID()

@@ -49,11 +49,14 @@ import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
+import com.googlecode.clearnlp.constant.universal.STConstant;
+import com.googlecode.clearnlp.constant.universal.STPunct;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.srl.SRLArc;
 import com.googlecode.clearnlp.dependency.srl.SRLLib;
 import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.propbank.PBLib;
@@ -101,6 +104,7 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 	
 	protected Prob1DMap			m_down, m_up;	// only for collecting
 	protected Set<String>		s_down, s_up;
+	protected PBRoleset			p_roleset;
 	protected AbstractFrames	m_frames;
 	
 //	====================================== CONSTRUCTORS ======================================
@@ -253,7 +257,7 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 	{
 		int i, pTotal = 0, rTotal = 0, correct = 0;
 		StringIntPair[] gHeads;
-		List<DEPArc>    sHeads;
+		List<SRLArc>    sHeads;
 		
 		for (i=1; i<t_size; i++)
 		{
@@ -302,6 +306,20 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 	{
 		DEPNode pred = d_tree.getNextPredicate(prevId);
 		return (pred != null) ? pred.id : d_tree.size();
+	}
+	
+	private PBRoleset getRoleset()
+	{
+		if (m_frames != null)
+		{
+			DEPNode pred = d_tree.get(i_pred);
+			PBType  type = getPBType(pred);
+			
+			if (type != null)
+				return m_frames.getRoleset(type, pred.lemma, pred.getFeat(DEPLibEn.FEAT_PB));
+		}
+		
+		return null;
 	}
 	
 	private void addLexica(DEPTree tree)
@@ -402,9 +420,10 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 		{
 			pred = d_tree.get(i_pred);
 			
-			s_skip .clear();
-			s_skip .add(i_pred);
-			s_skip .add(DEPLib.ROOT_ID);
+			p_roleset = getRoleset(); 
+			s_skip.clear();
+			s_skip.add(i_pred);
+			s_skip.add(DEPLib.ROOT_ID);
 			l_argns.clear();
 			m_argns.clear();
 			
@@ -516,24 +535,33 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 			DEPNode pred = d_tree.get(i_pred);
 			DEPNode arg  = d_tree.get(i_arg);
 			
-			if (PBLib.isCoreNumberedArgument(p.label))
+			if (PBLib.isNumberedArgument(p.label))
 			{
-				ObjectDoublePair<DEPNode> prev = m_argns.get(p.label);
+				l_argns.add(p.label);
 				
-				if (prev != null)
+				if (PBLib.isCoreNumberedArgument(p.label))
 				{
-					if (prev.d >= p.score) return;
-					DEPNode node = (DEPNode)prev.o;
-					node.removeSHeadsByLabel(p.label);
+					ObjectDoublePair<DEPNode> prev = m_argns.get(p.label);
+					
+					if (prev != null)
+					{
+						DEPNode node = (DEPNode)prev.o;
+						node.removeSHeadsByLabel(p.label);
+					}
+					
+					m_argns.put(p.label, new ObjectDoublePair<DEPNode>(arg, p.score));
 				}
-				
-				m_argns.put(p.label, new ObjectDoublePair<DEPNode>(arg, p.score));
 			}
 			
-			arg.addSHead(pred, p.label);
+			String fTag = STConstant.EMPTY;
 			
-			if (PBLib.isNumberedArgument(p.label))
-				l_argns.add(p.label);
+			if (!p.label.contains(STPunct.HYPHEN) && p_roleset != null)
+			{
+				String n = PBLib.getNumber(p.label);
+				fTag = p_roleset.getFunctionTag(n);
+			}
+			
+			arg.addSHead(pred, p.label, fTag);
 		}
 	}
 	
@@ -794,24 +822,28 @@ abstract public class AbstractSRLabeler extends AbstractStatisticalComponent
 	
 	protected void rerankPredictions(List<StringPrediction> ps)
 	{
-		if (m_frames != null)
+		for (StringPrediction p : ps)
 		{
-			DEPNode pred = d_tree.get(i_pred);
-			PBType  type = getPBType(pred);
-			
-			if (type != null)
-			{
-				PBRoleset roleset = m_frames.getRoleset(type, pred.lemma, pred.getFeat(DEPLibEn.FEAT_PB));
-				
-				if (roleset != null)
-				{
-					for (StringPrediction p : ps)
-					{
-						if (!roleset.isValidArgument(p.label))
-							p.score = -1;
-					}				
-				}
-			}
+			if (rerankFrameMismatch(p) || rerankRedundantNumberedArgument(p))
+				p.score = -1;
 		}
+	}
+	
+	protected boolean rerankFrameMismatch(StringPrediction prediction)
+	{
+		if (p_roleset != null && !p_roleset.isValidArgument(prediction.label))
+			return true;
+		
+		return false;
+	}
+	
+	protected boolean rerankRedundantNumberedArgument(StringPrediction prediction)
+	{
+		ObjectDoublePair<DEPNode> prev = m_argns.get(prediction.label);
+		
+		if (prev != null && prev.d >= prediction.score)
+			return true;
+		
+		return false;
 	}
 }

@@ -138,9 +138,7 @@ public class DEPArc implements Comparable<DEPArc>
 		return regex.matcher(label).find();
 	}
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
+	@Override
 	public String toString()
 	{
 		StringBuilder build = new StringBuilder();

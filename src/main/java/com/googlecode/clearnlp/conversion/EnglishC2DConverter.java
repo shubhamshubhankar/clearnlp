@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.google.common.collect.Lists;
 import com.googlecode.clearnlp.constituent.CTLib;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
@@ -44,6 +45,7 @@ import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.srl.SRLArc;
 import com.googlecode.clearnlp.dependency.srl.SRLLib;
 import com.googlecode.clearnlp.headrule.HeadRule;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
@@ -1348,16 +1350,16 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	private void arrangePBArgs(DEPTree dTree)
 	{
 		int i, size = dTree.size();
-		List<DEPArc> remove;
+		List<SRLArc> remove;
 		DEPNode node, head;
 		String label;
 		
 		for (i=1; i<size; i++)
 		{
 			node   = dTree.get(i);
-			remove = new ArrayList<DEPArc>();
+			remove = Lists.newArrayList();
 			
-			for (DEPArc arc : node.getSHeads())
+			for (SRLArc arc : node.getSHeads())
 			{
 				head  = arc.getNode();
 				label = arc.getLabel();
@@ -1402,14 +1404,14 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	{
 		Map<String,DEPNode> map = new HashMap<String,DEPNode>();
 		int i, size = dTree.size();
-		List<DEPArc> remove;
+		List<SRLArc> remove;
 		DEPNode node;
 		String key;
 		
 		for (i=1; i<size; i++)
 		{
 			node   = dTree.get(i);
-			remove = new ArrayList<DEPArc>();
+			remove = Lists.newArrayList();
 			
 			for (DEPArc arc : node.getSHeads())
 			{

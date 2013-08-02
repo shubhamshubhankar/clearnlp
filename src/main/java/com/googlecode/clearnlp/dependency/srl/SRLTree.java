@@ -133,7 +133,7 @@ public class SRLTree
 		for (SRLArc arg : l_arguments)
 		{
 			build.append(";");
-			build.append(arg.label);
+			build.append(arg.getLabel());
 			build.append(":");
 			build.append(arg.getNode().lemma);
 		}
@@ -151,10 +151,10 @@ public class SRLTree
 		
 		for (SRLArc arg : l_arguments)
 		{
-			if (!ignore.contains(arg.label))
+			if (!ignore.contains(arg.getLabel()))
 			{
 				build.append(";");
-				build.append(arg.label);
+				build.append(arg.getLabel());
 				build.append(":");
 				build.append(arg.getNode().lemma);				
 			}
@@ -173,10 +173,10 @@ public class SRLTree
 		
 		for (SRLArc arg : l_arguments)
 		{
-			if (!ignore.matcher(arg.label).find())
+			if (!ignore.matcher(arg.getLabel()).find())
 			{
 				build.append(";");
-				build.append(arg.label);
+				build.append(arg.getLabel());
 				build.append(":");
 				build.append(arg.getNode().lemma);				
 			}
@@ -197,12 +197,12 @@ public class SRLTree
 		
 		for (SRLArc arg : l_arguments)
 		{
-			if (!ignore.matcher(arg.label).find())
+			if (!ignore.matcher(arg.getLabel()).find())
 			{
 				node = arg.getNode();
 				
 				build.append(";");
-				build.append(arg.label);
+				build.append(arg.getLabel());
 				build.append(":");
 				
 				if (MPLibEn.isNoun(node.pos))

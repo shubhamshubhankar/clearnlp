@@ -21,7 +21,6 @@ import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
 import com.googlecode.clearnlp.classification.feature.JointFtrXml;
-import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.reader.JointReader;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTXml;
@@ -68,8 +67,6 @@ public class NLPGenerate extends NLPDevelop
 			if      (mode.equals(NLPLib.MODE_POS))
 				developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, getPOSTaggerForCollect(reader, xmls, trainFiles, i, language), mode, i);
 			else if (mode.equals(NLPLib.MODE_DEP))
-				developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParser(xmls), mode, i);
-			else if (mode.equals(NLPLib.MODE_DEP_SB))
 				developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, null, mode, i);
 		}
 	}

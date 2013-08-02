@@ -61,9 +61,6 @@ public class SRLLib
 	
 	static public final Pattern P_ARG_CONCATENATION = Pattern.compile("^"+PREFIX_CONCATENATION+".+$");
 	static public final Pattern P_ARG_REF = Pattern.compile("^"+PREFIX_REFERENT+".+$");
-	static public final Pattern P_ARGM = Pattern.compile("^AM");
-	
-	
 	static public String getBaseLabel(String label)
 	{
 		if (label.startsWith(SRLLib.PREFIX_CONCATENATION))
@@ -72,11 +69,6 @@ public class SRLLib
 			return label.substring(SRLLib.PREFIX_REFERENT.length());
 		else
 			return label;
-	}
-	
-	static public boolean isModifier(String label)
-	{
-		return P_ARGM.matcher(label).find();
 	}
 	
 	static public List<List<DEPArc>> getArgumentList(DEPTree tree)

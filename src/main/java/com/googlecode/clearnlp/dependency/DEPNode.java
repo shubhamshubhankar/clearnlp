@@ -33,7 +33,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
+import com.google.common.collect.Lists;
 import com.googlecode.clearnlp.constituent.CTLibEn;
+import com.googlecode.clearnlp.dependency.srl.SRLArc;
 import com.googlecode.clearnlp.ner.NERNode;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
@@ -55,7 +57,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	/** The list of secondary heads of this node (default: empty). */
 	protected List<DEPArc> x_heads;
 	/** The list of semantic heads of this node (default: empty). */
-	protected List<DEPArc> s_heads;
+	protected List<SRLArc> s_heads;
 	/** The sorted list of all dependents of this node (default: empty). */
 	protected List<DEPArc> l_dependents;
 	
@@ -116,7 +118,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	/** Initializes semantic heads of this node. */
 	public void initSHeads()
 	{
-		s_heads = new ArrayList<DEPArc>();
+		s_heads = new ArrayList<SRLArc>();
 	}
 	
 	public void copy(DEPNode node)
@@ -288,7 +290,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	
 	public String getSLabel(DEPNode sHead)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isNode(sHead))
 				return arc.label;
@@ -302,9 +304,9 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return s_heads != null && !s_heads.isEmpty();
 	}
 	
-	public DEPArc getSHead(DEPNode head)
+	public SRLArc getSHead(DEPNode head)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isNode(head))
 				return arc;
@@ -313,9 +315,9 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return null;
 	}
 	
-	public DEPArc getSHead(DEPNode head, Pattern labels)
+	public SRLArc getSHead(DEPNode head, Pattern labels)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isNode(head) && arc.isLabel(labels))
 				return arc;
@@ -324,21 +326,21 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return null;
 	}
 	
-	public List<DEPArc> getSHeads()
+	public List<SRLArc> getSHeads()
 	{
 		return s_heads;
 	}
 	
-	public void setSHeads(List<DEPArc> sHeads)
+	public void setSHeads(List<SRLArc> sHeads)
 	{
 		s_heads = sHeads;
 	}
 	
-	public List<DEPArc> getSHeadsByLabel(String label)
+	public List<SRLArc> getSHeadsByLabel(String label)
 	{
-		List<DEPArc> sHeads = new ArrayList<DEPArc>();
+		List<SRLArc> sHeads = Lists.newArrayList();
 		
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isLabel(label))
 				sHeads.add(arc);
@@ -347,9 +349,9 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return sHeads;
 	}
 	
-	public DEPArc getFirstSHead(DEPNode head, Pattern label)
+	public SRLArc getFirstSHead(DEPNode head, Pattern label)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isNode(head) && arc.isLabel(label))
 				return arc;
@@ -360,12 +362,17 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	
 	public void addSHead(DEPNode head, String label)
 	{
-		s_heads.add(new DEPArc(head, label));
+		s_heads.add(new SRLArc(head, label));
+	}
+	
+	public void addSHead(DEPNode head, String label, String functionTag)
+	{
+		s_heads.add(new SRLArc(head, label, functionTag));
 	}
 	
 	public boolean removeSHead(DEPNode head)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isNode(head))
 				return s_heads.remove(arc);
@@ -374,12 +381,12 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return false;
 	}
 	
-	public void removeSHead(DEPArc sHead)
+	public void removeSHead(SRLArc sHead)
 	{
 		s_heads.remove(sHead);
 	}
 	
-	public void removeSHeads(Collection<DEPArc> sHeads)
+	public void removeSHeads(Collection<SRLArc> sHeads)
 	{
 		s_heads.removeAll(sHeads);
 	}
@@ -391,7 +398,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	
 	public boolean containsSHead(DEPNode sHead)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isNode(sHead))
 				return true;
@@ -402,7 +409,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	
 	public boolean containsSHead(String label)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isLabel(label))
 				return true;
@@ -413,7 +420,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	
 	public boolean containsSHead(Pattern regex)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (regex.matcher(arc.getLabel()).find())
 				return true;
@@ -424,7 +431,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	
 	public boolean containsSHead(DEPNode sHead, Pattern p)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isNode(sHead) && arc.isLabel(p))
 				return true;
@@ -435,7 +442,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	
 	public boolean isArgumentOf(DEPNode sHead)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isNode(sHead))
 				return true;
@@ -446,7 +453,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	
 	public boolean isArgumentOf(DEPNode sHead, String label)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isNode(sHead) && arc.isLabel(label))
 				return true;
@@ -457,7 +464,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	
 	public boolean isArgumentOf(DEPNode sHead, Pattern regex)
 	{
-		for (DEPArc arc : s_heads)
+		for (SRLArc arc : s_heads)
 		{
 			if (arc.isNode(sHead) && regex.matcher(arc.getLabel()).find())
 				return true;
@@ -1075,7 +1082,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return build.toString();
 	}
 	
-	private String toString(List<DEPArc> heads)
+	private <T extends DEPArc>String toString(List<T> heads)
 	{
 		StringBuilder build = new StringBuilder();
 		Collections.sort(heads);

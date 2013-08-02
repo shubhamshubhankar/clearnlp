@@ -116,18 +116,14 @@ public class PBRole implements Serializable, Comparable<PBRole>
 		s_description = description;
 	}
 	
-	public String getArgKey()
+	public boolean isArgNumber(String n)
 	{
-		StringBuilder build = new StringBuilder();
-		build.append(s_argNumber);
-		
-		if (!s_functionTag.equals(STConstant.EMPTY))
-		{
-			build.append("-");
-			build.append(s_functionTag);
-		}
-		
-		return build.toString();
+		return s_argNumber.equals(n);
+	}
+	
+	public boolean isFunctionTag(String tag)
+	{
+		return s_functionTag.equals(tag);
 	}
 	
 	@Override
@@ -145,6 +141,20 @@ public class PBRole implements Serializable, Comparable<PBRole>
 			build.append(vncls);
 			build.append(":");
 			build.append(m_vnroles.get(vncls));
+		}
+		
+		return build.toString();
+	}
+	
+	public String getArgKey()
+	{
+		StringBuilder build = new StringBuilder();
+		build.append(s_argNumber);
+		
+		if (!s_functionTag.equals(STConstant.EMPTY))
+		{
+			build.append("-");
+			build.append(s_functionTag);
 		}
 		
 		return build.toString();

@@ -37,6 +37,7 @@ import org.kohsuke.args4j.Option;
 
 import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.IntOpenHashSet;
+import com.google.common.collect.Lists;
 import com.googlecode.clearnlp.component.AbstractComponent;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
@@ -49,6 +50,7 @@ import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.srl.SRLArc;
 import com.googlecode.clearnlp.dependency.srl.SRLLib;
 import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.morphology.MPLibEn;
@@ -220,11 +222,11 @@ public class C2DConvertMulti extends AbstractRun
 		}
 	}
 	
-	private void removeEditedHeads(List<DEPArc> heads, IntOpenHashSet set)
+	private <T extends DEPArc>void removeEditedHeads(List<T> heads, IntOpenHashSet set)
 	{
-		List<DEPArc> remove = new ArrayList<DEPArc>();
+		List<T> remove = Lists.newArrayList();
 		
-		for (DEPArc arc : heads)
+		for (T arc : heads)
 		{
 			if (set.contains(arc.getNode().id))
 				remove.add(arc);
@@ -297,7 +299,7 @@ public class C2DConvertMulti extends AbstractRun
 		int i, j, size = tree.size();
 		DEPNode noun, head, arg;
 		Set<DEPNode> verbs;
-		DEPArc arc;
+		SRLArc arc;
 		
 		for (i=1; i<size; i++)
 		{

@@ -185,7 +185,7 @@ public class NLPDecode extends AbstractNLP
 			return EngineGetter.getPOSTagger(zin, language);
 		else if (mode.equals(NLPLib.MODE_MORPH))
 			return EngineGetter.getMPAnalyzer(zin, language);
-		else if (mode.startsWith(NLPLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 			return EngineGetter.getDEPParser(zin, language);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(zin);
@@ -214,7 +214,7 @@ public class NLPDecode extends AbstractNLP
 			
 			modes.add(NLPLib.MODE_MORPH);
 		}
-		else if (mode.startsWith(NLPLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 		{
 			if (readerType.equals(AbstractReader.TYPE_RAW) || readerType.equals(AbstractReader.TYPE_LINE) || readerType.equals(AbstractReader.TYPE_TOK))
 			{
@@ -226,7 +226,7 @@ public class NLPDecode extends AbstractNLP
 				modes.add(NLPLib.MODE_MORPH);
 			}
 			
-			modes.add(NLPLib.MODE_DEP_SB);
+			modes.add(NLPLib.MODE_DEP);
 		}
 		else if (mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
 		{
@@ -238,16 +238,16 @@ public class NLPDecode extends AbstractNLP
 			{
 				modes.add(NLPLib.MODE_POS);
 				modes.add(NLPLib.MODE_MORPH);
-				modes.add(NLPLib.MODE_DEP_SB);
+				modes.add(NLPLib.MODE_DEP);
 			}
 			else if (readerType.equals(AbstractReader.TYPE_POS))
 			{
 				modes.add(NLPLib.MODE_MORPH);
-				modes.add(NLPLib.MODE_DEP_SB);
+				modes.add(NLPLib.MODE_DEP);
 			}
 			else if (readerType.equals(AbstractReader.TYPE_MORPH))
 			{
-				modes.add(NLPLib.MODE_DEP_SB);
+				modes.add(NLPLib.MODE_DEP);
 			}
 			
 			modes.add(NLPLib.MODE_PRED);

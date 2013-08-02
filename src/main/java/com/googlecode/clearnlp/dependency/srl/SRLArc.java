@@ -23,121 +23,52 @@
 */
 package com.googlecode.clearnlp.dependency.srl;
 
-import java.util.regex.Pattern;
-
+import com.googlecode.clearnlp.constant.universal.STConstant;
+import com.googlecode.clearnlp.constant.universal.STPunct;
+import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
-import com.googlecode.clearnlp.reader.AbstractReader;
 
 /**
  * Dependency arc.
  * @since 1.0.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class SRLArc implements Comparable<SRLArc>
+public class SRLArc extends DEPArc
 {
-	/** The linking node. */
-	protected DEPNode node;
-	/** The dependency label to the linking node. */
-	protected String label;
+	private String functionTag = STConstant.EMPTY;
 	
-	/** Constructs an empty dependency arc. */
 	public SRLArc()
 	{
-		clear();
+		super();
 	}
 	
-	/**
-	 * Constructs a dependency arc.
-	 * @param node the linking node.
-	 * @param label the dependency label for the linking node.
-	 */
 	public SRLArc(DEPNode node, String label)
 	{
-		set(node, label);
+		super(node, label);
 	}
 	
-	/** Sets the node to {@code null} and the label to {@link AbstractReader#DUMMY_TAG}. */
-	public void clear()
+	public SRLArc(DEPNode node, String label, String functionTag)
 	{
-		set(null, null);
+		super(node, label);
+		this.functionTag = functionTag;
 	}
 	
-	/**
-	 * Returns the linking node.
-	 * @return the linking node
-	 */
-	public DEPNode getNode()
+	public String getFunctionTag()
 	{
-		return node;
+		return functionTag;
 	}
 	
-	/**
-	 * Set the linking node to the specific node.
-	 * @param node the node to be set.
-	 */
-	public void setNode(DEPNode node)
+	public void mergeFunctionTag()
 	{
-		this.node = node;
+		if (!functionTag.isEmpty())
+		{
+			label += STPunct.HYPHEN + functionTag;
+			functionTag = STConstant.EMPTY;
+		}
 	}
 	
-	/**
-	 * Returns the dependency label.
-	 * @return the dependency label.
-	 */
-	public String getLabel()
-	{
-		return label;
-	}
-	
-	/**
-	 * Sets the dependency label to the linking node.
-	 * @param label the dependency label to the linking node.
-	 */
-	public void setLabel(String label)
-	{
-		this.label = label;
-	}
-
-	/**
-	 * Sets the linking node and dependency label. 
-	 * @param node the linking node.
-	 * @param label the dependency label to the linking node.
-	 */
-	public void set(DEPNode node, String label)
-	{
-		this.node  = node;
-		this.label = label;
-	}
-	
-	/**
-	 * Returns {@code true} if the specific node is its linking node.
-	 * @param node the node to be compared.
-	 * @return {@code true} if the specific node is its linking node.
-	 */
-	public boolean isNode(DEPNode node)
-	{
-		return this.node == node;
-	}
-	
-	/**
-	 * Returns {@code true} if the specific label is its label.
-	 * @param label the label to be compared.
-	 * @return {@code true} if the specific label is its label.
-	 */
-	public boolean isLabel(String label)
-	{
-		return this.label.equals(label);
-	}
-	
-	public boolean isLabel(Pattern regex)
-	{
-		return regex.matcher(label).find();
-	}
-	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
+	@Override
 	public String toString()
 	{
 		StringBuilder build = new StringBuilder();
@@ -146,11 +77,17 @@ public class SRLArc implements Comparable<SRLArc>
 		build.append(DEPLib.DELIM_HEADS_KEY);
 		build.append(label);
 		
+		if (!functionTag.isEmpty())
+		{
+			build.append(STPunct.HYPHEN);
+			build.append(functionTag);
+		}
+		
 		return build.toString();
 	}
 	
 	@Override
-	public int compareTo(SRLArc arc)
+	public int compareTo(DEPArc arc)
 	{
 		return label.compareTo(arc.getLabel());
 	}	
