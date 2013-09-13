@@ -27,11 +27,13 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.googlecode.clearnlp.dependency.DEPLib;
-import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.factory.DefaultDEPNodeDatumFactory;
+import com.googlecode.clearnlp.dependency.factory.DefaultDEPTreeDatumFactory;
+import com.googlecode.clearnlp.dependency.factory.IDEPTreeDatum;
+import com.googlecode.clearnlp.dependency.srl.SRLArc;
 
 
-public class DPTreeTest
+public class DEPTreeTest
 {
 	@Test
 	public void testCloneSRL()
@@ -41,7 +43,7 @@ public class DPTreeTest
 		assertEquals(DEPLib.ROOT_ID, tree.get(0).id);
 		assertEquals(null, tree.get(1));
 		
-		DEPNode sbj = new DEPNode(1, "He", "he", "PRP", new DEPFeat());
+		DEPNode sbj = new DEPNode(1, "John", "john", "NNP", new DEPFeat());
 		DEPNode vbd = new DEPNode(2, "bought", "buy", "VBD", new DEPFeat());
 		DEPNode nns = new DEPNode(3, "cars", "car", "NNS", new DEPFeat());
 		
@@ -56,14 +58,19 @@ public class DPTreeTest
 		nns.initSHeads();
 		
 		sbj.addSHead(vbd, "A0");
-		nns.addSHead(vbd, "A1");
+		nns.addSHead(new SRLArc(vbd, "A1", "PPT"));
 		
 		tree.add(sbj);
 		tree.add(vbd);
 		tree.add(nns);
 		
+		testClone(tree);
+		testGetDEPTreeDatum(tree);
+	}
+	
+	public void testClone(DEPTree tree)
+	{
 		String s1 = tree.toStringSRL()+"\n";
-		
 		DEPTree copy = tree.clone();
 		
 		copy.get(1).setLabel("nsbuj");
@@ -72,7 +79,16 @@ public class DPTreeTest
 		
 		String s2 = tree.toStringSRL()+"\n";
 		assertEquals(s1, s2);
+	}
+	
+	public void testGetDEPTreeDatum(DEPTree tree)
+	{
+		IDEPTreeDatum datum = tree.getDEPTreeDatum();
+		DEPTree newTree = DEPLib.buildFrom(datum);
+		assertEquals(tree.toStringSRL(), newTree.toStringSRL());
 		
-	//	System.out.println(copy.toStringSRL()+"\n");
+		datum = tree.getDEPTreeDatum(new DefaultDEPTreeDatumFactory(), new DefaultDEPNodeDatumFactory());
+		newTree = DEPLib.buildFrom(datum);
+		assertEquals(tree.toStringSRL(), newTree.toStringSRL());
 	}
 }

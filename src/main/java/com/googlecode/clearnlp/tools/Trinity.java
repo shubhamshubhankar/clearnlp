@@ -40,7 +40,7 @@ public class Trinity extends JFrame
 	private static final long serialVersionUID = -5371383601723946523L;
 
 	private TRMenuBar		mn_bar;
-	private JComboBox		cb_trees;
+	private JComboBox<String>		cb_trees;
 	private TRTreePane		pn_trees;
 	private TRTablePane		pn_table;
 	
@@ -93,9 +93,9 @@ public class Trinity extends JFrame
 		return trees;
 	}
 	
-	private JComboBox getCBTrees()
+	private JComboBox<String> getCBTrees()
 	{
-		JComboBox cb = new JComboBox();
+		JComboBox<String> cb = new JComboBox<String>();
 		cb.addActionListener(new TRComboBoxListener());
 		
 		return cb;
@@ -175,10 +175,11 @@ public class Trinity extends JFrame
 	
 	private class TRComboBoxListener implements ActionListener
 	{
+		@SuppressWarnings("unchecked")
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			JComboBox cb = (JComboBox)e.getSource();
+			JComboBox<String> cb = (JComboBox<String>)e.getSource();
 			selectTree(cb.getSelectedIndex());
 		}
 	}

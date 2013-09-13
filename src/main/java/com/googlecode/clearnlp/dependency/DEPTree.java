@@ -35,7 +35,14 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.google.common.collect.Lists;
 import com.googlecode.clearnlp.coreference.Mention;
+import com.googlecode.clearnlp.dependency.factory.DefaultDEPNodeDatumFactory;
+import com.googlecode.clearnlp.dependency.factory.DefaultDEPTreeDatumFactory;
+import com.googlecode.clearnlp.dependency.factory.IDEPNodeDatum;
+import com.googlecode.clearnlp.dependency.factory.IDEPNodeDatumFactory;
+import com.googlecode.clearnlp.dependency.factory.IDEPTreeDatum;
+import com.googlecode.clearnlp.dependency.factory.IDEPTreeDatumFactory;
 import com.googlecode.clearnlp.dependency.srl.SRLArc;
 import com.googlecode.clearnlp.dependency.srl.SRLTree;
 import com.googlecode.clearnlp.reader.DEPReader;
@@ -830,24 +837,6 @@ public class DEPTree extends ArrayList<DEPNode>
 		return tree;
 	}
 	
-	/** For each semantic argument, merge function tags into numbered argument labels if exist. */
-	public void mergeFunctionTagsForNumberedArguments()
-	{
-		int i, size = size();
-		DEPNode node;
-		
-		for (i=1; i<size; i++)
-		{
-			node = get(i);
-			
-			if (node.s_heads != null)
-			{
-				for (SRLArc arc : node.s_heads)
-					arc.mergeFunctionTag();
-			}
-		}
-	}
-	
 	// --------------------------------- toString ---------------------------------
 	
 	public String toString()
@@ -1048,10 +1037,31 @@ public class DEPTree extends ArrayList<DEPNode>
 			}
 			
 			nNode.setHead(nHead, oNode.getLabel());
-			nNode.nament = oNode.nament;
 		}
 		
 		return tree;
+	}
+	
+	public IDEPTreeDatum getDEPTreeDatum()
+	{
+		return getDEPTreeDatum(new DefaultDEPTreeDatumFactory(), new DefaultDEPNodeDatumFactory());
+	}
+	
+	public IDEPTreeDatum getDEPTreeDatum(IDEPTreeDatumFactory treeFactory, IDEPNodeDatumFactory nodeFactory)
+	{
+		IDEPTreeDatum datum = treeFactory.createDEPTreeDatum();
+		List<IDEPNodeDatum> nodeData = Lists.newArrayList();
+		int i, size = size();
+		DEPNode node;
+		
+		for (i=1; i<size; i++)
+		{
+			node = get(i);
+			nodeData.add(node.getDEPNodeDatum(nodeFactory));
+		}
+		
+		datum.setDEPNodeData(nodeData);
+		return datum;
 	}
 	
 	// --------------------------------- depredicated ---------------------------------

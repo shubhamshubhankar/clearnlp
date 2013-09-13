@@ -21,6 +21,7 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.util.zip.ZipInputStream;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.googlecode.clearnlp.dependency.DEPNode;
@@ -31,7 +32,7 @@ import com.googlecode.clearnlp.util.UTInput;
 /** @author Jinho D. Choi ({@code jdchoi77@gmail.com}) */
 public class LGAskTest
 {
-	//@Ignore
+	@Ignore
 	@Test
 	public void testGenerateQuestionFromAsk() throws Exception
 	{

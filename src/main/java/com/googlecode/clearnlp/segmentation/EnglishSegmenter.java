@@ -66,6 +66,9 @@ public class EnglishSegmenter extends AbstractSegmenter
 			}
 		}
 		
+		if (bIdx < size)
+			sentences.add(tokens.subList(bIdx, size));
+		
 		return sentences;
 	}
 		

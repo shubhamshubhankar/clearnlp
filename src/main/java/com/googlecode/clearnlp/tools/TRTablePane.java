@@ -65,6 +65,7 @@ public class TRTablePane extends JPanel
 		t_height = j_table.getFontMetrics(j_table.getFont()).getHeight();
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void setColumnEditor(TableColumnModel model, String tagFile, int columnIndex)
 	{
 		BufferedReader fin = UTInput.createBufferedFileReader(tagFile);

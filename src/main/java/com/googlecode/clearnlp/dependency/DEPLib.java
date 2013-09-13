@@ -23,6 +23,14 @@
 */
 package com.googlecode.clearnlp.dependency;
 
+import java.util.Collections;
+import java.util.List;
+
+import com.google.common.collect.Lists;
+import com.googlecode.clearnlp.dependency.factory.IDEPNodeDatum;
+import com.googlecode.clearnlp.dependency.factory.IDEPTreeDatum;
+import com.googlecode.clearnlp.dependency.srl.SRLArc;
+import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 /**
@@ -97,5 +105,76 @@ public class DEPLib
 		}
 		
 		return counts;
+	}
+
+	static public <T extends DEPArc>String toString(List<T> arcs)
+	{
+		StringBuilder build = new StringBuilder();
+		Collections.sort(arcs);
+		
+		for (DEPArc arc : arcs)
+		{
+			build.append(DELIM_HEADS);
+			build.append(arc.toString());
+		}
+		
+		if (build.length() > 0)
+			return build.substring(DELIM_HEADS.length());
+		else
+			return AbstractColumnReader.BLANK_COLUMN;
+	}
+	
+	static public List<DEPArc> getDEPArcs(DEPTree tree, String arcsStr)
+	{
+		List<DEPArc> arcs = Lists.newArrayList();
+		
+		if (arcsStr.equals(AbstractColumnReader.BLANK_COLUMN))
+			return arcs;
+		
+		for (String arc : arcsStr.split(DELIM_HEADS))
+			arcs.add(new DEPArc(tree, arc));
+		
+		return arcs;
+	}
+	
+	static public List<SRLArc> getSRLArcs(DEPTree tree, String arcsStr)
+	{
+		List<SRLArc> arcs = Lists.newArrayList();
+		
+		if (arcsStr.equals(AbstractColumnReader.BLANK_COLUMN))
+			return arcs;
+		
+		for (String arc : arcsStr.split(DELIM_HEADS))
+			arcs.add(new SRLArc(tree, arc));
+		
+		return arcs;
+	}
+	
+	static public DEPTree buildFrom(IDEPTreeDatum treeDatum)
+	{
+		List<IDEPNodeDatum> nodeData = treeDatum.getDEPNodeData();
+		DEPTree tree = new DEPTree();
+		int i, size = nodeData.size();
+		IDEPNodeDatum nd;
+		DEPNode node;
+		
+		for (i=0; i<size; i++)
+		{
+			nd = nodeData.get(i);
+			tree.add(new DEPNode(nd.getID(), nd.getForm(), nd.getLemma(), nd.getPOS(), nd.getNamedEntity(), new DEPFeat(nd.getFeats())));
+		}
+
+		for (i=0; i<size; i++)
+		{
+			nd = nodeData.get(i);
+			node = tree.get(i+1);
+			
+			node.initSHeads();
+			node.setHead(new DEPArc(tree, nd.getSyntacticHead()));
+			node.addSHeads(getSRLArcs(tree, nd.getSemanticHeads()));
+		}
+		
+		tree.resetDependents();
+		return tree;
 	}
 }

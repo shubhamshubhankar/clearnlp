@@ -60,6 +60,7 @@ public class EnXmlToHtml
 		convert(inXml, outHtml);
 	}
 
+	@SuppressWarnings("resource")
 	private void initMap() throws Exception
 	{
 		Scanner scan = new Scanner(new File(VN_MAP_FILE));

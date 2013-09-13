@@ -35,6 +35,9 @@ import java.util.regex.Pattern;
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.google.common.collect.Lists;
 import com.googlecode.clearnlp.constituent.CTLibEn;
+import com.googlecode.clearnlp.dependency.factory.DefaultDEPNodeDatumFactory;
+import com.googlecode.clearnlp.dependency.factory.IDEPNodeDatum;
+import com.googlecode.clearnlp.dependency.factory.IDEPNodeDatumFactory;
 import com.googlecode.clearnlp.dependency.srl.SRLArc;
 import com.googlecode.clearnlp.ner.NERNode;
 import com.googlecode.clearnlp.pos.POSNode;
@@ -83,6 +86,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		init(id, form, lemma, pos, feats);
 	}
 	
+	public DEPNode(int id, String form, String lemma, String pos, String nament, DEPFeat feats)
+	{
+		init(id, form, lemma, pos, nament, feats);
+	}
+	
 	public DEPNode(DEPNode node)
 	{
 		copy(node);
@@ -114,6 +122,17 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		this.d_feats = feats;
 		this.d_head  = new DEPArc();
 	}
+	
+	public void init(int id, String form, String lemma, String pos, String nament, DEPFeat feats)
+	{
+		this.id      = id;
+		this.form    = form;
+		this.lemma   = lemma;
+		this.pos     = pos;
+		this.nament  = nament;
+		this.d_feats = feats;
+		this.d_head  = new DEPArc();
+	}
 
 	/** Initializes semantic heads of this node. */
 	public void initSHeads()
@@ -123,7 +142,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	
 	public void copy(DEPNode node)
 	{
-		init(node.id, node.form, node.lemma, node.pos, (DEPFeat)node.d_feats.clone());
+		init(node.id, node.form, node.lemma, node.pos, node.nament, (DEPFeat)node.d_feats.clone());
 	}
 	
 	//	====================================== FEATS ======================================
@@ -132,6 +151,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	public String getFeat(String key)
 	{
 		return d_feats.get(key);
+	}
+	
+	public DEPFeat getFeats()
+	{
+		return d_feats;
 	}
 	
 	/**
@@ -198,11 +222,10 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return head != null && head.id == DEPLib.ROOT_ID;
 	}
 	
-	
-	
-	
-	
-	
+	public DEPArc getHeadArc()
+	{
+		return d_head;
+	}
 	
 	/**
 	 * Returns the dependency head of this node.
@@ -212,6 +235,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	public DEPNode getHead()
 	{
 		return d_head.node;
+	}
+	
+	public void setHead(DEPArc arc)
+	{
+		d_head = arc;
 	}
 	
 	public void setHead(DEPNode head)
@@ -358,6 +386,16 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		}
 		
 		return null;
+	}
+	
+	public void addSHead(SRLArc arc)
+	{
+		s_heads.add(arc);
+	}
+	
+	public void addSHeads(Collection<SRLArc> arcs)
+	{
+		s_heads.addAll(arcs);
 	}
 	
 	public void addSHead(DEPNode head, String label)
@@ -1052,7 +1090,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		StringBuilder build = new StringBuilder();
 		
 		build.append(toStringDEP());		build.append(DEPReader.DELIM_COLUMN);
-		build.append(toString(x_heads));
+		build.append(DEPLib.toString(x_heads));
 		
 		return build.toString();
 	}
@@ -1062,7 +1100,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		StringBuilder build = new StringBuilder();
 		
 		build.append(toStringDEP());		build.append(DEPReader.DELIM_COLUMN);
-		build.append(toString(s_heads));
+		build.append(DEPLib.toString(s_heads));
 		
 		return build.toString();
 	}
@@ -1075,28 +1113,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		StringBuilder build = new StringBuilder();
 		
 		build.append(toStringDEP());		build.append(DEPReader.DELIM_COLUMN);
-		build.append(toString(x_heads));	build.append(DEPReader.DELIM_COLUMN);
-		build.append(toString(s_heads));	build.append(DEPReader.DELIM_COLUMN);
+		build.append(DEPLib.toString(x_heads));	build.append(DEPReader.DELIM_COLUMN);
+		build.append(DEPLib.toString(s_heads));	build.append(DEPReader.DELIM_COLUMN);
 		build.append(nament);
 		
 		return build.toString();
-	}
-	
-	private <T extends DEPArc>String toString(List<T> heads)
-	{
-		StringBuilder build = new StringBuilder();
-		Collections.sort(heads);
-		
-		for (DEPArc arc : heads)
-		{
-			build.append(DEPLib.DELIM_HEADS);
-			build.append(arc.toString());
-		}
-		
-		if (build.length() > 0)
-			return build.substring(DEPLib.DELIM_HEADS.length());
-		else
-			return AbstractColumnReader.BLANK_COLUMN;
 	}
 	
 	public String getSubForms(String delim)
@@ -1262,100 +1283,24 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		x_heads = xHeads;
 	}
 	
-/*	protected void addChild(DPNode child)
+	public IDEPNodeDatum getDEPNodeDatum()
 	{
-		int idx = Collections.binarySearch(l_dependents, child);
-		if (idx < 0)	l_dependents.add(-idx-1, child);
+		return getDEPNodeDatum(new DefaultDEPNodeDatumFactory());
 	}
 	
-	public String getXPath(DEPNode node, int flag)
+	public IDEPNodeDatum getDEPNodeDatum(IDEPNodeDatumFactory factory)
 	{
-		StringIntPair path = getXPathUp(node, flag);
-		if (path.s != null)	return path.s;
+		IDEPNodeDatum datum = factory.createDEPTreeDatum();
 		
-		path = getXPathDown(node, flag);
-		if (path.s != null)	return path.s;
-	
-		getXPathAux(this, node, node.getXAncestorSet(), "", path, 0, flag);
-		return path.s;
-	}
-	
-	public StringIntPair getXPathUp(DEPNode node, int flag)
-	{
-		StringIntPair path = new StringIntPair(null, Integer.MAX_VALUE);
-
-		getXPathUpAux(this, node, "", path, 0, flag, DEPLib.DELIM_PATH_UP);
-		return path;
-	}
-	
-	public StringIntPair getXPathDown(DEPNode node, int flag)
-	{
-		StringIntPair path = new StringIntPair(null, Integer.MAX_VALUE);
-
-		getXPathUpAux(node, this, "", path, 0, flag, DEPLib.DELIM_PATH_DOWN);
-		return path;
-	}
-	
-	private String getXPathAux(DEPNode source, DEPNode target, Set<DEPNode> targetAncestors, String prevPath, StringIntPair path, int height, int flag)
-	{
-		String currPath = (flag == 0) ? prevPath + DEPLib.DELIM_PATH_DOWN + source.pos : prevPath + DEPLib.DELIM_PATH_DOWN;
-		DEPNode head;
+		datum.setID(id);
+		datum.setForm(form);
+		datum.setLemma(lemma);
+		datum.setPOS(pos);
+		datum.setNamedEntity(nament);
+		datum.setFeats(d_feats.toString());
+		datum.setSyntacticHead(d_head.toString());
+		datum.setSemanticHeads(DEPLib.toString(s_heads));
 		
-		for (DEPArc arc : source.x_heads)
-		{
-			head = arc.getNode();
-			
-			if (targetAncestors.contains(head))
-			{
-				StringIntPair sPath = target.getXPathUp(head, flag);
-				
-				if (height < path.i)
-				{
-					switch (flag)
-					{
-					case 0: path.set(sPath.s + currPath, sPath.i + height); break;
-					case 1: path.set(sPath.s + currPath + arc.label, sPath.i + height); break;
-					case 2: path.set(sPath.s + DEPLib.DELIM_PATH_DOWN + height, sPath.i + height);
-					}
-				}
-				
-				break;
-			}
-			else
-			{
-				if (flag == 0)	getXPathAux(head, target, targetAncestors, currPath, path, height+1, flag);
-				else			getXPathAux(head, target, targetAncestors, currPath + arc.label, path, height+1, flag);
-			}
-		}
-		
-		return null;
+		return datum;
 	}
-	
-	private void getXPathUpAux(DEPNode curr, DEPNode head, String prevPath, StringIntPair path, int height, int flag, String delim)
-	{
-		String currPath = (flag == 0) ? prevPath + delim + curr.pos : prevPath + delim;
-		
-		for (DEPArc arc : curr.x_heads)
-		{
-			if (arc.isNode(head))
-			{
-				if (height < path.i)
-				{
-					switch (flag)
-					{
-					case 0: path.set(currPath + delim + head.pos, height); break;
-					case 1: path.set(currPath + arc.label, height); break;
-					case 2: path.set(delim+height, height);
-					}
-				}
-				
-				break;
-			}
-			else
-			{
-				if (flag == 0)	getXPathUpAux(arc.getNode(), head, currPath, path, height+1, flag,  delim);
-				else			getXPathUpAux(arc.getNode(), head, currPath + arc.label, path, height+1, flag, delim);
-			}
-		}
-	} */
 }

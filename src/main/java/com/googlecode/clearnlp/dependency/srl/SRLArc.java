@@ -28,6 +28,7 @@ import com.googlecode.clearnlp.constant.universal.STPunct;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
+import com.googlecode.clearnlp.dependency.DEPTree;
 
 /**
  * Dependency arc.
@@ -36,6 +37,7 @@ import com.googlecode.clearnlp.dependency.DEPNode;
  */
 public class SRLArc extends DEPArc
 {
+	static private String DELIM_FTAG = STPunct.EQUAL;
 	private String functionTag = STConstant.EMPTY;
 	
 	public SRLArc()
@@ -54,18 +56,25 @@ public class SRLArc extends DEPArc
 		this.functionTag = functionTag;
 	}
 	
+	public SRLArc(DEPTree tree, String arc)
+	{
+		int idx = arc.indexOf(DEPLib.DELIM_HEADS_KEY);
+		int nodeId = Integer.parseInt(arc.substring(0, idx));
+		
+		node  = tree.get(nodeId);
+		label = arc.substring(idx+1);
+		idx   = label.lastIndexOf(DELIM_FTAG);
+		
+		if (idx >= 0)
+		{
+			functionTag = label.substring(idx+1);
+			label = label.substring(0, idx);
+		}
+	}
+	
 	public String getFunctionTag()
 	{
 		return functionTag;
-	}
-	
-	public void mergeFunctionTag()
-	{
-		if (!functionTag.isEmpty())
-		{
-			label += STPunct.HYPHEN + functionTag;
-			functionTag = STConstant.EMPTY;
-		}
 	}
 	
 	@Override
@@ -79,7 +88,7 @@ public class SRLArc extends DEPArc
 		
 		if (!functionTag.isEmpty())
 		{
-			build.append(STPunct.HYPHEN);
+			build.append(DELIM_FTAG);
 			build.append(functionTag);
 		}
 		
