@@ -15,13 +15,17 @@
 */
 package com.googlecode.clearnlp.dependency.factory;
 
+import java.io.Serializable;
+
 
 /**
  * @since 1.5.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class DefaultDEPNodeDatum implements IDEPNodeDatum
+public class DefaultDEPNodeDatum implements IDEPNodeDatum, Serializable
 {
+	private static final long serialVersionUID = 669975643426329724L;
+	
 	int    id;
 	String form;
 	String lemma;

@@ -16,6 +16,7 @@
 package com.googlecode.clearnlp.dependency.factory;
 
 
+
 /**
  * @since 1.5.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})

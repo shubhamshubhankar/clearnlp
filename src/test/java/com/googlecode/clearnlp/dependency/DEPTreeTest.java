@@ -84,11 +84,11 @@ public class DEPTreeTest
 	public void testGetDEPTreeDatum(DEPTree tree)
 	{
 		IDEPTreeDatum datum = tree.getDEPTreeDatum();
-		DEPTree newTree = DEPLib.buildFrom(datum);
+		DEPTree newTree = DEPTree.buildFrom(datum);
 		assertEquals(tree.toStringSRL(), newTree.toStringSRL());
 		
 		datum = tree.getDEPTreeDatum(new DefaultDEPTreeDatumFactory(), new DefaultDEPNodeDatumFactory());
-		newTree = DEPLib.buildFrom(datum);
+		newTree = DEPTree.buildFrom(datum);
 		assertEquals(tree.toStringSRL(), newTree.toStringSRL());
 	}
 }

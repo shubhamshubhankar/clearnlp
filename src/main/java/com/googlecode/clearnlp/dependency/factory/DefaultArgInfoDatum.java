@@ -16,26 +16,52 @@
 package com.googlecode.clearnlp.dependency.factory;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @since 1.5.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class DefaultDEPTreeDatum implements IDEPTreeDatum, Serializable
+public class DefaultArgInfoDatum implements IArgInfoDatum, Serializable
 {
-	private static final long serialVersionUID = -5754158957446073494L;
-	List<IDEPNodeDatum> nodeData;
+	private static final long serialVersionUID = -5544870341444382479L;
+	
+	int    predicateID;
+	String semanticInfo;
+	String syntacticInfo;
 	
 	@Override
-	public List<IDEPNodeDatum> getDEPNodeData()
+	public int getPredicateID()
 	{
-		return nodeData;
+		return predicateID;
 	}
 
 	@Override
-	public void setDEPNodeData(List<IDEPNodeDatum> nodeData)
+	public String getSemanticInfo()
 	{
-		this.nodeData = nodeData;		
+		return semanticInfo;
+	}
+
+	@Override
+	public String getSyntacticInfo()
+	{
+		return syntacticInfo;
+	}
+
+	@Override
+	public void setPredicateID(int predicateID)
+	{
+		this.predicateID = predicateID;
+	}
+
+	@Override
+	public void setSemanticInfo(String semanticInfo)
+	{
+		this.semanticInfo = semanticInfo;
+	}
+
+	@Override
+	public void setSyntacticInfo(String syntacticInfo)
+	{
+		this.syntacticInfo = syntacticInfo;
 	}
 }

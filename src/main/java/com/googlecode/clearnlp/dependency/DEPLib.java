@@ -27,8 +27,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import com.googlecode.clearnlp.dependency.factory.IDEPNodeDatum;
-import com.googlecode.clearnlp.dependency.factory.IDEPTreeDatum;
 import com.googlecode.clearnlp.dependency.srl.SRLArc;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
@@ -148,33 +146,5 @@ public class DEPLib
 			arcs.add(new SRLArc(tree, arc));
 		
 		return arcs;
-	}
-	
-	static public DEPTree buildFrom(IDEPTreeDatum treeDatum)
-	{
-		List<IDEPNodeDatum> nodeData = treeDatum.getDEPNodeData();
-		DEPTree tree = new DEPTree();
-		int i, size = nodeData.size();
-		IDEPNodeDatum nd;
-		DEPNode node;
-		
-		for (i=0; i<size; i++)
-		{
-			nd = nodeData.get(i);
-			tree.add(new DEPNode(nd.getID(), nd.getForm(), nd.getLemma(), nd.getPOS(), nd.getNamedEntity(), new DEPFeat(nd.getFeats())));
-		}
-
-		for (i=0; i<size; i++)
-		{
-			nd = nodeData.get(i);
-			node = tree.get(i+1);
-			
-			node.initSHeads();
-			node.setHead(new DEPArc(tree, nd.getSyntacticHead()));
-			node.addSHeads(getSRLArcs(tree, nd.getSemanticHeads()));
-		}
-		
-		tree.resetDependents();
-		return tree;
 	}
 }

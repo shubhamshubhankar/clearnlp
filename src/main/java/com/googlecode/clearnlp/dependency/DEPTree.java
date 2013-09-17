@@ -1064,6 +1064,34 @@ public class DEPTree extends ArrayList<DEPNode>
 		return datum;
 	}
 	
+	static public DEPTree buildFrom(IDEPTreeDatum treeDatum)
+	{
+		List<IDEPNodeDatum> nodeData = treeDatum.getDEPNodeData();
+		DEPTree tree = new DEPTree();
+		int i, size = nodeData.size();
+		IDEPNodeDatum nd;
+		DEPNode node;
+		
+		for (i=0; i<size; i++)
+		{
+			nd = nodeData.get(i);
+			tree.add(new DEPNode(nd.getID(), nd.getForm(), nd.getLemma(), nd.getPOS(), nd.getNamedEntity(), new DEPFeat(nd.getFeats())));
+		}
+
+		for (i=0; i<size; i++)
+		{
+			nd = nodeData.get(i);
+			node = tree.get(i+1);
+			
+			node.initSHeads();
+			node.setHead(new DEPArc(tree, nd.getSyntacticHead()));
+			node.addSHeads(DEPLib.getSRLArcs(tree, nd.getSemanticHeads()));
+		}
+		
+		tree.resetDependents();
+		return tree;
+	}
+	
 	// --------------------------------- depredicated ---------------------------------
 	
 	@Deprecated

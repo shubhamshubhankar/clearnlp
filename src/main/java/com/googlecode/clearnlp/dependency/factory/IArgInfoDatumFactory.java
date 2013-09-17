@@ -15,27 +15,11 @@
 */
 package com.googlecode.clearnlp.dependency.factory;
 
-import java.io.Serializable;
-import java.util.List;
-
 /**
  * @since 1.5.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class DefaultDEPTreeDatum implements IDEPTreeDatum, Serializable
+public interface IArgInfoDatumFactory
 {
-	private static final long serialVersionUID = -5754158957446073494L;
-	List<IDEPNodeDatum> nodeData;
-	
-	@Override
-	public List<IDEPNodeDatum> getDEPNodeData()
-	{
-		return nodeData;
-	}
-
-	@Override
-	public void setDEPNodeData(List<IDEPNodeDatum> nodeData)
-	{
-		this.nodeData = nodeData;		
-	}
+	IArgInfoDatum createArgInfoDatum();
 }
