@@ -44,7 +44,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * @since 1.5.0
+ * @since 2.0.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class DefaultDEPTreeDatum implements IDEPTreeDatum, Serializable

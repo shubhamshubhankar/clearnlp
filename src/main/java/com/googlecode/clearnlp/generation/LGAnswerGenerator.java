@@ -41,14 +41,15 @@
 package com.googlecode.clearnlp.generation;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.googlecode.clearnlp.constant.english.ENAux;
-import com.googlecode.clearnlp.constant.universal.STPunct;
 import com.googlecode.clearnlp.constant.universal.STConstant;
+import com.googlecode.clearnlp.constant.universal.STPunct;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
@@ -86,7 +87,7 @@ public class LGAnswerGenerator
 	
 	private List<Pair<String,String>> getLongAnswers(List<DEPTree> rTrees, List<ArgInfo> rArgs, String conjunction, String delim)
 	{
-		List<Pair<String,String>> answers = new ArrayList<Pair<String,String>>();
+		List<Pair<String,String>> answers = Lists.newArrayList();
 		DEPTree rTree;
 		ArgInfo rArg;
 		int i;
@@ -103,7 +104,7 @@ public class LGAnswerGenerator
 	
 	public List<Pair<String,String>> getShortAnswers(List<DEPTree> rTrees, List<ArgInfo> rArgs, String conjunction, String delim, boolean trivialize)
 	{
-		List<Pair<String,String>> answers = new ArrayList<Pair<String,String>>();
+		List<Pair<String,String>> answers = Lists.newArrayList();
 		Pair<DEPTree,SRLTree> p;
 		ArgInfo rArg;
 		int i;
@@ -140,7 +141,7 @@ public class LGAnswerGenerator
 	
 	private void removeDependents(DEPNode root, DEPNode verb)
 	{
-		List<DEPArc> remove = new ArrayList<DEPArc>();
+		List<DEPArc> remove = Lists.newArrayList();
 		
 		for (DEPArc arc : verb.getDependents())
 		{
@@ -156,7 +157,7 @@ public class LGAnswerGenerator
 	
 	private void removeDependents(DEPNode root, DEPNode verb, Set<DEPNode> keep, boolean trivialize)
 	{
-		List<DEPArc> remove = new ArrayList<DEPArc>();
+		List<DEPArc> remove = Lists.newArrayList();
 		boolean changeDo = true, hasModal = false;
 		DEPNode dep;
 		
@@ -251,7 +252,7 @@ public class LGAnswerGenerator
 	
 	private Set<DEPNode> getSubNodeSet(DEPNode pred, DEPNode node)
 	{
-		Set<DEPNode> set = new HashSet<DEPNode>();
+		Set<DEPNode> set = Sets.newHashSet();
 		set.add(getDependent(pred, node));
 				
 		return set;
@@ -259,7 +260,7 @@ public class LGAnswerGenerator
 	
 	private Set<DEPNode> getSubNodeSet(DEPNode pred, List<DEPNode> nodes)
 	{
-		Set<DEPNode> set = new HashSet<DEPNode>();
+		Set<DEPNode> set = Sets.newHashSet();
 		
 		for (DEPNode node : nodes)
 			set.add(getDependent(pred, node));
@@ -600,7 +601,7 @@ public class LGAnswerGenerator
 	
 	private Set<String> getLemmaSet(SRLTree sTree, String pos)
 	{
-		Set<String> set = new HashSet<String>();
+		Set<String> set = Sets.newHashSet();
 		DEPNode arg;
 		
 		for (SRLArc arc : sTree.getArguments())

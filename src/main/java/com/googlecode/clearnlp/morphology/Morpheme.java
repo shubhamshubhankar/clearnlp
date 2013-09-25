@@ -41,7 +41,7 @@
 package com.googlecode.clearnlp.morphology;
 
 /**
- * @since 1.5.0
+ * @since 2.0.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class Morpheme

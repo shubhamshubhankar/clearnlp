@@ -160,7 +160,7 @@ public class ArgInfo
 		String[] tokens = PTLib.SPACE.split(syntacticInfo);
 		int i, size = tokens.length;
 		
-		for (i=0; i<size; i+=2)
+		for (i=0; i+1<size; i+=2)
 			deque.add(new Pair<String,String>(tokens[i], tokens[i+1]));
 		
 		return deque;

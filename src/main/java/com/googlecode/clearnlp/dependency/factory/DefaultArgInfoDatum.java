@@ -43,7 +43,7 @@ package com.googlecode.clearnlp.dependency.factory;
 import java.io.Serializable;
 
 /**
- * @since 1.5.0
+ * @since 2.0.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class DefaultArgInfoDatum implements IArgInfoDatum, Serializable

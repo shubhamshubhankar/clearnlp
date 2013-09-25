@@ -46,7 +46,6 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.util.zip.ZipInputStream;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.googlecode.clearnlp.dependency.DEPNode;
@@ -57,13 +56,13 @@ import com.googlecode.clearnlp.util.UTInput;
 /** @author Jinho D. Choi ({@code jdchoi77@gmail.com}) */
 public class LGAskTest
 {
-	@Ignore
+//	@Ignore
 	@Test
 	public void testGenerateQuestionFromAsk() throws Exception
 	{
 		SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 7);
 		reader.open(UTInput.createBufferedFileReader("src/test/resources/generation/ask.txt"));
-		LGAsk ask = new LGAsk(new ZipInputStream(new BufferedInputStream(new FileInputStream("/Users/jdchoi/Documents/Workspace/ClearNLP2/clearnlp-models/1.4.0/dictionary-1.4.0.zip"))));
+		LGAsk ask = new LGAsk(new ZipInputStream(new BufferedInputStream(new FileInputStream("/Users/jdchoi/Documents/Workspace/lib/dictionary-1.4.0.zip"))));
 		DEPTree tree;
 		DEPNode root;
 		int i;
@@ -71,6 +70,7 @@ public class LGAskTest
 		String[] questions = {
 				"When was the last time that you were able to log into Remedy?",
 				"How many users are getting this error message?",
+				"Do you need to learn how to read?",
 				"Do you want to reset your password?",
 				"Do you want to reset your password?",
 				"Do you want to reset your password?",
@@ -104,6 +104,7 @@ public class LGAskTest
 		String[] asks = {
 				"Ask when the last time that the user were able to log into Remedy was.",
 				"Ask how many users are getting this error message.",
+				"Ask whether the user needs to learn how to read.",
 				"Ask whether the user wants to reset the user's password.",
 				"Ask whether the user wants to reset the user's password.",
 				"Ask whether the user wants to reset the user's password.",
@@ -146,6 +147,21 @@ public class LGAskTest
 				assertEquals(questions[i], LGLibEn.getForms(tree, false, " "));				
 			}
 		}
+		
+		testGenerateAskFromQuestion(ask);
+	}
+	
+	void testGenerateAskFromQuestion(LGAsk ask)
+	{
+		SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 7);
+		reader.open(UTInput.createBufferedFileReader("src/test/resources/generation/ask4.txt"));
+		DEPTree tree;
+		
+		tree = ask.generateAskFromQuestion(reader.next());
+		assertEquals("Ask what the user's name is.", LGLibEn.getForms(tree, false, " "));
+		
+		tree = ask.generateAskFromQuestion(reader.next());
+		assertEquals("Ask whether the user can describe what the user is seeing.", LGLibEn.getForms(tree, false, " "));
 	}
 	
 	@Test

@@ -49,8 +49,8 @@ import java.util.zip.ZipInputStream;
 import com.googlecode.clearnlp.constant.english.ENAux;
 import com.googlecode.clearnlp.constant.english.ENModal;
 import com.googlecode.clearnlp.constant.english.ENPronoun;
-import com.googlecode.clearnlp.constant.universal.STPunct;
 import com.googlecode.clearnlp.constant.universal.STConstant;
+import com.googlecode.clearnlp.constant.universal.STPunct;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPFeat;
@@ -107,8 +107,25 @@ public class LGAsk
 		
 		tree.resetIDs();
 		tree.resetDependents();
+		normalizeBe(tree);
 		
 		return tree;
+	}
+	
+	private void normalizeBe(DEPTree tree)
+	{
+		int i, size = tree.size();
+		DEPNode node;
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			if (node.isLemma("be"))
+			{
+				     if (node.isForm("'s"))		node.form = "is";
+				else if (node.isForm("'re"))	node.form = "are";
+			}
+		}
 	}
 	
 	/** {@link LGAsk#generateAskFromQuestion(DEPTree, String)}. */
@@ -230,7 +247,7 @@ public class LGAsk
 		verb.setHead(ask);
 		tree.add(1, ask);
 		
-		if (ref == null && !hasRelativizer(tree) && !DEPLibEn.containsRelativizer(verb))
+		if (ref == null && !DEPLibEn.containsRelativizer(verb))
 		{
 			DEPNode complm = getNode(verb, "whether", "whether", CTLibEn.POS_IN, DEPLibEn.DEP_COMPLM, null);
 			tree.add(2, complm);			
@@ -297,22 +314,21 @@ public class LGAsk
 			tree.add(getNode(root, STPunct.PERIOD, STPunct.PERIOD, CTLibEn.POS_PERIOD, DEPLibEn.DEP_PUNCT, null));
 	}
 	
-	/** {@link LGAsk#generateAskFromQuestion(DEPTree, String)}. */
-	private boolean hasRelativizer(DEPTree tree)
-	{
-		int i, size = tree.size();
-		DEPNode node;
-		
-		for (i=1; i<size; i++)
-		{
-			node = tree.get(i);
-			
-			if (node.containsSHead(SRLLib.P_ARG_REF))
-				return true;
-		}
-		
-		return false;
-	}
+//	private boolean hasRelativizer(DEPTree tree, DEPNode verb)
+//	{
+//		int i, size = tree.size();
+//		DEPNode node;
+//		
+//		for (i=1; i<size; i++)
+//		{
+//			node = tree.get(i);
+//			
+//			if (node.containsSHead(SRLLib.P_ARG_REF))
+//				return true;
+//		}
+//		
+//		return false;
+//	}
 	
 	/** Generates a question from a declarative sentence with "ask". */
 	public DEPTree generateQuestionFromAsk(DEPTree tree)

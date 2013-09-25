@@ -380,13 +380,18 @@ public class DEPLibEn extends DEPLib
 	
 	static public boolean containsRelativizer(DEPNode arg)
 	{
+		return containsRelativizerAux(arg, arg);
+	}
+	
+	static private boolean containsRelativizerAux(DEPNode arg, DEPNode head)
+	{
 		DEPNode dep;
 		
 		for (DEPArc arc : arg.getDependents())
 		{
 			dep = arc.getNode();
 			
-			if (dep.pos.startsWith("W") || (!MPLibEn.isVerb(dep.pos) && containsRelativizer(dep)))
+			if (dep.pos.startsWith("W") || ((!MPLibEn.isVerb(dep.pos) || (arg == head && dep.isLabel(DEP_XCOMP))) && containsRelativizerAux(dep, head)))
 				return true;
 		}
 		

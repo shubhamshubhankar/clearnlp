@@ -56,10 +56,12 @@ public class ArgInfoTest
 		ArgInfo oldInfo = new ArgInfo();
 		
 		oldInfo.setPredicateId(7);
+		oldInfo.setSemanticInfo(null);
+		testArgInfoDatum(oldInfo);
+		
 		oldInfo.setSemanticInfo("A1");
 		oldInfo.pushSyntacticInfo("dobj", "take");
 		oldInfo.pushSyntacticInfo("prt", "outr");
-		
 		testArgInfoDatum(oldInfo);
 	}
 	

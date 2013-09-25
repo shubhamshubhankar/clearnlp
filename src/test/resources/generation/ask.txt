@@ -31,6 +31,18 @@
 1	Ask	ask	VB	pb=ask.01	0	root	_
 2	whether	whether	IN	_	5	complm	_
 3	the	the	DT	_	4	det	_
+4	user	user	NN	_	5	nsubj	5:A0-PAG;7:A0-PAG
+5	needs	need	VBZ	pb=need.01	1	ccomp	1:A1-PPT
+6	to	to	TO	_	7	aux	_
+7	learn	learn	VB	pb=learn.01	5	xcomp	5:A1-PPT
+8	how	how	WRB	_	10	advmod	10:R-AM-MNR
+9	to	to	TO	_	10	aux	_
+10	read	read	VB	pb=read.01	7	xcomp	7:A1-PPT
+11	.	.	.	_	1	punct	_
+
+1	Ask	ask	VB	pb=ask.01	0	root	_
+2	whether	whether	IN	_	5	complm	_
+3	the	the	DT	_	4	det	_
 4	user	user	NN	_	5	nsubj	5:A0;7:A0
 5	wants	want	VBZ	pb=want.01	1	ccomp	1:A1
 6	to	to	TO	_	7	aux	_
